@@ -85,7 +85,10 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const params = new URLSearchParams(location.search);
-const MEDICO_ID = params.get("medico_id");
+const MEDICO_ID =
+  params.get("medico") ||
+  params.get("medico_id") ||
+  "0b6bf656-85da-4ef2-bbbd-5444efb2efe6";
 
 document.getElementById("tzPill").textContent = "TZ: America/Argentina/Buenos_Aires";
 document.getElementById("medicoLine").textContent = "Médico ID: " + MEDICO_ID;
