@@ -96,36 +96,65 @@ document.getElementById("medicoLine").textContent = "Médico ID: " + MEDICO_ID;
 let selectedSlot = null;
 
 async function loadDays(){
-  const { data } = await supabase.rpc("get_dias_con_slots",{ p_medico_id: MEDICO_ID });
-  const days = data.map(d=>d.dia);
+  const hoy = new Date();
+  const desde = hoy.toISOString().slice(0,10); // YYYY-MM-DD
+
+  const hastaDate = new Date(hoy);
+  hastaDate.setDate(hastaDate.getDate() + 14);
+  const hasta = hastaDate.toISOString().slice(0,10);
+
+  const { data, error } = await supabase.rpc("get_dias_con_slots", {
+    p_medico_id: MEDICO_ID,
+    p_desde: desde,
+    p_hasta: hasta
+  });
+
+  if (error) {
+    document.getElementById("errDays").textContent = error.message;
+    return;
+  }
+
   const wrap = document.getElementById("days");
-  wrap.innerHTML="";
-  days.forEach(d=>{
-    const b=document.createElement("button");
-    b.className="daybtn";
-    b.textContent=d;
-    b.onclick=()=>loadSlots(d);
+  wrap.innerHTML = "";
+
+  (data || []).forEach(r => {
+    const fecha = r.dia; // date
+    const b = document.createElement("button");
+    b.className = "daybtn";
+    b.textContent = fecha;
+    b.onclick = () => loadSlots(fecha);
     wrap.appendChild(b);
   });
 }
+async function loadSlots(fecha){
+  const { data, error } = await supabase.rpc("get_slots_dia", {
+    p_medico_id: MEDICO_ID,
+    p_fecha: fecha
+  });
 
-async function loadSlots(day){
-  const { data } = await supabase.rpc("get_slots_dia",{ p_medico_id: MEDICO_ID, p_fecha: day });
-  const wrap=document.getElementById("slots");
-  wrap.innerHTML="";
-  data.forEach(s=>{
-    const b=document.createElement("button");
-    b.className="slotbtn";
-    b.textContent=new Date(s.inicio_slot).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
-    b.onclick=()=>{
-      selectedSlot=s.inicio_slot;
-      document.getElementById("chosenSlot").textContent=new Date(s.inicio_slot).toLocaleString("es-AR");
-      document.getElementById("btnBook").disabled=false;
-    }
+  if (error) {
+    document.getElementById("errSlots").textContent = error.message;
+    return;
+  }
+
+  const wrap = document.getElementById("slots");
+  wrap.innerHTML = "";
+
+  (data || []).forEach(s => {
+    const b = document.createElement("button");
+    b.className = "slotbtn";
+    b.textContent = new Date(s.inicio_slot).toLocaleTimeString("es-AR", {
+      hour:"2-digit", minute:"2-digit"
+    });
+    b.onclick = () => {
+      selectedSlot = s.inicio_slot;
+      document.getElementById("chosenSlot").textContent =
+        new Date(s.inicio_slot).toLocaleString("es-AR");
+      document.getElementById("btnBook").disabled = false;
+    };
     wrap.appendChild(b);
   });
 }
-
 document.getElementById("btnBook").onclick=async()=>{
   const nombre=document.getElementById("nombre").value;
   const dni=document.getElementById("dni").value;
