@@ -364,14 +364,17 @@ btnBook.onclick = async () => {
   okBook.textContent = "";
 
   const slot = window.SLOT_SELECCIONADO;
-  if (!slot || !selectedDateISO) return;
+  if (!slot?.inicio_slot) {
+    errBook.textContent = "Elegí un horario.";
+    return;
+  }
 
   const nombre = document.getElementById("nombre").value.trim();
   const dni = document.getElementById("dni").value.trim();
   const telefono = document.getElementById("telefono").value.trim();
   const email = document.getElementById("email").value.trim();
-  const obra_social = document.getElementById("obra_social").value.trim();
-  const numero_afiliado = document.getElementById("numero_afiliado").value.trim();
+  const obra_social = document.getElementById("obra_social")?.value?.trim() || "";
+  const numero_afiliado = document.getElementById("numero_afiliado")?.value?.trim() || "";
 
   if (!nombre || !dni || !telefono) {
     errBook.textContent = "Completá nombre, DNI y teléfono.";
@@ -381,33 +384,49 @@ btnBook.onclick = async () => {
   btnBook.disabled = true;
 
   try {
-    // 1) Upsert del paciente (así guardás obra social y afiliado)
-    //    Requiere: UNIQUE en Pacientes(dni) + que RLS no te bloquee inserts/updates.
-    await sb.from("Pacientes").upsert({
-      dni,
-      nombre,
-      telefono,
-      email: email || null,
-      obra_social: obra_social || null,
-      numero_afiliado: numero_afiliado || null
-    }, { onConflict: "dni" });
+    // (A) Guardar datos del paciente
+    // IMPORTANTE: esto te estaba dando 401 (Unauthorized / RLS).
+    // Si no tenés RLS bien configurado para INSERT/UPDATE en Pacientes, comentá este bloque.
+    const { error: upsertErr } = await sb
+      .from("Pacientes")
+      .upsert(
+        {
+          dni,
+          nombre,
+          telefono,
+          email: email || null,
+          obra_social: obra_social || null,
+          // si en DB es numeric y mandás texto, mejor mandarlo como número o null
+          numero_afiliado: numero_afiliado ? Number(numero_afiliado) : null
+        },
+        { onConflict: "dni" }
+      );
 
-    // 2) Reservar turno (RPC)
+    if (upsertErr) {
+      console.error("Upsert Pacientes error:", upsertErr);
+      // seguís igual; el turno se reserva por RPC
+      // si querés frenar acá, descomentá:
+      // errBook.textContent = upsertErr.message; btnBook.disabled = false; return;
+    }
+
+    // (B) Reservar turno por RPC (ACÁ estaba el bug: inicio undefined + selectedDateISO)
+    const inicio = slot.inicio_slot;
+    const duracion = Math.round((new Date(slot.fin_slot) - new Date(slot.inicio_slot)) / 60000) || 15;
     const token = crypto.randomUUID().replaceAll("-", "");
 
     const { data, error } = await sb.rpc("reservar_turno", {
-  p_medico_id: MEDICO_ID,
-  p_dni: dni,
-  p_nombre: nombre,
-  p_inicio: inicio,
-  p_duracion_min: 20,
-  p_manage_token: "",
-  p_canal: "web",
-  p_obra_social: document.getElementById("obra_social").value || null,
-  p_numero_afiliado: document.getElementById("numero_afiliado").value || null,
-  p_email: document.getElementById("email").value || null,
-  p_telefono: document.getElementById("telefono").value || null
-});
+      p_medico_id: MEDICO_ID,
+      p_dni: dni,
+      p_nombre: nombre,
+      p_inicio: inicio,
+      p_duracion_min: duracion,
+      p_manage_token: token,
+      p_canal: "web",
+      p_obra_social: obra_social || null,
+      p_numero_afiliado: numero_afiliado || null, // si tu RPC lo espera text, dejalo text
+      p_email: email || null,
+      p_telefono: telefono || null
+    });
 
     if (error) {
       errBook.textContent = error.message;
@@ -416,6 +435,12 @@ btnBook.onclick = async () => {
     }
 
     okBook.textContent = "✅ Turno confirmado.";
+  } catch (e) {
+    console.error(e);
+    errBook.textContent = "Error inesperado. Revisá consola.";
+    btnBook.disabled = false;
+  }
+};
     // refrescar slots para que desaparezca el tomado
     await cargarSlots(selectedDateISO);
 
