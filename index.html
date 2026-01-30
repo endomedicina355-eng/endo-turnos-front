@@ -79,99 +79,96 @@
   </div>
 </div>
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
+/* ================= CONFIG ================= */
+const SUPABASE_URL = <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+/* ================= CONFIG ================= */
 const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const params = new URLSearchParams(location.search);
-const MEDICO_ID =
-  params.get("medico") ||
-  params.get("medico_id") ||
-  "0b6bf656-85da-4ef2-bbbd-5444efb2efe6";
+/* ================= PARAMS ================= */
+const params = new URLSearchParams(window.location.search);
+const MEDICO_ID = params.get("medico_id");
 
-document.getElementById("tzPill").textContent = "TZ: America/Argentina/Buenos_Aires";
-document.getElementById("medicoLine").textContent = "Médico ID: " + MEDICO_ID;
-
-let selectedSlot = null;
-
-async function loadDays(){
-  const hoy = new Date();
-  const desde = hoy.toISOString().slice(0,10); // YYYY-MM-DD
-
-  const hastaDate = new Date(hoy);
-  hastaDate.setDate(hastaDate.getDate() + 14);
-  const hasta = hastaDate.toISOString().slice(0,10);
-
-  const { data, error } = await supabase.rpc("get_dias_con_slots", {
-    p_medico_id: MEDICO_ID,
-    p_desde: desde,
-    p_hasta: hasta
-  });
-
-  if (error) {
-    document.getElementById("errDays").textContent = error.message;
-    return;
-  }
-
-  const wrap = document.getElementById("days");
-  wrap.innerHTML = "";
-
-  (data || []).forEach(r => {
-    const fecha = r.dia; // date
-    const b = document.createElement("button");
-    b.className = "daybtn";
-    b.textContent = fecha;
-    b.onclick = () => loadSlots(fecha);
-    wrap.appendChild(b);
-  });
+if (!MEDICO_ID) {
+  alert("Falta medico_id en la URL");
+  throw new Error("medico_id missing");
 }
-async function loadSlots(fecha){
-  const { data, error } = await supabase.rpc("get_slots_dia", {
-    p_medico_id: MEDICO_ID,
-    p_fecha: fecha
-  });
 
-  if (error) {
-    document.getElementById("errSlots").textContent = error.message;
-    return;
-  }
+/* ================= FECHAS ================= */
+const hoy = new Date();
+const desde = hoy.toISOString().slice(0,10); // YYYY-MM-DD
 
-  const wrap = document.getElementById("slots");
-  wrap.innerHTML = "";
+const hastaDate = new Date();
+hastaDate.setDate(hastaDate.getDate() + 14);
+const hasta = hastaDate.toISOString().slice(0,10);
 
-  (data || []).forEach(s => {
-    const b = document.createElement("button");
-    b.className = "slotbtn";
-    b.textContent = new Date(s.inicio_slot).toLocaleTimeString("es-AR", {
-      hour:"2-digit", minute:"2-digit"
+/* ================= DOM ================= */
+const diasBox = document.getElementById("dias");
+const horariosBox = document.getElementById("horarios");
+const seleccionadoBox = document.getElementById("seleccionado");
+
+/* ================= LOAD DIAS ================= */
+async function cargarDias() {
+  const { data, error } = await supabase
+    .rpc("get_dias_con_slots", {
+      p_medico_id: MEDICO_ID,
+      p_desde: desde,
+      p_hasta: hasta
     });
-    b.onclick = () => {
-      selectedSlot = s.inicio_slot;
-      document.getElementById("chosenSlot").textContent =
-        new Date(s.inicio_slot).toLocaleString("es-AR");
-      document.getElementById("btnBook").disabled = false;
-    };
-    wrap.appendChild(b);
+
+  if (error) {
+    console.error("Error dias:", error);
+    return;
+  }
+
+  diasBox.innerHTML = "";
+
+  data.forEach(d => {
+    const btn = document.createElement("button");
+    btn.textContent = d.dia;
+    btn.onclick = () => cargarHorarios(d.dia);
+    diasBox.appendChild(btn);
   });
 }
-document.getElementById("btnBook").onclick=async()=>{
-  const nombre=document.getElementById("nombre").value;
-  const dni=document.getElementById("dni").value;
-  const { error } = await supabase.rpc("reservar_turno",{
-    p_medico_id: MEDICO_ID,
-    p_dni: dni,
-    p_nombre: nombre,
-    p_inicio: selectedSlot,
-    p_duracion_min: 20,
-    p_manage_token: "",
-    p_canal: "web"
-  });
-  if(error) document.getElementById("errBook").textContent=error.message;
-  else document.getElementById("okBook").textContent="Turno confirmado";
-};
 
-loadDays();
+/* ================= LOAD HORARIOS ================= */
+async function cargarHorarios(fecha) {
+  const { data, error } = await supabase
+    .rpc("get_slots_dia", {
+      p_medico_id: MEDICO_ID,
+      p_fecha: fecha
+    });
+
+  if (error) {
+    console.error("Error slots:", error);
+    return;
+  }
+
+  horariosBox.innerHTML = "";
+
+  data.forEach(s => {
+    const hora = new Date(s.inicio_slot).toLocaleTimeString("es-AR", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    const btn = document.createElement("button");
+    btn.textContent = hora;
+    btn.onclick = () => {
+      seleccionadoBox.textContent = `${fecha} ${hora}`;
+      window.SLOT_SELECCIONADO = s;
+    };
+    horariosBox.appendChild(btn);
+  });
+}
+
+/* ================= INIT ================= */
+cargarDias();
+
 </script>
 </body>
 </html>
