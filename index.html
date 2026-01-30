@@ -396,14 +396,18 @@ btnBook.onclick = async () => {
     const token = crypto.randomUUID().replaceAll("-", "");
 
     const { data, error } = await sb.rpc("reservar_turno", {
-      p_medico_id: MEDICO_ID,
-      p_dni: dni,
-      p_nombre: nombre,
-      p_inicio: slot.inicio_slot,
-      p_duracion_min: 15,   // ajustalo si querés
-      p_manage_token: token,
-      p_canal: "web"
-    });
+  p_medico_id: MEDICO_ID,
+  p_dni: dni,
+  p_nombre: nombre,
+  p_inicio: inicio,
+  p_duracion_min: 20,
+  p_manage_token: "",
+  p_canal: "web",
+  p_obra_social: document.getElementById("obra_social").value || null,
+  p_numero_afiliado: document.getElementById("numero_afiliado").value || null,
+  p_email: document.getElementById("email").value || null,
+  p_telefono: document.getElementById("telefono").value || null
+});
 
     if (error) {
       errBook.textContent = error.message;
