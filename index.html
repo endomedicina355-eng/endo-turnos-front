@@ -395,12 +395,6 @@ btnBook.onclick = async () => {
     // 2) Reservar turno (RPC)
     const token = crypto.randomUUID().replaceAll("-", "");
 
- const obraSocial = document.getElementById("obra_social")?.value?.trim() || "";
-const nroAfiliado = document.getElementById("numero_afiliado")?.value?.trim() || "";
-const emailVal = document.getElementById("email")?.value?.trim() || "";
-const telVal = document.getElementById("telefono")?.value?.trim() || "";
-
-console.log("DEBUG inputs:", { obraSocial, nroAfiliado, emailVal, telVal });
     const { data, error } = await sb.rpc("reservar_turno", {
   p_medico_id: MEDICO_ID,
   p_dni: dni,
