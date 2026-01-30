@@ -13,15 +13,29 @@
     .brand{font-weight:800}
     .muted{color:#666; font-size:13px}
     .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #ddd; font-size:12px; background:#fff}
+
     .grid{display:grid; grid-template-columns:1fr; gap:12px;}
     @media(min-width:900px){ .grid{grid-template-columns:1.1fr .9fr;} }
-    .days{display:flex; gap:8px; overflow:auto; padding:6px 2px}
-    .daybtn{border:1px solid #ddd; background:#fff; border-radius:12px; padding:10px 12px; min-width:120px; cursor:pointer; text-align:left}
-    .daybtn.active{border-color:#111; box-shadow:0 1px 0 rgba(0,0,0,.06)}
+
+    /* Calendar */
+    .calWrap{display:grid; gap:12px;}
+    @media(min-width:740px){ .calWrap{grid-template-columns:1fr 1fr;} }
+    .month{border:1px solid #eee; border-radius:14px; padding:12px;}
+    .monthTitle{font-weight:800; margin:0 0 8px 0;}
+    .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px;}
+    .dow div{font-size:12px; color:#777; text-align:center;}
+    .daysGrid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+    .dayCell{height:38px; border-radius:10px; border:1px solid #eee; background:#fff; cursor:pointer; font-size:13px;}
+    .dayCell:disabled{opacity:.35; cursor:not-allowed; background:#fafafa;}
+    .dayCell.active{border-color:#111; box-shadow:0 1px 0 rgba(0,0,0,.06)}
+    .dayCell.inRange{border-color:#ddd;}
+    .dayCell.empty{border:0; background:transparent; cursor:default;}
+
     .slots{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
     @media(max-width:520px){ .slots{grid-template-columns:repeat(2, minmax(0,1fr));} }
     .slotbtn{border:1px solid #ddd; background:#fff; border-radius:12px; padding:10px; cursor:pointer; text-align:center}
     .slotbtn.active{border-color:#111}
+
     .row{display:grid; gap:10px; grid-template-columns:1fr 1fr}
     @media(max-width:700px){ .row{grid-template-columns:1fr} }
     input{width:100%; padding:10px 12px; border-radius:12px; border:1px solid #ddd; font-size:14px}
@@ -39,13 +53,14 @@
       <div class="brand">ENDO Medicina</div>
       <div class="muted">Turnos online</div>
       <div class="muted" id="medicoLine">Médico: —</div>
+      <div class="muted" id="espLine"></div>
     </div>
-    <div class="pill" id="tzPill">TZ: —</div>
+    <div class="pill" id="tzPill">TZ: AR (Buenos Aires)</div>
   </div>
 
   <div class="card">
     <div class="muted">Próximos 14 días</div>
-    <div class="days" id="days"></div>
+    <div class="calWrap" id="calendar"></div>
     <div class="error" id="errDays"></div>
   </div>
 
@@ -70,6 +85,11 @@
         <input id="email" placeholder="Email"/>
       </div>
 
+      <div class="row">
+        <input id="obra_social" placeholder="Obra social"/>
+        <input id="numero_afiliado" placeholder="N° afiliado"/>
+      </div>
+
       <div class="error" id="errBook"></div>
       <div class="ok" id="okBook"></div>
 
@@ -78,107 +98,334 @@
   </div>
 </div>
 
-<!-- Supabase JS (una sola vez) -->
+<!-- Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A"; // poné la key acá
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/* ================= CONFIG ================= */
+const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const params = new URLSearchParams(window.location.search);
-  const MEDICO_ID = params.get("medico_id"); // lo trae de la URL
+/* ================= PARAMS ================= */
+const params = new URLSearchParams(window.location.search);
+const MEDICO_ID = params.get("medico_id"); // viene por URL
 
-  const daysBox = document.getElementById("days");
-  const slotsBox = document.getElementById("slots");
-  const chosenSlot = document.getElementById("chosenSlot");
-  const errDays = document.getElementById("errDays");
-  const errSlots = document.getElementById("errSlots");
+/* ================= DOM ================= */
+const medicoLine = document.getElementById("medicoLine");
+const espLine    = document.getElementById("espLine");
+const calBox     = document.getElementById("calendar");
+const daysErr    = document.getElementById("errDays");
 
-  if (!MEDICO_ID) {
-    errDays.textContent = "Falta medico_id en la URL. Ej: ?medico_id=UUID";
-    throw new Error("medico_id missing");
-  }
+const slotsBox   = document.getElementById("slots");
+const errSlots   = document.getElementById("errSlots");
+const dayTitle   = document.getElementById("dayTitle");
+const chosenSlot = document.getElementById("chosenSlot");
+
+const btnBook = document.getElementById("btnBook");
+const errBook = document.getElementById("errBook");
+const okBook  = document.getElementById("okBook");
+
+/* ================= GUARDS ================= */
+if (!MEDICO_ID) {
+  daysErr.textContent = "Falta medico_id en la URL. Ej: ?medico_id=UUID";
+  throw new Error("medico_id missing");
+}
+
+/* ================= HELPERS (AR TZ) ================= */
+const AR_TZ = "America/Argentina/Buenos_Aires";
+
+function isoDateAR(d) {
+  // retorna YYYY-MM-DD en base a AR (evita corrimientos)
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: AR_TZ, year:"numeric", month:"2-digit", day:"2-digit"}).formatToParts(d);
+  const y = parts.find(p=>p.type==="year").value;
+  const m = parts.find(p=>p.type==="month").value;
+  const da = parts.find(p=>p.type==="day").value;
+  return `${y}-${m}-${da}`;
+}
+function fmtDMY(yyyy_mm_dd) {
+  const [y,m,d] = yyyy_mm_dd.split("-");
+  return `${d}/${m}/${y}`;
+}
+function monthKey(yyyy_mm_dd) { return yyyy_mm_dd.slice(0,7); } // YYYY-MM
+
+function addDaysISO(yyyy_mm_dd, n) {
+  // suma días sobre AR TZ sin líos: parse manual
+  const [y,m,d] = yyyy_mm_dd.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  // volver a YYYY-MM-DD
+  const y2 = dt.getUTCFullYear();
+  const m2 = String(dt.getUTCMonth()+1).padStart(2,"0");
+  const d2 = String(dt.getUTCDate()).padStart(2,"0");
+  return `${y2}-${m2}-${d2}`;
+}
+function dayOfWeekIndex(yyyy_mm_dd) {
+  // 0=Sun..6=Sat calculado en UTC (sirve para grilla)
+  const [y,m,d] = yyyy_mm_dd.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  return dt.getUTCDay();
+}
+function daysInMonth(yyyy_mm) {
+  const [y,m] = yyyy_mm.split("-").map(Number);
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+/* ================= STATE ================= */
+let availableDaysSet = new Set(); // "YYYY-MM-DD" con slots
+let selectedDateISO = null;       // "YYYY-MM-DD"
+window.SLOT_SELECCIONADO = null;
+
+/* ================= LOAD MEDICO (Nombre + Especialidad) ================= */
+async function cargarMedico() {
+  // OJO: tu columna puede llamarse distinto. Probamos varias (no rompe si no existe).
+  // Si en tu tabla ya existe "especialidad" o "Especialidad", dejá una sola en el select.
+  const { data, error } = await sb
+    .from("Medicos")
+    .select('Nombre, especialidad, "Especialidad"')
+    .eq("id", MEDICO_ID)
+    .maybeSingle();
+
+  if (error) return; // no frena el front
+
+  if (data?.Nombre) medicoLine.textContent = "Médico: " + data.Nombre;
+
+  const esp = data?.especialidad || data?.["Especialidad"];
+  if (esp) espLine.textContent = esp;
+}
+
+/* ================= RPC: DIAS ================= */
+async function cargarDias() {
+  daysErr.textContent = "";
+  calBox.innerHTML = "";
 
   const hoy = new Date();
-  const desde = hoy.toISOString().slice(0,10);
+  const desde = isoDateAR(hoy);
 
-  const hastaDate = new Date();
-  hastaDate.setDate(hastaDate.getDate() + 14);
-  const hasta = hastaDate.toISOString().slice(0,10);
+  const hasta = addDaysISO(desde, 14);
 
-  async function cargarDias() {
-    errDays.textContent = "";
-    daysBox.innerHTML = "";
+  const { data, error } = await sb.rpc("get_dias_con_slots", {
+    p_medico_id: MEDICO_ID,
+    p_desde: desde,
+    p_hasta: hasta
+  });
 
-    const { data, error } = await sb.rpc("get_dias_con_slots", {
+  if (error) {
+    console.error(error);
+    daysErr.textContent = error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    daysErr.textContent = "No hay días con disponibilidad en los próximos 14 días.";
+    return;
+  }
+
+  availableDaysSet = new Set(data.map(r => r.dia));
+
+  // render 1 o 2 meses (según rango)
+  const startMonth = monthKey(desde);
+  const endMonth   = monthKey(hasta);
+  renderMonth(startMonth, desde, hasta);
+  if (endMonth !== startMonth) renderMonth(endMonth, desde, hasta);
+
+  // auto seleccionar el primer día disponible
+  const first = data[0].dia;
+  selectDay(first);
+}
+
+/* ================= CALENDAR RENDER ================= */
+function renderMonth(yyyy_mm, desdeISO, hastaISO) {
+  const monthDiv = document.createElement("div");
+  monthDiv.className = "month";
+
+  const [y,m] = yyyy_mm.split("-").map(Number);
+  const monthName = new Intl.DateTimeFormat("es-AR", { timeZone: AR_TZ, month:"long", year:"numeric" })
+    .format(new Date(Date.UTC(y, m-1, 1)));
+  const title = document.createElement("div");
+  title.className = "monthTitle";
+  title.textContent = monthName[0].toUpperCase() + monthName.slice(1);
+  monthDiv.appendChild(title);
+
+  const dow = document.createElement("div");
+  dow.className = "dow";
+  ["L","M","M","J","V","S","D"].forEach(x => {
+    const d = document.createElement("div");
+    d.textContent = x;
+    dow.appendChild(d);
+  });
+  monthDiv.appendChild(dow);
+
+  const grid = document.createElement("div");
+  grid.className = "daysGrid";
+
+  // primer día del mes
+  const firstISO = `${yyyy_mm}-01`;
+  // Queremos que la semana empiece Lunes. JS UTCDay: 0 Dom..6 Sab
+  // Convertimos a índice Lunes=0..Dom=6
+  const firstDowSun0 = dayOfWeekIndex(firstISO);
+  const firstDowMon0 = (firstDowSun0 + 6) % 7; // Dom->6, Lun->0...
+
+  for (let i=0;i<firstDowMon0;i++) {
+    const b = document.createElement("button");
+    b.className = "dayCell empty";
+    b.disabled = true;
+    grid.appendChild(b);
+  }
+
+  const dim = daysInMonth(yyyy_mm);
+  for (let day=1; day<=dim; day++) {
+    const dd = String(day).padStart(2,"0");
+    const iso = `${yyyy_mm}-${dd}`;
+
+    const btn = document.createElement("button");
+    btn.className = "dayCell";
+    btn.textContent = String(day);
+
+    const inRange = (iso >= desdeISO && iso <= hastaISO);
+    if (inRange) btn.classList.add("inRange");
+
+    const has = availableDaysSet.has(iso);
+    btn.disabled = !(inRange && has);
+
+    btn.onclick = () => selectDay(iso);
+
+    btn.dataset.iso = iso;
+    grid.appendChild(btn);
+  }
+
+  monthDiv.appendChild(grid);
+  calBox.appendChild(monthDiv);
+}
+
+function selectDay(iso) {
+  selectedDateISO = iso;
+
+  // marcar active
+  document.querySelectorAll(".dayCell").forEach(b => {
+    if (b.dataset?.iso) b.classList.toggle("active", b.dataset.iso === iso);
+  });
+
+  dayTitle.textContent = "Horarios · " + fmtDMY(iso);
+  cargarSlots(iso);
+}
+
+/* ================= RPC: SLOTS ================= */
+async function cargarSlots(fechaISO) {
+  errSlots.textContent = "";
+  slotsBox.innerHTML = "";
+  chosenSlot.textContent = "—";
+  btnBook.disabled = true;
+  window.SLOT_SELECCIONADO = null;
+
+  const { data, error } = await sb.rpc("get_slots_dia", {
+    p_medico_id: MEDICO_ID,
+    p_fecha: fechaISO
+  });
+
+  if (error) {
+    console.error(error);
+    errSlots.textContent = error.message;
+    return;
+  }
+  if (!data || data.length === 0) {
+    errSlots.textContent = "Ese día no tiene horarios.";
+    return;
+  }
+
+  data.forEach(s => {
+    const hora = new Date(s.inicio_slot).toLocaleTimeString("es-AR", {
+      timeZone: AR_TZ,
+      hour:"2-digit",
+      minute:"2-digit"
+    });
+
+    const btn = document.createElement("button");
+    btn.className = "slotbtn";
+    btn.textContent = hora;
+
+    btn.onclick = () => {
+      // marcar active
+      document.querySelectorAll(".slotbtn").forEach(x => x.classList.remove("active"));
+      btn.classList.add("active");
+
+      chosenSlot.textContent = `${fmtDMY(fechaISO)} ${hora}`;
+      window.SLOT_SELECCIONADO = s;
+      btnBook.disabled = false;
+    };
+
+    slotsBox.appendChild(btn);
+  });
+}
+
+/* ================= BOOKING ================= */
+btnBook.onclick = async () => {
+  errBook.textContent = "";
+  okBook.textContent = "";
+
+  const slot = window.SLOT_SELECCIONADO;
+  if (!slot || !selectedDateISO) return;
+
+  const nombre = document.getElementById("nombre").value.trim();
+  const dni = document.getElementById("dni").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const obra_social = document.getElementById("obra_social").value.trim();
+  const numero_afiliado = document.getElementById("numero_afiliado").value.trim();
+
+  if (!nombre || !dni || !telefono) {
+    errBook.textContent = "Completá nombre, DNI y teléfono.";
+    return;
+  }
+
+  btnBook.disabled = true;
+
+  try {
+    // 1) Upsert del paciente (así guardás obra social y afiliado)
+    //    Requiere: UNIQUE en Pacientes(dni) + que RLS no te bloquee inserts/updates.
+    await sb.from("Pacientes").upsert({
+      dni,
+      nombre,
+      telefono,
+      email: email || null,
+      obra_social: obra_social || null,
+      numero_afiliado: numero_afiliado || null
+    }, { onConflict: "dni" });
+
+    // 2) Reservar turno (RPC)
+    const token = crypto.randomUUID().replaceAll("-", "");
+
+    const { data, error } = await sb.rpc("reservar_turno", {
       p_medico_id: MEDICO_ID,
-      p_desde: desde,
-      p_hasta: hasta
+      p_dni: dni,
+      p_nombre: nombre,
+      p_inicio: slot.inicio_slot,
+      p_duracion_min: 15,   // ajustalo si querés
+      p_manage_token: token,
+      p_canal: "web"
     });
 
     if (error) {
-      console.error(error);
-      errDays.textContent = error.message;
+      errBook.textContent = error.message;
+      btnBook.disabled = false;
       return;
     }
 
-    if (!data || data.length === 0) {
-      errDays.textContent = "No hay días con disponibilidad en los próximos 14 días.";
-      return;
-    }
+    okBook.textContent = "✅ Turno confirmado.";
+    // refrescar slots para que desaparezca el tomado
+    await cargarSlots(selectedDateISO);
 
-    data.forEach(row => {
-      const fecha = row.dia; // YYYY-MM-DD
-      const btn = document.createElement("button");
-      btn.className = "daybtn";
-      btn.textContent = fecha;
-      btn.onclick = () => cargarSlots(fecha);
-      daysBox.appendChild(btn);
-    });
-
-    // auto-cargar el primer día
-    cargarSlots(data[0].dia);
+  } catch (e) {
+    console.error(e);
+    errBook.textContent = "Error inesperado. Revisá consola.";
+    btnBook.disabled = false;
   }
+};
 
-  async function cargarSlots(fecha) {
-    errSlots.textContent = "";
-    slotsBox.innerHTML = "";
-    chosenSlot.textContent = "—";
-
-    const { data, error } = await sb.rpc("get_slots_dia", {
-      p_medico_id: MEDICO_ID,
-      p_fecha: fecha
-    });
-
-    if (error) {
-      console.error(error);
-      errSlots.textContent = error.message;
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      errSlots.textContent = "Ese día no tiene horarios.";
-      return;
-    }
-
-    data.forEach(s => {
-      const hora = new Date(s.inicio_slot).toLocaleTimeString("es-AR", { hour:"2-digit", minute:"2-digit" });
-
-      const btn = document.createElement("button");
-      btn.className = "slotbtn";
-      btn.textContent = hora;
-      btn.onclick = () => {
-        chosenSlot.textContent = `${fecha} ${hora}`;
-        window.SLOT_SELECCIONADO = s;
-        document.getElementById("btnBook").disabled = false;
-      };
-
-      slotsBox.appendChild(btn);
-    });
-  }
-
-  cargarDias();
+/* ================= INIT ================= */
+document.getElementById("tzPill").textContent = "TZ: AR (Buenos Aires)";
+cargarMedico();
+cargarDias();
 </script>
 </body>
 </html>
