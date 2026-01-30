@@ -1,1 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ENDO Medicina · Turnos</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; background:#f6f7f8; color:#111;}
+    .wrap{max-width:980px; margin:0 auto; padding:18px;}
+    .card{background:#fff; border:1px solid #e7e7e7; border-radius:14px; padding:16px; margin:12px 0;}
+    .header{display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
+    .brand{font-weight:800}
+    .muted{color:#666; font-size:13px}
+    .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #ddd; font-size:12px; background:#fff}
+    .grid{display:grid; grid-template-columns:1fr; gap:12px;}
+    @media(min-width:900px){ .grid{grid-template-columns:1.1fr .9fr;} }
+    .days{display:flex; gap:8px; overflow:auto; padding:6px 2px}
+    .daybtn{border:1px solid #ddd; background:#fff; border-radius:12px; padding:10px 12px; min-width:120px; cursor:pointer; text-align:left}
+    .daybtn:disabled{opacity:.35; cursor:not-allowed}
+    .daybtn.active{border-color:#111; box-shadow:0 1px 0 rgba(0,0,0,.06)}
+    .slots{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
+    @media(max-width:520px){ .slots{grid-template-columns:repeat(2, minmax(0,1fr));} }
+    .slotbtn{border:1px solid #ddd; background:#fff; border-radius:12px; padding:10px; cursor:pointer; text-align:center}
+    .slotbtn.active{border-color:#111}
+    .row{display:grid; gap:10px; grid-template-columns:1fr 1fr}
+    @media(max-width:700px){ .row{grid-template-columns:1fr} }
+    input{width:100%; padding:10px 12px; border-radius:12px; border:1px solid #ddd; font-size:14px}
+    button.primary{background:#111; color:#fff; border:0; border-radius:12px; padding:12px 14px; font-weight:700; cursor:pointer; width:100%}
+    button.primary:disabled{opacity:.45}
+    .error{color:#b00020; font-size:13px}
+    .ok{color:#0a7a27; font-size:13px}
+    .hr{height:1px; background:#eee; margin:12px 0}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="brand">ENDO Medicina</div>
+      <div class="muted">Turnos online</div>
+      <div class="muted" id="medicoLine">Médico: —</div>
+    </div>
+    <div class="pill" id="tzPill">TZ: —</div>
+  </div>
 
+  <div class="card">
+    <div class="muted">Próximos 14 días</div>
+    <div class="days" id="days"></div>
+    <div class="error" id="errDays"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div style="font-weight:800" id="dayTitle">Horarios</div>
+      <div class="slots" id="slots"></div>
+      <div class="error" id="errSlots"></div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:800">Confirmar turno</div>
+      <div class="muted">Seleccionado: <b id="chosenSlot">—</b></div>
+
+      <div class="row">
+        <input id="nombre" placeholder="Nombre y apellido"/>
+        <input id="dni" placeholder="DNI"/>
+      </div>
+
+      <div class="row">
+        <input id="telefono" placeholder="Teléfono"/>
+        <input id="email" placeholder="Email"/>
+      </div>
+
+      <div class="error" id="errBook"></div>
+      <div class="ok" id="okBook"></div>
+
+      <button class="primary" id="btnBook" disabled>Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const params = new URLSearchParams(location.search);
+const MEDICO_ID = params.get("medico_id");
+
+document.getElementById("tzPill").textContent = "TZ: America/Argentina/Buenos_Aires";
+document.getElementById("medicoLine").textContent = "Médico ID: " + MEDICO_ID;
+
+let selectedSlot = null;
+
+async function loadDays(){
+  const { data } = await supabase.rpc("get_dias_con_slots",{ p_medico_id: MEDICO_ID });
+  const days = data.map(d=>d.dia);
+  const wrap = document.getElementById("days");
+  wrap.innerHTML="";
+  days.forEach(d=>{
+    const b=document.createElement("button");
+    b.className="daybtn";
+    b.textContent=d;
+    b.onclick=()=>loadSlots(d);
+    wrap.appendChild(b);
+  });
+}
+
+async function loadSlots(day){
+  const { data } = await supabase.rpc("get_slots_dia",{ p_medico_id: MEDICO_ID, p_fecha: day });
+  const wrap=document.getElementById("slots");
+  wrap.innerHTML="";
+  data.forEach(s=>{
+    const b=document.createElement("button");
+    b.className="slotbtn";
+    b.textContent=new Date(s.inicio_slot).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+    b.onclick=()=>{
+      selectedSlot=s.inicio_slot;
+      document.getElementById("chosenSlot").textContent=new Date(s.inicio_slot).toLocaleString("es-AR");
+      document.getElementById("btnBook").disabled=false;
+    }
+    wrap.appendChild(b);
+  });
+}
+
+document.getElementById("btnBook").onclick=async()=>{
+  const nombre=document.getElementById("nombre").value;
+  const dni=document.getElementById("dni").value;
+  const { error } = await supabase.rpc("reservar_turno",{
+    p_medico_id: MEDICO_ID,
+    p_dni: dni,
+    p_nombre: nombre,
+    p_inicio: selectedSlot,
+    p_duracion_min: 20,
+    p_manage_token: "",
+    p_canal: "web"
+  });
+  if(error) document.getElementById("errBook").textContent=error.message;
+  else document.getElementById("okBook").textContent="Turno confirmado";
+};
+
+loadDays();
+</script>
+</body>
+</html>
