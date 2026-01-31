@@ -98,13 +98,12 @@
   </div>
 </div>
 
-<!-- Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 /* ================= CONFIG ================= */
 const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A";
+const SUPABASE_ANON_KEY = "REEMPLAZA_CON_TU_ANON_KEY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ================= PARAMS ================= */
@@ -136,7 +135,6 @@ if (!MEDICO_ID) {
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
 function isoDateAR(d) {
-  // retorna YYYY-MM-DD en base a AR (evita corrimientos)
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone: AR_TZ, year:"numeric", month:"2-digit", day:"2-digit"}).formatToParts(d);
   const y = parts.find(p=>p.type==="year").value;
   const m = parts.find(p=>p.type==="month").value;
@@ -147,21 +145,17 @@ function fmtDMY(yyyy_mm_dd) {
   const [y,m,d] = yyyy_mm_dd.split("-");
   return `${d}/${m}/${y}`;
 }
-function monthKey(yyyy_mm_dd) { return yyyy_mm_dd.slice(0,7); } // YYYY-MM
-
+function monthKey(yyyy_mm_dd) { return yyyy_mm_dd.slice(0,7); }
 function addDaysISO(yyyy_mm_dd, n) {
-  // suma días sobre AR TZ sin líos: parse manual
   const [y,m,d] = yyyy_mm_dd.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m-1, d));
   dt.setUTCDate(dt.getUTCDate() + n);
-  // volver a YYYY-MM-DD
   const y2 = dt.getUTCFullYear();
   const m2 = String(dt.getUTCMonth()+1).padStart(2,"0");
   const d2 = String(dt.getUTCDate()).padStart(2,"0");
   return `${y2}-${m2}-${d2}`;
 }
 function dayOfWeekIndex(yyyy_mm_dd) {
-  // 0=Sun..6=Sat calculado en UTC (sirve para grilla)
   const [y,m,d] = yyyy_mm_dd.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m-1, d));
   return dt.getUTCDay();
@@ -170,26 +164,29 @@ function daysInMonth(yyyy_mm) {
   const [y,m] = yyyy_mm.split("-").map(Number);
   return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
+function cleanDigits(v) {
+  return (v || "").replace(/[^\d]/g, "");
+}
+function cleanDni(v) {
+  return (v || "").trim().replace(/[.\s-]/g, "");
+}
 
 /* ================= STATE ================= */
-let availableDaysSet = new Set(); // "YYYY-MM-DD" con slots
-let selectedDateISO = null;       // "YYYY-MM-DD"
+let availableDaysSet = new Set();
+let selectedDateISO = null;
 window.SLOT_SELECCIONADO = null;
 
-/* ================= LOAD MEDICO (Nombre + Especialidad) ================= */
+/* ================= LOAD MEDICO ================= */
 async function cargarMedico() {
-  // OJO: tu columna puede llamarse distinto. Probamos varias (no rompe si no existe).
-  // Si en tu tabla ya existe "especialidad" o "Especialidad", dejá una sola en el select.
   const { data, error } = await sb
     .from("Medicos")
     .select('Nombre, especialidad, "Especialidad"')
     .eq("id", MEDICO_ID)
     .maybeSingle();
 
-  if (error) return; // no frena el front
+  if (error) return;
 
   if (data?.Nombre) medicoLine.textContent = "Médico: " + data.Nombre;
-
   const esp = data?.especialidad || data?.["Especialidad"];
   if (esp) espLine.textContent = esp;
 }
@@ -201,7 +198,6 @@ async function cargarDias() {
 
   const hoy = new Date();
   const desde = isoDateAR(hoy);
-
   const hasta = addDaysISO(desde, 14);
 
   const { data, error } = await sb.rpc("get_dias_con_slots", {
@@ -223,15 +219,12 @@ async function cargarDias() {
 
   availableDaysSet = new Set(data.map(r => r.dia));
 
-  // render 1 o 2 meses (según rango)
   const startMonth = monthKey(desde);
   const endMonth   = monthKey(hasta);
   renderMonth(startMonth, desde, hasta);
   if (endMonth !== startMonth) renderMonth(endMonth, desde, hasta);
 
-  // auto seleccionar el primer día disponible
-  const first = data[0].dia;
-  selectDay(first);
+  selectDay(data[0].dia);
 }
 
 /* ================= CALENDAR RENDER ================= */
@@ -259,12 +252,9 @@ function renderMonth(yyyy_mm, desdeISO, hastaISO) {
   const grid = document.createElement("div");
   grid.className = "daysGrid";
 
-  // primer día del mes
   const firstISO = `${yyyy_mm}-01`;
-  // Queremos que la semana empiece Lunes. JS UTCDay: 0 Dom..6 Sab
-  // Convertimos a índice Lunes=0..Dom=6
   const firstDowSun0 = dayOfWeekIndex(firstISO);
-  const firstDowMon0 = (firstDowSun0 + 6) % 7; // Dom->6, Lun->0...
+  const firstDowMon0 = (firstDowSun0 + 6) % 7;
 
   for (let i=0;i<firstDowMon0;i++) {
     const b = document.createElement("button");
@@ -301,7 +291,6 @@ function renderMonth(yyyy_mm, desdeISO, hastaISO) {
 function selectDay(iso) {
   selectedDateISO = iso;
 
-  // marcar active
   document.querySelectorAll(".dayCell").forEach(b => {
     if (b.dataset?.iso) b.classList.toggle("active", b.dataset.iso === iso);
   });
@@ -345,7 +334,6 @@ async function cargarSlots(fechaISO) {
     btn.textContent = hora;
 
     btn.onclick = () => {
-      // marcar active
       document.querySelectorAll(".slotbtn").forEach(x => x.classList.remove("active"));
       btn.classList.add("active");
 
@@ -358,23 +346,26 @@ async function cargarSlots(fechaISO) {
   });
 }
 
-/* ================= BOOKING ================= */
+/* ================= BOOKING =================
+   CLAVE: NO hacemos upsert a Pacientes desde el front (RLS -> 401).
+   Mandamos TODO al RPC reservar_turno (la versión larga).
+*/
 btnBook.onclick = async () => {
   errBook.textContent = "";
   okBook.textContent = "";
 
   const slot = window.SLOT_SELECCIONADO;
-  if (!slot?.inicio_slot) {
-    errBook.textContent = "Elegí un horario.";
-    return;
-  }
+  if (!slot || !selectedDateISO) return;
 
   const nombre = document.getElementById("nombre").value.trim();
-  const dni = document.getElementById("dni").value.trim();
-  const telefono = document.getElementById("telefono").value.trim();
+  const dniRaw = document.getElementById("dni").value.trim();
+  const telRaw = document.getElementById("telefono").value.trim();
   const email = document.getElementById("email").value.trim();
-  const obra_social = document.getElementById("obra_social")?.value?.trim() || "";
-  const numero_afiliado = document.getElementById("numero_afiliado")?.value?.trim() || "";
+  const obra_social = document.getElementById("obra_social").value.trim();
+  const numero_afiliado = document.getElementById("numero_afiliado").value.trim();
+
+  const dni = cleanDni(dniRaw);
+  const telefono = cleanDigits(telRaw); // si en DB es numeric, esto evita letras/espacios
 
   if (!nombre || !dni || !telefono) {
     errBook.textContent = "Completá nombre, DNI y teléfono.";
@@ -384,64 +375,31 @@ btnBook.onclick = async () => {
   btnBook.disabled = true;
 
   try {
-    // (A) Guardar datos del paciente
-    // IMPORTANTE: esto te estaba dando 401 (Unauthorized / RLS).
-    // Si no tenés RLS bien configurado para INSERT/UPDATE en Pacientes, comentá este bloque.
-    const { error: upsertErr } = await sb
-      .from("Pacientes")
-      .upsert(
-        {
-          dni,
-          nombre,
-          telefono,
-          email: email || null,
-          obra_social: obra_social || null,
-          // si en DB es numeric y mandás texto, mejor mandarlo como número o null
-          numero_afiliado: numero_afiliado ? Number(numero_afiliado) : null
-        },
-        { onConflict: "dni" }
-      );
-
-    if (upsertErr) {
-      console.error("Upsert Pacientes error:", upsertErr);
-      // seguís igual; el turno se reserva por RPC
-      // si querés frenar acá, descomentá:
-      // errBook.textContent = upsertErr.message; btnBook.disabled = false; return;
-    }
-
-    // (B) Reservar turno por RPC (ACÁ estaba el bug: inicio undefined + selectedDateISO)
-    const inicio = slot.inicio_slot;
-    const duracion = Math.round((new Date(slot.fin_slot) - new Date(slot.inicio_slot)) / 60000) || 15;
     const token = crypto.randomUUID().replaceAll("-", "");
 
+    // Llamamos a la función LARGA (con filiatorios)
     const { data, error } = await sb.rpc("reservar_turno", {
       p_medico_id: MEDICO_ID,
       p_dni: dni,
       p_nombre: nombre,
-      p_inicio: inicio,
-      p_duracion_min: duracion,
+      p_inicio: slot.inicio_slot,
+      p_duracion_min: 15,
       p_manage_token: token,
       p_canal: "web",
       p_obra_social: obra_social || null,
-      p_numero_afiliado: numero_afiliado || null, // si tu RPC lo espera text, dejalo text
+      p_numero_afiliado: numero_afiliado || null,
       p_email: email || null,
       p_telefono: telefono || null
     });
 
     if (error) {
+      console.error(error);
       errBook.textContent = error.message;
       btnBook.disabled = false;
       return;
     }
 
     okBook.textContent = "✅ Turno confirmado.";
-  } catch (e) {
-    console.error(e);
-    errBook.textContent = "Error inesperado. Revisá consola.";
-    btnBook.disabled = false;
-  }
-};
-    // refrescar slots para que desaparezca el tomado
     await cargarSlots(selectedDateISO);
 
   } catch (e) {
