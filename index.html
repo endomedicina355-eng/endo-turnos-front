@@ -180,7 +180,7 @@ window.SLOT_SELECCIONADO = null;
 async function cargarMedico() {
   const { data, error } = await sb
     .from("Medicos")
-    .select('Nombre, especialidad, "Especialidad"')
+    .select('Nombre, especialidad')
     .eq("id", MEDICO_ID)
     .maybeSingle();
 
