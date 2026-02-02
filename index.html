@@ -400,7 +400,19 @@ btnBook.onclick = async () => {
     }
 
     okBook.textContent = "✅ Turno confirmado.";
+
+    // Limpieza de formulario (post-confirmación)
+["nombre","dni","telefono","email","obra_social","numero_afiliado"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.value = "";
+});
+    setTimeout(() => { okBook.textContent = ""; }, 3500);
+
     await cargarSlots(selectedDateISO);
+
+chosenSlot.textContent = "—";
+window.SLOT_SELECCIONADO = null;
+btnBook.disabled = true;
 
   } catch (e) {
     console.error(e);
