@@ -38,11 +38,42 @@
 
     .row{display:grid; gap:10px; grid-template-columns:1fr 1fr}
     @media(max-width:700px){ .row{grid-template-columns:1fr} }
+
     input{width:100%; padding:10px 12px; border-radius:12px; border:1px solid #ddd; font-size:14px}
     button.primary{background:#111; color:#fff; border:0; border-radius:12px; padding:12px 14px; font-weight:700; cursor:pointer; width:100%}
     button.primary:disabled{opacity:.45}
     .error{color:#b00020; font-size:13px}
     .ok{color:#0a7a27; font-size:13px}
+
+    .checks{display:flex; gap:14px; flex-wrap:wrap; margin-top:10px;}
+    .checkItem{display:flex; align-items:center; gap:8px; font-size:13px; color:#333;}
+    .checkItem input{width:auto}
+
+    /* Modal confirm */
+    .modalBack{
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:none; align-items:center; justify-content:center;
+      padding:18px; z-index:9999;
+    }
+    .modal{
+      width:min(560px, 100%);
+      background:#fff; border-radius:16px; border:1px solid #e7e7e7;
+      padding:16px;
+      box-shadow:0 10px 40px rgba(0,0,0,.25);
+    }
+    .modal h3{margin:0 0 6px 0}
+    .kv{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:12px;}
+    .kv div{border:1px solid #eee; border-radius:12px; padding:10px}
+    .kv b{display:block; font-size:12px; color:#666; margin-bottom:4px}
+    .modalBtns{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
+    .btnGhost{
+      background:#fff; border:1px solid #ddd; border-radius:12px; padding:12px 14px;
+      font-weight:700; cursor:pointer; width:100%;
+    }
+    .btnDanger{
+      background:#fff; border:1px solid #ddd; border-radius:12px; padding:12px 14px;
+      font-weight:700; cursor:pointer; width:100%;
+    }
   </style>
 </head>
 
@@ -59,7 +90,7 @@
   </div>
 
   <div class="card">
-    <div class="muted">Próximos 14 días</div>
+    <div class="muted" id="horizonLine">Próximos — días</div>
     <div class="calWrap" id="calendar"></div>
     <div class="error" id="errDays"></div>
   </div>
@@ -75,7 +106,7 @@
       <div style="font-weight:800">Confirmar turno</div>
       <div class="muted">Seleccionado: <b id="chosenSlot">—</b></div>
 
-      <div class="row">
+      <div class="row" style="margin-top:10px">
         <input id="nombre" placeholder="Nombre y apellido"/>
         <input id="dni" placeholder="DNI"/>
       </div>
@@ -90,10 +121,38 @@
         <input id="numero_afiliado" placeholder="N° afiliado"/>
       </div>
 
-      <div class="error" id="errBook"></div>
+      <div class="checks">
+        <label class="checkItem">
+          <input type="checkbox" id="chkNoEmail" />
+          No tengo mail
+        </label>
+
+        <label class="checkItem">
+          <input type="checkbox" id="chkParticular" />
+          Sin obra social (Particular)
+        </label>
+      </div>
+
+      <div class="error" id="errBook" style="margin-top:10px"></div>
       <div class="ok" id="okBook"></div>
 
-      <button class="primary" id="btnBook" disabled>Confirmar</button>
+      <button class="primary" id="btnBook" disabled style="margin-top:10px">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmación -->
+<div class="modalBack" id="modalBack">
+  <div class="modal">
+    <h3>✅ Turno confirmado</h3>
+    <div class="muted">Podés imprimir o compartir esta confirmación.</div>
+
+    <div class="kv" id="kvBox"></div>
+
+    <div class="modalBtns">
+      <button class="btnGhost" id="btnShare">Compartir / Copiar</button>
+      <button class="btnGhost" id="btnPrint">Imprimir</button>
+      <button class="btnDanger" id="btnClose">Cerrar</button>
     </div>
   </div>
 </div>
@@ -108,28 +167,37 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ================= PARAMS ================= */
 const params = new URLSearchParams(window.location.search);
-const MEDICO_ID = params.get("medico_id"); // viene por URL
+const MEDICO_ID_QS = params.get("medico_id"); // legacy
+const SLUG_QS = params.get("m");              // nuevo: ?m=slug
 
 /* ================= DOM ================= */
-const medicoLine = document.getElementById("medicoLine");
-const espLine    = document.getElementById("espLine");
-const calBox     = document.getElementById("calendar");
-const daysErr    = document.getElementById("errDays");
+const medicoLine   = document.getElementById("medicoLine");
+const espLine      = document.getElementById("espLine");
+const horizonLine  = document.getElementById("horizonLine");
+const calBox       = document.getElementById("calendar");
+const daysErr      = document.getElementById("errDays");
 
-const slotsBox   = document.getElementById("slots");
-const errSlots   = document.getElementById("errSlots");
-const dayTitle   = document.getElementById("dayTitle");
-const chosenSlot = document.getElementById("chosenSlot");
+const slotsBox     = document.getElementById("slots");
+const errSlots     = document.getElementById("errSlots");
+const dayTitle     = document.getElementById("dayTitle");
+const chosenSlot   = document.getElementById("chosenSlot");
 
-const btnBook = document.getElementById("btnBook");
-const errBook = document.getElementById("errBook");
-const okBook  = document.getElementById("okBook");
+const btnBook      = document.getElementById("btnBook");
+const errBook      = document.getElementById("errBook");
+const okBook       = document.getElementById("okBook");
 
-/* ================= GUARDS ================= */
-if (!MEDICO_ID) {
-  daysErr.textContent = "Falta medico_id en la URL. Ej: ?medico_id=UUID";
-  throw new Error("medico_id missing");
-}
+const chkNoEmail   = document.getElementById("chkNoEmail");
+const chkParticular= document.getElementById("chkParticular");
+const inEmail      = document.getElementById("email");
+const inOS         = document.getElementById("obra_social");
+const inAf         = document.getElementById("numero_afiliado");
+
+/* Modal */
+const modalBack = document.getElementById("modalBack");
+const kvBox     = document.getElementById("kvBox");
+const btnShare  = document.getElementById("btnShare");
+const btnPrint  = document.getElementById("btnPrint");
+const btnClose  = document.getElementById("btnClose");
 
 /* ================= HELPERS (AR TZ) ================= */
 const AR_TZ = "America/Argentina/Buenos_Aires";
@@ -145,7 +213,6 @@ function fmtDMY(yyyy_mm_dd) {
   const [y,m,d] = yyyy_mm_dd.split("-");
   return `${d}/${m}/${y}`;
 }
-function monthKey(yyyy_mm_dd) { return yyyy_mm_dd.slice(0,7); }
 function addDaysISO(yyyy_mm_dd, n) {
   const [y,m,d] = yyyy_mm_dd.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m-1, d));
@@ -155,40 +222,118 @@ function addDaysISO(yyyy_mm_dd, n) {
   const d2 = String(dt.getUTCDate()).padStart(2,"0");
   return `${y2}-${m2}-${d2}`;
 }
+function monthKey(yyyy_mm_dd) { return yyyy_mm_dd.slice(0,7); }
+function nextMonthKey(yyyy_mm) {
+  const [y,m] = yyyy_mm.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, 15));
+  dt.setUTCMonth(dt.getUTCMonth() + 1);
+  const y2 = dt.getUTCFullYear();
+  const m2 = String(dt.getUTCMonth()+1).padStart(2,"0");
+  return `${y2}-${m2}`;
+}
 function dayOfWeekIndex(yyyy_mm_dd) {
   const [y,m,d] = yyyy_mm_dd.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m-1, d));
-  return dt.getUTCDay();
+  return dt.getUTCDay(); // 0=Dom..6=Sáb
 }
 function daysInMonth(yyyy_mm) {
   const [y,m] = yyyy_mm.split("-").map(Number);
   return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
-function cleanDigits(v) {
-  return (v || "").replace(/[^\d]/g, "");
-}
-function cleanDni(v) {
-  return (v || "").trim().replace(/[.\s-]/g, "");
+function cleanDigits(v) { return (v || "").replace(/[^\d]/g, ""); }
+function cleanDni(v) { return (v || "").trim().replace(/[.\s-]/g, ""); }
+
+function fmtHora(inicio_slot) {
+  return new Date(inicio_slot).toLocaleTimeString("es-AR", {
+    timeZone: AR_TZ, hour:"2-digit", minute:"2-digit"
+  });
 }
 
+function openModal() { modalBack.style.display = "flex"; }
+function closeModal() { modalBack.style.display = "none"; }
+
 /* ================= STATE ================= */
+let MEDICO_ID = null;
+let medicoNombre = null;
+let medicoEsp = null;
+let medicoHorizonte = 30;
+let medicoDuracion = 15;
+
 let availableDaysSet = new Set();
 let selectedDateISO = null;
 window.SLOT_SELECCIONADO = null;
 
-/* ================= LOAD MEDICO ================= */
+/* ================= CHECKBOX LOGIC ================= */
+chkNoEmail.addEventListener("change", () => {
+  if (chkNoEmail.checked) {
+    inEmail.value = "";
+    inEmail.disabled = true;
+  } else {
+    inEmail.disabled = false;
+  }
+});
+
+chkParticular.addEventListener("change", () => {
+  if (chkParticular.checked) {
+    inOS.value = "PARTICULAR";
+    inOS.disabled = true;
+
+    inAf.value = "";
+    inAf.disabled = true;
+  } else {
+    inOS.disabled = false;
+    inAf.disabled = false;
+    // opcional: si quedó PARTICULAR, lo borramos para obligar a completar
+    if ((inOS.value || "").trim().toUpperCase() === "PARTICULAR") inOS.value = "";
+  }
+});
+
+/* ================= RESOLVE MEDICO (id o slug) ================= */
+async function resolveMedico() {
+  daysErr.textContent = "";
+
+  if (MEDICO_ID_QS) {
+    MEDICO_ID = MEDICO_ID_QS;
+    return;
+  }
+
+  if (!SLUG_QS) {
+    daysErr.textContent = "Falta medico_id o m (slug) en la URL.";
+    throw new Error("Missing medico identifier");
+  }
+
+  const { data, error } = await sb
+    .from("Medicos")
+    .select("id")
+    .eq("slug", SLUG_QS)
+    .maybeSingle();
+
+  if (error || !data?.id) {
+    daysErr.textContent = "No se encontró el médico por slug.";
+    throw new Error("Slug not found");
+  }
+
+  MEDICO_ID = data.id;
+}
+
+/* ================= LOAD MEDICO DATA ================= */
 async function cargarMedico() {
   const { data, error } = await sb
     .from("Medicos")
-    .select('Nombre, especialidad')
+    .select("Nombre, especialidad, horizonte_dias, duracion_min")
     .eq("id", MEDICO_ID)
     .maybeSingle();
 
-  if (error) return;
+  if (error || !data) return;
 
-  if (data?.Nombre) medicoLine.textContent = "Médico: " + data.Nombre;
-  const esp = data?.especialidad || data?.["Especialidad"];
-  if (esp) espLine.textContent = esp;
+  medicoNombre = data.Nombre || null;
+  medicoEsp = data.especialidad || null;
+  medicoHorizonte = Number.isFinite(Number(data.horizonte_dias)) ? Number(data.horizonte_dias) : 30;
+  medicoDuracion = Number.isFinite(Number(data.duracion_min)) ? Number(data.duracion_min) : 15;
+
+  if (medicoNombre) medicoLine.textContent = "Médico: " + medicoNombre;
+  if (medicoEsp) espLine.textContent = medicoEsp;
+  horizonLine.textContent = `Próximos ${medicoHorizonte} días`;
 }
 
 /* ================= RPC: DIAS ================= */
@@ -198,7 +343,7 @@ async function cargarDias() {
 
   const hoy = new Date();
   const desde = isoDateAR(hoy);
-  const hasta = addDaysISO(desde, 14);
+  const hasta = addDaysISO(desde, medicoHorizonte);
 
   const { data, error } = await sb.rpc("get_dias_con_slots", {
     p_medico_id: MEDICO_ID,
@@ -213,16 +358,22 @@ async function cargarDias() {
   }
 
   if (!data || data.length === 0) {
-    daysErr.textContent = "No hay días con disponibilidad en los próximos 14 días.";
+    daysErr.textContent = "No hay días con disponibilidad en el rango.";
     return;
   }
 
   availableDaysSet = new Set(data.map(r => r.dia));
 
-  const startMonth = monthKey(desde);
-  const endMonth   = monthKey(hasta);
-  renderMonth(startMonth, desde, hasta);
-  if (endMonth !== startMonth) renderMonth(endMonth, desde, hasta);
+  // Render todos los meses entre desde..hasta
+  let mk = monthKey(desde);
+  const endMk = monthKey(hasta);
+  while (true) {
+    renderMonth(mk, desde, hasta);
+    if (mk === endMk) break;
+    mk = nextMonthKey(mk);
+    // safety: por si algo raro
+    if (!mk) break;
+  }
 
   selectDay(data[0].dia);
 }
@@ -234,7 +385,8 @@ function renderMonth(yyyy_mm, desdeISO, hastaISO) {
 
   const [y,m] = yyyy_mm.split("-").map(Number);
   const monthName = new Intl.DateTimeFormat("es-AR", { timeZone: AR_TZ, month:"long", year:"numeric" })
-  .format(new Date(Date.UTC(y, m-1, 15, 12, 0, 0)));
+    .format(new Date(Date.UTC(y, m-1, 15, 12, 0, 0)));
+
   const title = document.createElement("div");
   title.className = "monthTitle";
   title.textContent = monthName[0].toUpperCase() + monthName.slice(1);
@@ -254,7 +406,7 @@ function renderMonth(yyyy_mm, desdeISO, hastaISO) {
 
   const firstISO = `${yyyy_mm}-01`;
   const firstDowSun0 = dayOfWeekIndex(firstISO);
-  const firstDowMon0 = (firstDowSun0 + 6) % 7;
+  const firstDowMon0 = (firstDowSun0 + 6) % 7; // lunes=0
 
   for (let i=0;i<firstDowMon0;i++) {
     const b = document.createElement("button");
@@ -279,8 +431,8 @@ function renderMonth(yyyy_mm, desdeISO, hastaISO) {
     btn.disabled = !(inRange && has);
 
     btn.onclick = () => selectDay(iso);
-
     btn.dataset.iso = iso;
+
     grid.appendChild(btn);
   }
 
@@ -323,11 +475,7 @@ async function cargarSlots(fechaISO) {
   }
 
   data.forEach(s => {
-    const hora = new Date(s.inicio_slot).toLocaleTimeString("es-AR", {
-      timeZone: AR_TZ,
-      hour:"2-digit",
-      minute:"2-digit"
-    });
+    const hora = fmtHora(s.inicio_slot);
 
     const btn = document.createElement("button");
     btn.className = "slotbtn";
@@ -346,10 +494,7 @@ async function cargarSlots(fechaISO) {
   });
 }
 
-/* ================= BOOKING =================
-   CLAVE: NO hacemos upsert a Pacientes desde el front (RLS -> 401).
-   Mandamos TODO al RPC reservar_turno (la versión larga).
-*/
+/* ================= BOOKING (RPC largo) ================= */
 btnBook.onclick = async () => {
   errBook.textContent = "";
   okBook.textContent = "";
@@ -358,17 +503,35 @@ btnBook.onclick = async () => {
   if (!slot || !selectedDateISO) return;
 
   const nombre = document.getElementById("nombre").value.trim();
-  const dniRaw = document.getElementById("dni").value.trim();
-  const telRaw = document.getElementById("telefono").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const obra_social = document.getElementById("obra_social").value.trim();
-  const numero_afiliado = document.getElementById("numero_afiliado").value.trim();
+  const dni = cleanDni(document.getElementById("dni").value.trim());
+  const telefono = cleanDigits(document.getElementById("telefono").value.trim());
 
-  const dni = cleanDni(dniRaw);
-  const telefono = cleanDigits(telRaw); // si en DB es numeric, esto evita letras/espacios
+  let email = (document.getElementById("email").value || "").trim();
+  let obra_social = (document.getElementById("obra_social").value || "").trim();
+  let numero_afiliado = (document.getElementById("numero_afiliado").value || "").trim();
 
+  // reglas de checkboxes
+  if (chkNoEmail.checked) email = "";
+  if (chkParticular.checked) {
+    obra_social = "PARTICULAR";
+    numero_afiliado = "";
+  }
+
+  // VALIDACIONES (obligatorio salvo excepciones)
   if (!nombre || !dni || !telefono) {
     errBook.textContent = "Completá nombre, DNI y teléfono.";
+    return;
+  }
+  if (!chkNoEmail.checked && !email) {
+    errBook.textContent = "Completá el email (o marcá 'No tengo mail').";
+    return;
+  }
+  if (!obra_social) {
+    errBook.textContent = "Completá la obra social (o marcá 'Sin obra social').";
+    return;
+  }
+  if (!chkParticular.checked && !numero_afiliado) {
+    errBook.textContent = "Completá el N° de afiliado (o marcá 'Sin obra social').";
     return;
   }
 
@@ -377,19 +540,18 @@ btnBook.onclick = async () => {
   try {
     const token = crypto.randomUUID().replaceAll("-", "");
 
-    // Llamamos a la función LARGA (con filiatorios)
     const { data, error } = await sb.rpc("reservar_turno", {
       p_medico_id: MEDICO_ID,
       p_dni: dni,
       p_nombre: nombre,
       p_inicio: slot.inicio_slot,
-      p_duracion_min: 15,
+      p_duracion_min: medicoDuracion,
       p_manage_token: token,
       p_canal: "web",
       p_obra_social: obra_social || null,
       p_numero_afiliado: numero_afiliado || null,
-      p_email: email || null,
-      p_telefono: telefono || null
+      p_email: (email || null),
+      p_telefono: (telefono || null)
     });
 
     if (error) {
@@ -399,20 +561,81 @@ btnBook.onclick = async () => {
       return;
     }
 
-    okBook.textContent = "✅ Turno confirmado.";
+    // Mostrar checkout modal
+    const fecha = fmtDMY(selectedDateISO);
+    const hora = fmtHora(slot.inicio_slot);
 
-    // Limpieza de formulario (post-confirmación)
-["nombre","dni","telefono","email","obra_social","numero_afiliado"].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.value = "";
-});
-    setTimeout(() => { okBook.textContent = ""; }, 3500);
+    const resumen = [
+      ["Médico", medicoNombre || "—"],
+      ["Especialidad", medicoEsp || "—"],
+      ["Fecha", fecha],
+      ["Hora", hora],
+      ["Paciente", nombre],
+      ["DNI", dni],
+      ["Teléfono", telefono],
+      ["Email", chkNoEmail.checked ? "—" : (email || "—")],
+      ["Obra social", obra_social],
+      ["N° afiliado", chkParticular.checked ? "—" : (numero_afiliado || "—")],
+      ["Código", token] // útil para soporte / auditoría
+    ];
 
+    kvBox.innerHTML = "";
+    resumen.forEach(([k,v]) => {
+      const div = document.createElement("div");
+      div.innerHTML = `<b>${k}</b>${String(v)}`;
+      kvBox.appendChild(div);
+    });
+
+    // Texto para compartir/copiar
+    const shareText =
+`ENDO Medicina - Confirmación de turno
+Médico: ${medicoNombre || "-"} (${medicoEsp || "-"})
+Fecha: ${fecha}  Hora: ${hora}
+Paciente: ${nombre}  DNI: ${dni}
+Tel: ${telefono}
+${chkNoEmail.checked ? "" : ("Email: " + email + "\n")}
+Obra social: ${obra_social}
+${chkParticular.checked ? "" : ("Afiliado: " + numero_afiliado + "\n")}
+Código: ${token}`;
+
+    btnShare.onclick = async () => {
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: "Confirmación de turno", text: shareText });
+        } else {
+          await navigator.clipboard.writeText(shareText);
+          btnShare.textContent = "Copiado ✅";
+          setTimeout(()=> btnShare.textContent = "Compartir / Copiar", 1500);
+        }
+      } catch(e) {
+        try {
+          await navigator.clipboard.writeText(shareText);
+          btnShare.textContent = "Copiado ✅";
+          setTimeout(()=> btnShare.textContent = "Compartir / Copiar", 1500);
+        } catch(_) {}
+      }
+    };
+
+    btnPrint.onclick = () => window.print();
+
+    btnClose.onclick = () => {
+      // recarga para volver “home” limpio (ideal para tótem)
+      window.location.reload();
+    };
+
+    openModal();
+
+    // refrescar slots para que desaparezca el tomado
     await cargarSlots(selectedDateISO);
 
-chosenSlot.textContent = "—";
-window.SLOT_SELECCIONADO = null;
-btnBook.disabled = true;
+    // limpieza de form (por seguridad)
+    ["nombre","dni","telefono","email","obra_social","numero_afiliado"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.disabled) el.value = "";
+    });
+
+    chosenSlot.textContent = "—";
+    window.SLOT_SELECCIONADO = null;
 
   } catch (e) {
     console.error(e);
@@ -423,8 +646,12 @@ btnBook.disabled = true;
 
 /* ================= INIT ================= */
 document.getElementById("tzPill").textContent = "TZ: AR (Buenos Aires)";
-cargarMedico();
-cargarDias();
+
+(async function init(){
+  await resolveMedico();
+  await cargarMedico();
+  await cargarDias();
+})();
 </script>
 </body>
 </html>
