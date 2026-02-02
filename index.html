@@ -234,7 +234,7 @@ function renderMonth(yyyy_mm, desdeISO, hastaISO) {
 
   const [y,m] = yyyy_mm.split("-").map(Number);
   const monthName = new Intl.DateTimeFormat("es-AR", { timeZone: AR_TZ, month:"long", year:"numeric" })
-    .format(new Date(Date.UTC(y, m-1, 1)));
+  .format(new Date(Date.UTC(y, m-1, 15, 12, 0, 0)));
   const title = document.createElement("div");
   title.className = "monthTitle";
   title.textContent = monthName[0].toUpperCase() + monthName.slice(1);
