@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ENDO · Login Secretaría</title>
+
+  <style>
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      margin:0; background:#f6f7f8; color:#111;
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh;
+    }
+    .card{
+      background:#fff;
+      border:1px solid #e7e7e7;
+      border-radius:16px;
+      padding:24px;
+      width:100%;
+      max-width:380px;
+    }
+    h1{margin:0 0 6px 0;font-size:22px}
+    .muted{color:#666;font-size:13px;margin-bottom:16px}
+    input{
+      width:100%;
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px solid #ddd;
+      font-size:14px;
+      margin-bottom:12px;
+    }
+    button{
+      width:100%;
+      padding:12px 14px;
+      border-radius:12px;
+      border:0;
+      font-weight:800;
+      cursor:pointer;
+      background:#111;
+      color:#fff;
+    }
+    button:disabled{opacity:.5}
+    .error{color:#b00020;font-size:13px;margin-top:10px}
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>ENDO Medicina</h1>
+    <div class="muted">Acceso secretaría</div>
+
+    <input id="email" type="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Contraseña" />
+
+    <button id="btnLogin">Ingresar</button>
+    <div class="error" id="err"></div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ===== CONFIG ===== */
+const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A"; // ← misma que usás en el resto
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ===== DOM ===== */
+const btn = document.getElementById("btnLogin");
+const err = document.getElementById("err");
+
+/* ===== Si ya está logueado ===== */
+(async ()=>{
+  const { data } = await sb.auth.getSession();
+  if (data.session){
+    window.location.href = "/admin-secretaria.html";
+  }
+})();
+
+/* ===== Login ===== */
+btn.onclick = async () => {
+  err.textContent = "";
+  btn.disabled = true;
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password){
+    err.textContent = "Completá email y contraseña";
+    btn.disabled = false;
+    return;
+  }
+
+  const { error } = await sb.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error){
+    err.textContent = "Credenciales incorrectas";
+    btn.disabled = false;
+    return;
+  }
+
+  window.location.href = "/admin-secretaria.html";
+};
+</script>
+</body>
+</html>
