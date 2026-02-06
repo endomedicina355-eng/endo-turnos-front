@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ENDO · Secretaría · Turnos + Sobreturnos</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f7f8;color:#111}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .card{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:16px;margin:12px 0}
+    .header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .brand{font-weight:900}
+    .muted{color:#666;font-size:13px}
+    .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr 1fr}
+    @media(max-width:900px){.row{grid-template-columns:1fr}}
+    input,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
+    button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
+    button.primary{background:#111;color:#fff;border:0;font-weight:800}
+    button.small{padding:8px 10px;border-radius:10px;font-size:13px}
+    .error{color:#b00020;font-size:13px}
+    .ok{color:#0a7a27;font-size:13px}
+    .pill{display:inline-block;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+    .divider{height:1px;background:#eee;margin:12px 0}
+    .two{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
+    @media(max-width:900px){.two{grid-template-columns:1fr}}
+    .hint{font-size:12px;color:#777;margin-top:6px}
+    .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .saving{opacity:.6}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="brand">ENDO · Secretaría</div>
+      <div class="muted">Alta de turnos / sobreturnos + búsqueda de paciente (DNI)</div>
+    </div>
+    <div class="right">
+      <button id="btnIrAgenda" class="small">Volver a agenda</button>
+      <button id="btnLogout" class="small">Salir</button>
+    </div>
+  </div>
+
+  <div class="two">
+    <!-- PACIENTE -->
+    <div class="card">
+      <div style="font-weight:900">Paciente</div>
+      <div class="hint">Buscá por DNI. Si no existe, cargás datos y se guarda/actualiza.</div>
+
+      <div class="row" style="margin-top:10px">
+        <div style="grid-column:span 2">
+          <div class="muted">DNI</div>
+          <input id="dni" placeholder="Ej: 33123456" inputmode="numeric" />
+        </div>
+        <div>
+          <div class="muted">&nbsp;</div>
+          <button id="btnBuscar" class="primary">Buscar</button>
+        </div>
+        <div>
+          <div class="muted">&nbsp;</div>
+          <button id="btnLimpiar" class="small">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <div style="grid-column:span 2">
+          <div class="muted">Nombre y apellido</div>
+          <input id="nombre" placeholder="Ej: Juan Perez" />
+        </div>
+        <div>
+          <div class="muted">Teléfono</div>
+          <input id="telefono" placeholder="Ej: 3624..." inputmode="tel" />
+        </div>
+        <div>
+          <div class="muted">Email (opcional)</div>
+          <input id="email" placeholder="Ej: juan@mail.com" inputmode="email" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <div>
+          <div class="muted">Obra social</div>
+          <input id="obra_social" placeholder="Ej: INSSSEP" />
+        </div>
+        <div>
+          <div class="muted">N° afiliado</div>
+          <input id="numero_afiliado" placeholder="Ej: 12345" inputmode="numeric" />
+        </div>
+        <div>
+          <div class="muted">&nbsp;</div>
+          <button id="btnGuardarPaciente" class="primary">Guardar paciente</button>
+        </div>
+        <div>
+          <div class="muted">Paciente ID</div>
+          <div class="pill" id="pacienteIdPill">—</div>
+        </div>
+      </div>
+
+      <div class="error" id="errPac" style="margin-top:10px"></div>
+      <div class="ok" id="okPac" style="margin-top:10px"></div>
+    </div>
+
+    <!-- TURNO -->
+    <div class="card">
+      <div style="font-weight:900">Crear turno</div>
+      <div class="hint">Elegí médico + fecha/hora. “Sobreturno” crea un turno fuera de cupo.</div>
+
+      <div class="row" style="margin-top:10px">
+        <div style="grid-column:span 2">
+          <div class="muted">Médico</div>
+          <select id="medico"></select>
+        </div>
+        <div>
+          <div class="muted">Fecha</div>
+          <input id="fecha" type="date" />
+        </div>
+        <div>
+          <div class="muted">Hora</div>
+          <input id="hora" type="time" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <div>
+          <div class="muted">Duración (min)</div>
+          <input id="duracion" inputmode="numeric" value="15" />
+          <div class="hint">Si querés, después lo traemos automático del médico.</div>
+        </div>
+        <div>
+          <div class="muted">Estado inicial</div>
+          <select id="estado_init">
+            <option value="pendiente" selected>Pendiente</option>
+            <option value="presente">Presente</option>
+          </select>
+        </div>
+        <div>
+          <div class="muted">Copago</div>
+          <input id="copago" inputmode="numeric" placeholder="0" />
+        </div>
+        <div>
+          <div class="muted">Nota</div>
+          <input id="nota" placeholder="Opcional" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <div>
+          <div class="muted">Tipo</div>
+          <select id="tipo">
+            <option value="normal" selected>Turno normal</option>
+            <option value="sobreturno">Sobreturno</option>
+          </select>
+        </div>
+        <div>
+          <div class="muted">&nbsp;</div>
+          <button id="btnCrear" class="primary">Crear</button>
+        </div>
+        <div style="grid-column:span 2">
+          <div class="kpis" id="resumen"></div>
+        </div>
+      </div>
+
+      <div class="error" id="errTurno" style="margin-top:10px"></div>
+      <div class="ok" id="okTurno" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ====== CONFIG ====== */
+const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const AR_TZ = "America/Argentina/Buenos_Aires";
+
+/* ====== GUARD + LOGOUT ====== */
+(async () => {
+  const { data } = await sb.auth.getUser();
+  if (!data?.user) { window.location.href = "./login.html"; return; }
+
+  document.getElementById("btnLogout").onclick = async () => {
+    await sb.auth.signOut();
+    window.location.href = "./login.html";
+  };
+  document.getElementById("btnIrAgenda").onclick = () => {
+    // ajustá el nombre real de tu página de agenda
+    window.location.href = "./secre_admin.html";
+  };
+})();
+
+/* ====== DOM ====== */
+const elErrPac = document.getElementById("errPac");
+const elOkPac  = document.getElementById("okPac");
+const elErrT   = document.getElementById("errTurno");
+const elOkT    = document.getElementById("okTurno");
+
+const elDni    = document.getElementById("dni");
+const elNombre = document.getElementById("nombre");
+const elTel    = document.getElementById("telefono");
+const elEmail  = document.getElementById("email");
+const elOS     = document.getElementById("obra_social");
+const elNA     = document.getElementById("numero_afiliado");
+const elPid    = document.getElementById("pacienteIdPill");
+
+const elMedico = document.getElementById("medico");
+const elFecha  = document.getElementById("fecha");
+const elHora   = document.getElementById("hora");
+const elDur    = document.getElementById("duracion");
+const elEstadoInit = document.getElementById("estado_init");
+const elCopago = document.getElementById("copago");
+const elNota   = document.getElementById("nota");
+const elTipo   = document.getElementById("tipo");
+const elResumen= document.getElementById("resumen");
+
+let PACIENTE_ID = null;
+
+/* ====== Helpers ====== */
+function cleanDni(v){ return (v||"").trim().replace(/[.\s-]/g,""); }
+function cleanDigits(v){ return (v||"").replace(/[^\d]/g,""); }
+
+function isoDateARNow(){
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: AR_TZ, year:"numeric", month:"2-digit", day:"2-digit"}).formatToParts(new Date());
+  const y = parts.find(p=>p.type==="year").value;
+  const m = parts.find(p=>p.type==="month").value;
+  const d = parts.find(p=>p.type==="day").value;
+  return `${y}-${m}-${d}`;
+}
+function toastOk(el, msg){
+  el.textContent = msg;
+  setTimeout(()=> el.textContent="", 1800);
+}
+function resetMsgs(){ elErrPac.textContent=""; elOkPac.textContent=""; elErrT.textContent=""; elOkT.textContent=""; }
+
+function setPacienteId(id){
+  PACIENTE_ID = id || null;
+  elPid.textContent = id ? id : "—";
+}
+
+/* ====== Load médicos ====== */
+async function cargarMedicos(){
+  const { data, error } = await sb.rpc("get_medicos_activos");
+  if (error){ console.error(error); elErrT.textContent = error.message; return; }
+
+  elMedico.innerHTML = "";
+  (data||[]).forEach(m=>{
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = m.nombre;
+    elMedico.appendChild(opt);
+  });
+}
+
+/* ====== Buscar paciente ====== */
+document.getElementById("btnBuscar").onclick = async () => {
+  resetMsgs();
+  setPacienteId(null);
+
+  const dni = cleanDni(elDni.value);
+  if (!dni){ elErrPac.textContent="Ingresá DNI."; return; }
+
+  const { data, error } = await sb.rpc("admin_buscar_paciente_por_dni", { p_dni: dni });
+  if (error){ console.error(error); elErrPac.textContent = error.message; return; }
+
+  if (!data || data.length === 0){
+    elOkPac.textContent = "No existe. Cargá datos y guardá.";
+    return;
+  }
+
+  const p = data[0];
+  setPacienteId(p.paciente_id);
+  elNombre.value = p.nombre || "";
+  elTel.value    = p.telefono || "";
+  elEmail.value  = p.email || "";
+  elOS.value     = p.obra_social || "";
+  elNA.value     = p.numero_afiliado ?? "";
+
+  toastOk(elOkPac, "✅ Paciente encontrado");
+};
+
+/* ====== Guardar paciente ====== */
+document.getElementById("btnGuardarPaciente").onclick = async () => {
+  resetMsgs();
+
+  const dni = cleanDni(elDni.value);
+  const nombre = (elNombre.value||"").trim();
+  const telefono = cleanDigits(elTel.value);
+  const email = (elEmail.value||"").trim();
+  const obra_social = (elOS.value||"").trim();
+  const numero_afiliado = (elNA.value||"").trim();
+
+  if (!dni || !nombre){ elErrPac.textContent="DNI y nombre son obligatorios."; return; }
+
+  const { data, error } = await sb.rpc("admin_upsert_paciente", {
+    p_dni: dni,
+    p_nombre: nombre,
+    p_telefono: telefono || null,
+    p_obra_social: obra_social || null,
+    p_numero_afiliado: numero_afiliado || null,
+    p_email: email || null
+  });
+
+  if (error){ console.error(error); elErrPac.textContent = error.message; return; }
+
+  setPacienteId(data);
+  toastOk(elOkPac, "✅ Paciente guardado");
+};
+
+/* ====== Crear turno / sobreturno ======
+   Requiere RPC: public.admin_crear_turno(...)
+   (la armamos ahora en el próximo paso)
+*/
+document.getElementById("btnCrear").onclick = async () => {
+  resetMsgs();
+
+  const dni = cleanDni(elDni.value);
+  const nombre = (elNombre.value||"").trim();
+
+  if (!PACIENTE_ID){
+    elErrT.textContent = "Primero buscá/guardá el paciente (necesito Paciente ID).";
+    return;
+  }
+  if (!elMedico.value){ elErrT.textContent="Elegí médico."; return; }
+  if (!elFecha.value){ elErrT.textContent="Elegí fecha."; return; }
+  if (!elHora.value){ elErrT.textContent="Elegí hora."; return; }
+
+  const dur = Number((elDur.value||"").trim());
+  if (!dur || Number.isNaN(dur) || dur < 5){ elErrT.textContent="Duración inválida."; return; }
+
+  const cop = (elCopago.value||"").trim();
+  const copago = cop==="" ? null : Number(cop);
+  if (cop!=="" && Number.isNaN(copago)){ elErrT.textContent="Copago inválido."; return; }
+
+  // inicio timestamptz en AR -> lo mandamos como ISO con offset AR usando Date + ajuste TZ server-side
+  // Simple: mandamos "YYYY-MM-DD HH:MM:00" y la función la interpreta en TZ AR.
+  const inicio_local = `${elFecha.value} ${elHora.value}:00`;
+
+  const payload = {
+    p_medico_id: elMedico.value,
+    p_paciente_id: PACIENTE_ID,
+    p_inicio_local_ar: inicio_local,
+    p_duracion_min: dur,
+    p_estado: elEstadoInit.value,
+    p_sobreturno: (elTipo.value === "sobreturno"),
+    p_copago: copago,
+    p_nota: (elNota.value||"").trim() || null
+  };
+
+  const btn = document.getElementById("btnCrear");
+  btn.classList.add("saving");
+  btn.disabled = true;
+
+  const { data, error } = await sb.rpc("admin_crear_turno", payload);
+
+  btn.classList.remove("saving");
+  btn.disabled = false;
+
+  if (error){
+    console.error(error);
+    elErrT.textContent = error.message + " (¿ya creamos la RPC admin_crear_turno?)";
+    return;
+  }
+
+  elResumen.innerHTML = `
+    <span class="pill">Turno ID: <b>${data}</b></span>
+    <span class="pill">Paciente: <b>${nombre || dni}</b></span>
+  `;
+  toastOk(elOkT, "✅ Turno creado");
+};
+
+/* ====== Limpiar ====== */
+document.getElementById("btnLimpiar").onclick = () => {
+  resetMsgs();
+  setPacienteId(null);
+  elDni.value=""; elNombre.value=""; elTel.value=""; elEmail.value="";
+  elOS.value=""; elNA.value="";
+  elCopago.value=""; elNota.value="";
+  elResumen.innerHTML="";
+};
+
+/* ====== Init ====== */
+elFecha.value = isoDateARNow();
+(async () => {
+  await cargarMedicos();
+})();
+</script>
+</body>
+</html>
