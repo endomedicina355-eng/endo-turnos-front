@@ -3,248 +3,279 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ENDO · Secretaría · Turnos + Sobreturnos</title>
+  <title>ENDO · Secretaría</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f7f8;color:#111}
     .wrap{max-width:1100px;margin:0 auto;padding:18px}
-    .card{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:16px;margin:12px 0}
-    .header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .header{display:flex;justify-content:space-between;gap:12px;align-items:center}
     .brand{font-weight:900}
     .muted{color:#666;font-size:13px}
     .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr 1fr}
+    .card{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:16px;margin:12px 0}
+    .grid2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+    @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+    .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
     @media(max-width:900px){.row{grid-template-columns:1fr}}
-    input,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
+    textarea{min-height:44px;resize:vertical}
     button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
     button.primary{background:#111;color:#fff;border:0;font-weight:800}
     button.small{padding:8px 10px;border-radius:10px;font-size:13px}
-    .error{color:#b00020;font-size:13px}
-    .ok{color:#0a7a27;font-size:13px}
-    .pill{display:inline-block;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
-    .divider{height:1px;background:#eee;margin:12px 0}
-    .two{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
-    @media(max-width:900px){.two{grid-template-columns:1fr}}
-    .hint{font-size:12px;color:#777;margin-top:6px}
-    .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    .saving{opacity:.6}
+    .error{color:#b00020;font-size:13px;margin-top:8px}
+    .ok{color:#0a7a27;font-size:13px;margin-top:8px}
+    .hr{height:1px;background:#eee;margin:14px 0}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+    .pill.red{border-color:#f2b7c2;background:#fde2e6;color:#842029;font-weight:800}
+    .pill.green{border-color:#a7e1b7;background:#dff5e5;color:#0f5132;font-weight:800}
+    .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    /* Modal */
+    .modalBg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:18px;z-index:999}
+    .modal{background:#fff;max-width:820px;width:100%;border-radius:14px;border:1px solid #e7e7e7;overflow:hidden}
+    .modalHead{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #eee}
+    .modalBody{padding:14px;max-height:65vh;overflow:auto}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
+    th{color:#666;font-weight:700;text-align:left;font-size:12px}
+    .tag{font-size:12px;border:1px solid #ddd;border-radius:999px;padding:4px 8px;display:inline-block}
   </style>
 </head>
-
 <body>
 <div class="wrap">
   <div class="header">
     <div>
       <div class="brand">ENDO · Secretaría</div>
-      <div class="muted">Alta de turnos / sobreturnos + búsqueda de paciente (DNI)</div>
+      <div class="muted">Alta de turnos / sobreturnos</div>
     </div>
     <div class="right">
-      <button id="btnIrAgenda" class="small">Volver a agenda</button>
+      <button id="btnBack" class="small">Volver a agenda</button>
       <button id="btnLogout" class="small">Salir</button>
     </div>
   </div>
 
-  <div class="two">
-    <!-- PACIENTE -->
-    <div class="card">
-      <div style="font-weight:900">Paciente</div>
-      <div class="hint">Buscá por DNI. Si no existe, cargás datos y se guarda/actualiza.</div>
+  <!-- 1) Buscar o crear paciente -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div class="brand" style="font-weight:900">Buscar o crear paciente</div>
+        <div class="muted">Buscá por DNI. Si no existe, cargás datos y se guarda/actualiza.</div>
+      </div>
+      <div class="inline">
+        <span id="warnAusente" class="pill" style="display:none"></span>
+        <button id="btnHistorial" class="small" disabled>Historial</button>
+      </div>
+    </div>
 
-      <div class="row" style="margin-top:10px">
-        <div style="grid-column:span 2">
-          <div class="muted">DNI</div>
-          <input id="dni" placeholder="Ej: 33123456" inputmode="numeric" />
-        </div>
-        <div>
-          <div class="muted">&nbsp;</div>
+    <div class="hr"></div>
+
+    <div class="row">
+      <div>
+        <div class="muted">DNI</div>
+        <div class="inline">
+          <input id="dni" inputmode="numeric" placeholder="Ej: 33123456" />
           <button id="btnBuscar" class="primary">Buscar</button>
-        </div>
-        <div>
-          <div class="muted">&nbsp;</div>
           <button id="btnLimpiar" class="small">Limpiar</button>
         </div>
       </div>
-
-      <div class="divider"></div>
-
-      <div class="row">
-        <div style="grid-column:span 2">
-          <div class="muted">Nombre y apellido</div>
-          <input id="nombre" placeholder="Ej: Juan Perez" />
-        </div>
-        <div>
-          <div class="muted">Teléfono</div>
-          <input id="telefono" placeholder="Ej: 3624..." inputmode="tel" />
-        </div>
-        <div>
-          <div class="muted">Email (opcional)</div>
-          <input id="email" placeholder="Ej: juan@mail.com" inputmode="email" />
-        </div>
+      <div>
+        <div class="muted">Nombre y apellido</div>
+        <input id="nombre" placeholder="Nombre completo" />
       </div>
-
-      <div class="row" style="margin-top:10px">
-        <div>
-          <div class="muted">Obra social</div>
-          <input id="obra_social" placeholder="Ej: INSSSEP" />
-        </div>
-        <div>
-          <div class="muted">N° afiliado</div>
-          <input id="numero_afiliado" placeholder="Ej: 12345" inputmode="numeric" />
-        </div>
-        <div>
-          <div class="muted">&nbsp;</div>
-          <button id="btnGuardarPaciente" class="primary">Guardar paciente</button>
-        </div>
-        <div>
-          <div class="muted">Paciente ID</div>
-          <div class="pill" id="pacienteIdPill">—</div>
-        </div>
+      <div>
+        <div class="muted">Teléfono</div>
+        <input id="telefono" inputmode="tel" placeholder="Ej: 11..." />
       </div>
-
-      <div class="error" id="errPac" style="margin-top:10px"></div>
-      <div class="ok" id="okPac" style="margin-top:10px"></div>
     </div>
 
-    <!-- TURNO -->
-    <div class="card">
-      <div style="font-weight:900">Crear turno</div>
-      <div class="hint">Elegí médico + fecha/hora. “Sobreturno” crea un turno fuera de cupo.</div>
+    <div class="row" style="margin-top:10px">
+      <div>
+        <div class="muted">Email (opcional)</div>
+        <input id="email" inputmode="email" placeholder="Ej: mail@..." />
+      </div>
+      <div>
+        <div class="muted">Obra social</div>
+        <input id="obra_social" placeholder="PARTICULAR / INSSSEP / ..." />
+      </div>
+      <div>
+        <div class="muted">N° afiliado</div>
+        <input id="numero_afiliado" inputmode="numeric" placeholder="Ej: 12345" />
+      </div>
+    </div>
 
-      <div class="row" style="margin-top:10px">
-        <div style="grid-column:span 2">
-          <div class="muted">Médico</div>
-          <select id="medico"></select>
+    <div class="actions" style="margin-top:12px">
+      <button id="btnGuardarPaciente" class="primary">Guardar paciente</button>
+      <div class="error" id="errP"></div>
+      <div class="ok" id="okP"></div>
+    </div>
+  </div>
+
+  <!-- 2) Crear turno -->
+  <div class="card">
+    <div class="brand" style="font-weight:900">Crear turno</div>
+    <div class="muted">Elegí médico + fecha. Si NO es sobreturno, usás slots disponibles. Si es sobreturno, ponés la hora manual.</div>
+
+    <div class="hr"></div>
+
+    <div class="grid2">
+      <div>
+        <div class="row">
+          <div>
+            <div class="muted">Médico</div>
+            <select id="medico"></select>
+          </div>
+          <div>
+            <div class="muted">Fecha</div>
+            <input id="fecha" type="date" />
+          </div>
+          <div>
+            <div class="muted">Duración (min)</div>
+            <input id="duracion" inputmode="numeric" value="15" />
+          </div>
         </div>
-        <div>
-          <div class="muted">Fecha</div>
-          <input id="fecha" type="date" />
+
+        <div class="row" style="margin-top:10px">
+          <div>
+            <div class="muted">Slot disponible</div>
+            <select id="slot"></select>
+          </div>
+          <div>
+            <div class="muted">Hora manual (sobreturno)</div>
+            <input id="horaManual" type="time" disabled />
+          </div>
+          <div>
+            <div class="muted">Copago (opcional)</div>
+            <input id="copago" inputmode="numeric" placeholder="0" />
+          </div>
         </div>
-        <div>
-          <div class="muted">Hora</div>
-          <input id="hora" type="time" />
+
+        <div style="margin-top:10px" class="inline">
+          <label class="inline" style="gap:8px">
+            <input id="chkSobreturno" type="checkbox" />
+            <span><b>Sobreturno</b> (se marca como sobreturno)</span>
+          </label>
+          <span id="lblSobreturno" class="tag" style="display:none"><b>SOBRETURNO</b></span>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="muted">Nota (opcional)</div>
+          <textarea id="nota" placeholder="Opcional"></textarea>
+        </div>
+
+        <div class="actions" style="margin-top:12px">
+          <button id="btnCrearTurno" class="primary" disabled>Crear</button>
+          <div class="error" id="errT"></div>
+          <div class="ok" id="okT"></div>
         </div>
       </div>
 
-      <div class="row" style="margin-top:10px">
-        <div>
-          <div class="muted">Duración (min)</div>
-          <input id="duracion" inputmode="numeric" value="15" />
-          <div class="hint">Si querés, después lo traemos automático del médico.</div>
-        </div>
-        <div>
-          <div class="muted">Estado inicial</div>
-          <select id="estado_init">
-            <option value="pendiente" selected>Pendiente</option>
-            <option value="presente">Presente</option>
-          </select>
-        </div>
-        <div>
-          <div class="muted">Copago</div>
-          <input id="copago" inputmode="numeric" placeholder="0" />
-        </div>
-        <div>
-          <div class="muted">Nota</div>
-          <input id="nota" placeholder="Opcional" />
+      <div>
+        <div class="pill green">Tip</div>
+        <div class="muted" style="margin-top:10px">
+          1) Buscá paciente por DNI (o crealo).<br/>
+          2) Elegí médico y fecha.<br/>
+          3) Si sobreturno: tildá “Sobreturno” y poné hora manual.<br/>
+          4) Crear.
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div class="row" style="margin-top:10px">
-        <div>
-          <div class="muted">Tipo</div>
-          <select id="tipo">
-            <option value="normal" selected>Turno normal</option>
-            <option value="sobreturno">Sobreturno</option>
-          </select>
-        </div>
-        <div>
-          <div class="muted">&nbsp;</div>
-          <button id="btnCrear" class="primary">Crear</button>
-        </div>
-        <div style="grid-column:span 2">
-          <div class="kpis" id="resumen"></div>
-        </div>
-      </div>
-
-      <div class="error" id="errTurno" style="margin-top:10px"></div>
-      <div class="ok" id="okTurno" style="margin-top:10px"></div>
+<!-- Modal Historial -->
+<div class="modalBg" id="modalBg">
+  <div class="modal">
+    <div class="modalHead">
+      <div><b>Historial del paciente</b></div>
+      <button id="btnCerrarModal" class="small">Cerrar</button>
+    </div>
+    <div class="modalBody">
+      <div class="muted" id="histTitle" style="margin-bottom:10px"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Médico</th>
+            <th>Estado</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody id="histBody"></tbody>
+      </table>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ====== CONFIG ====== */
+/* ===== CONFIG ===== */
 const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const AR_TZ = "America/Argentina/Buenos_Aires";
-
-/* ====== GUARD + LOGOUT ====== */
-(async () => {
-  const { data } = await sb.auth.getUser();
-  if (!data?.user) { window.location.href = "./login.html"; return; }
-
-  document.getElementById("btnLogout").onclick = async () => {
-    await sb.auth.signOut();
-    window.location.href = "./login.html";
-  };
-  document.getElementById("btnIrAgenda").onclick = () => {
-    // ajustá el nombre real de tu página de agenda
-    window.location.href = "./secre_admin.html";
-  };
-})();
-
-/* ====== DOM ====== */
-const elErrPac = document.getElementById("errPac");
-const elOkPac  = document.getElementById("okPac");
-const elErrT   = document.getElementById("errTurno");
-const elOkT    = document.getElementById("okTurno");
-
-const elDni    = document.getElementById("dni");
-const elNombre = document.getElementById("nombre");
-const elTel    = document.getElementById("telefono");
-const elEmail  = document.getElementById("email");
-const elOS     = document.getElementById("obra_social");
-const elNA     = document.getElementById("numero_afiliado");
-const elPid    = document.getElementById("pacienteIdPill");
-
-const elMedico = document.getElementById("medico");
-const elFecha  = document.getElementById("fecha");
-const elHora   = document.getElementById("hora");
-const elDur    = document.getElementById("duracion");
-const elEstadoInit = document.getElementById("estado_init");
-const elCopago = document.getElementById("copago");
-const elNota   = document.getElementById("nota");
-const elTipo   = document.getElementById("tipo");
-const elResumen= document.getElementById("resumen");
-
-let PACIENTE_ID = null;
-
-/* ====== Helpers ====== */
-function cleanDni(v){ return (v||"").trim().replace(/[.\s-]/g,""); }
-function cleanDigits(v){ return (v||"").replace(/[^\d]/g,""); }
+const fmtDate = (ts)=> new Date(ts).toLocaleDateString("es-AR",{ timeZone: AR_TZ });
+const fmtHour = (ts)=> new Date(ts).toLocaleTimeString("es-AR",{ timeZone: AR_TZ, hour:"2-digit", minute:"2-digit" });
 
 function isoDateARNow(){
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: AR_TZ, year:"numeric", month:"2-digit", day:"2-digit"}).formatToParts(new Date());
+  const parts = new Intl.DateTimeFormat("en-CA",{ timeZone: AR_TZ, year:"numeric", month:"2-digit", day:"2-digit"}).formatToParts(new Date());
   const y = parts.find(p=>p.type==="year").value;
   const m = parts.find(p=>p.type==="month").value;
   const d = parts.find(p=>p.type==="day").value;
   return `${y}-${m}-${d}`;
 }
-function toastOk(el, msg){
-  el.textContent = msg;
-  setTimeout(()=> el.textContent="", 1800);
-}
-function resetMsgs(){ elErrPac.textContent=""; elOkPac.textContent=""; elErrT.textContent=""; elOkT.textContent=""; }
 
-function setPacienteId(id){
-  PACIENTE_ID = id || null;
-  elPid.textContent = id ? id : "—";
-}
+/* ===== GUARD + LOGOUT ===== */
+(async () => {
+  const { data } = await sb.auth.getUser();
+  if (!data?.user) { window.location.href = "./login"; return; }
 
-/* ====== Load médicos ====== */
+  document.getElementById("btnLogout").onclick = async () => {
+    await sb.auth.signOut();
+    window.location.href = "./login";
+  };
+})();
+
+document.getElementById("btnBack").onclick = ()=> window.location.href = "./secretaria.html";
+
+/* ===== DOM ===== */
+const elDni = document.getElementById("dni");
+const elNombre = document.getElementById("nombre");
+const elTel = document.getElementById("telefono");
+const elEmail = document.getElementById("email");
+const elOS = document.getElementById("obra_social");
+const elAf = document.getElementById("numero_afiliado");
+const errP = document.getElementById("errP");
+const okP = document.getElementById("okP");
+
+const elMedico = document.getElementById("medico");
+const elFecha = document.getElementById("fecha");
+const elDur = document.getElementById("duracion");
+const elSlot = document.getElementById("slot");
+const elHoraManual = document.getElementById("horaManual");
+const elCopago = document.getElementById("copago");
+const elNota = document.getElementById("nota");
+const chkSob = document.getElementById("chkSobturno") || document.getElementById("chkSobreturno");
+const lblSob = document.getElementById("lblSobreturno");
+const btnCrear = document.getElementById("btnCrearTurno");
+const errT = document.getElementById("errT");
+const okT = document.getElementById("okT");
+
+const btnHistorial = document.getElementById("btnHistorial");
+const warnAusente = document.getElementById("warnAusente");
+const modalBg = document.getElementById("modalBg");
+const btnCerrarModal = document.getElementById("btnCerrarModal");
+const histBody = document.getElementById("histBody");
+const histTitle = document.getElementById("histTitle");
+
+let currentPacienteId = null;
+
+/* ===== Médicos ===== */
 async function cargarMedicos(){
+  // usa tu RPC existente
   const { data, error } = await sb.rpc("get_medicos_activos");
-  if (error){ console.error(error); elErrT.textContent = error.message; return; }
+  if (error) throw error;
 
   elMedico.innerHTML = "";
   (data||[]).forEach(m=>{
@@ -255,137 +286,226 @@ async function cargarMedicos(){
   });
 }
 
-/* ====== Buscar paciente ====== */
-document.getElementById("btnBuscar").onclick = async () => {
-  resetMsgs();
-  setPacienteId(null);
+/* ===== Slots ===== */
+async function cargarSlots(){
+  errT.textContent = "";
+  elSlot.innerHTML = "";
 
-  const dni = cleanDni(elDni.value);
-  if (!dni){ elErrPac.textContent="Ingresá DNI."; return; }
+  if (!elMedico.value || !elFecha.value) return;
 
-  const { data, error } = await sb.rpc("admin_buscar_paciente_por_dni", { p_dni: dni });
-  if (error){ console.error(error); elErrPac.textContent = error.message; return; }
+  const { data, error } = await sb.rpc("get_slots", {
+    p_medico_id: elMedico.value,
+    p_fecha: elFecha.value
+  });
+  if (error){ errT.textContent = error.message; return; }
 
-  if (!data || data.length === 0){
-    elOkPac.textContent = "No existe. Cargá datos y guardá.";
+  const slots = data || [];
+  if (!slots.length){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Sin disponibilidad";
+    elSlot.appendChild(opt);
     return;
   }
 
-  const p = data[0];
-  setPacienteId(p.paciente_id);
+  slots.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s.inicio_slot; // timestamptz string
+    opt.textContent = fmtHour(s.inicio_slot);
+    elSlot.appendChild(opt);
+  });
+}
+
+/* ===== Buscar paciente ===== */
+async function buscarPaciente(){
+  errP.textContent = ""; okP.textContent = "";
+  btnHistorial.disabled = true;
+  warnAusente.style.display = "none";
+  currentPacienteId = null;
+  btnCrear.disabled = true;
+
+  const dni = (elDni.value||"").trim();
+  if (!dni){ errP.textContent = "Ingresá DNI."; return; }
+
+  const { data, error } = await sb.rpc("secre_get_paciente_por_dni", { p_dni: dni });
+  if (error){ errP.textContent = error.message; return; }
+
+  const p = (data||[])[0];
+  if (!p){
+    okP.textContent = "No existe. Completá datos y guardá.";
+    return;
+  }
+
+  currentPacienteId = p.id_paciente;
   elNombre.value = p.nombre || "";
-  elTel.value    = p.telefono || "";
-  elEmail.value  = p.email || "";
-  elOS.value     = p.obra_social || "";
-  elNA.value     = p.numero_afiliado ?? "";
+  elTel.value = p.telefono || "";
+  elEmail.value = p.email || "";
+  elOS.value = p.obra_social || "";
+  elAf.value = p.numero_afiliado ?? "";
 
-  toastOk(elOkPac, "✅ Paciente encontrado");
-};
+  okP.textContent = "✅ Paciente encontrado.";
+  btnHistorial.disabled = false;
+  btnCrear.disabled = false;
 
-/* ====== Guardar paciente ====== */
-document.getElementById("btnGuardarPaciente").onclick = async () => {
-  resetMsgs();
+  // warning ausentes
+  const w = await sb.rpc("secre_warning_paciente", { p_paciente_id: currentPacienteId, p_anios: 2 });
+  const aus = (w.data||[])[0]?.ausentes ?? 0;
+  if (aus > 0){
+    warnAusente.className = "pill red";
+    warnAusente.textContent = `⚠ ${aus} ausente(s) en últimos 2 años`;
+    warnAusente.style.display = "inline-flex";
+  } else {
+    warnAusente.className = "pill green";
+    warnAusente.textContent = "✅ Sin ausentes (2 años)";
+    warnAusente.style.display = "inline-flex";
+  }
+}
 
-  const dni = cleanDni(elDni.value);
-  const nombre = (elNombre.value||"").trim();
-  const telefono = cleanDigits(elTel.value);
-  const email = (elEmail.value||"").trim();
-  const obra_social = (elOS.value||"").trim();
-  const numero_afiliado = (elNA.value||"").trim();
+/* ===== Guardar paciente ===== */
+async function guardarPaciente(){
+  errP.textContent=""; okP.textContent="";
+  const dni = (elDni.value||"").trim();
+  if (!dni){ errP.textContent="Ingresá DNI."; return; }
+  if (!(elNombre.value||"").trim()){ errP.textContent="Ingresá nombre."; return; }
 
-  if (!dni || !nombre){ elErrPac.textContent="DNI y nombre son obligatorios."; return; }
-
-  const { data, error } = await sb.rpc("admin_upsert_paciente", {
+  const { data, error } = await sb.rpc("secre_upsert_paciente", {
     p_dni: dni,
-    p_nombre: nombre,
-    p_telefono: telefono || null,
-    p_obra_social: obra_social || null,
-    p_numero_afiliado: numero_afiliado || null,
-    p_email: email || null
+    p_nombre: (elNombre.value||"").trim(),
+    p_telefono: (elTel.value||"").trim(),
+    p_email: (elEmail.value||"").trim(),
+    p_obra_social: (elOS.value||"").trim(),
+    p_numero_afiliado: (elAf.value||"").trim()
   });
 
-  if (error){ console.error(error); elErrPac.textContent = error.message; return; }
+  if (error){ errP.textContent=error.message; return; }
 
-  setPacienteId(data);
-  toastOk(elOkPac, "✅ Paciente guardado");
-};
+  currentPacienteId = data; // uuid
+  okP.textContent = "✅ Paciente guardado.";
+  btnHistorial.disabled = false;
+  btnCrear.disabled = false;
+}
 
-/* ====== Crear turno / sobreturno ======
-   Requiere RPC: public.admin_crear_turno(...)
-   (la armamos ahora en el próximo paso)
-*/
-document.getElementById("btnCrear").onclick = async () => {
-  resetMsgs();
+/* ===== Historial modal ===== */
+async function abrirHistorial(){
+  if (!currentPacienteId) return;
 
-  const dni = cleanDni(elDni.value);
-  const nombre = (elNombre.value||"").trim();
+  histBody.innerHTML = "";
+  histTitle.textContent = `${(elNombre.value||"").trim()} · DNI ${elDni.value}`;
 
-  if (!PACIENTE_ID){
-    elErrT.textContent = "Primero buscá/guardá el paciente (necesito Paciente ID).";
-    return;
+  const { data, error } = await sb.rpc("secre_historial_paciente", {
+    p_paciente_id: currentPacienteId,
+    p_anios: 2
+  });
+  if (error){ errP.textContent = error.message; return; }
+
+  const rows = data || [];
+  if (!rows.length){
+    histBody.innerHTML = `<tr><td colspan="5" class="muted">Sin historial en 2 años.</td></tr>`;
+  } else {
+    rows.forEach(r=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${fmtDate(r.inicio)}</td>
+        <td>${fmtHour(r.inicio)}</td>
+        <td>${r.medico_nombre || "-"}</td>
+        <td><b>${r.estado || "-"}</b></td>
+        <td>${r.sobreturno ? `<span class="tag"><b>SOBRE</b></span>` : `<span class="tag">Normal</span>`}</td>
+      `;
+      histBody.appendChild(tr);
+    });
   }
-  if (!elMedico.value){ elErrT.textContent="Elegí médico."; return; }
-  if (!elFecha.value){ elErrT.textContent="Elegí fecha."; return; }
-  if (!elHora.value){ elErrT.textContent="Elegí hora."; return; }
 
-  const dur = Number((elDur.value||"").trim());
-  if (!dur || Number.isNaN(dur) || dur < 5){ elErrT.textContent="Duración inválida."; return; }
+  modalBg.style.display = "flex";
+}
+
+btnCerrarModal.onclick = ()=> modalBg.style.display = "none";
+modalBg.onclick = (e)=>{ if (e.target === modalBg) modalBg.style.display = "none"; };
+
+/* ===== Crear turno / sobreturno ===== */
+async function crearTurno(){
+  errT.textContent=""; okT.textContent="";
+  if (!currentPacienteId){ errT.textContent="Primero buscá/guardá el paciente."; return; }
+  if (!elMedico.value){ errT.textContent="Elegí médico."; return; }
+  if (!elFecha.value){ errT.textContent="Elegí fecha."; return; }
+
+  const dur = Number((elDur.value||"15").trim());
+  if (!dur || Number.isNaN(dur)){ errT.textContent="Duración inválida."; return; }
+
+  const sob = chkSob.checked;
+
+  let inicioISO = null;
+
+  if (sob){
+    const hm = (elHoraManual.value||"").trim();
+    if (!hm){ errT.textContent="Ingresá hora manual."; return; }
+    // construir inicio en AR y pasar ISO en UTC via Date
+    const [hh, mm] = hm.split(":").map(Number);
+    const local = new Date(`${elFecha.value}T${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:00`);
+    // el backend ya usa timestamptz; mandamos ISO
+    inicioISO = local.toISOString();
+  } else {
+    inicioISO = elSlot.value;
+    if (!inicioISO){ errT.textContent="No hay slot disponible."; return; }
+  }
 
   const cop = (elCopago.value||"").trim();
-  const copago = cop==="" ? null : Number(cop);
-  if (cop!=="" && Number.isNaN(copago)){ elErrT.textContent="Copago inválido."; return; }
+  const copagoNum = cop === "" ? null : Number(cop);
+  if (cop !== "" && Number.isNaN(copagoNum)){ errT.textContent="Copago inválido."; return; }
 
-  // inicio timestamptz en AR -> lo mandamos como ISO con offset AR usando Date + ajuste TZ server-side
-  // Simple: mandamos "YYYY-MM-DD HH:MM:00" y la función la interpreta en TZ AR.
-  const inicio_local = `${elFecha.value} ${elHora.value}:00`;
-
-  const payload = {
+  const { data, error } = await sb.rpc("secre_crear_turno", {
     p_medico_id: elMedico.value,
-    p_paciente_id: PACIENTE_ID,
-    p_inicio_local_ar: inicio_local,
+    p_paciente_id: currentPacienteId,
+    p_inicio: inicioISO,
     p_duracion_min: dur,
-    p_estado: elEstadoInit.value,
-    p_sobreturno: (elTipo.value === "sobreturno"),
-    p_copago: copago,
-    p_nota: (elNota.value||"").trim() || null
-  };
+    p_copago: copagoNum,
+    p_nota: (elNota.value||"").trim() || null,
+    p_sobreturno: sob,
+    p_canal: "secre"
+  });
 
-  const btn = document.getElementById("btnCrear");
-  btn.classList.add("saving");
-  btn.disabled = true;
+  if (error){ errT.textContent = error.message; return; }
 
-  const { data, error } = await sb.rpc("admin_crear_turno", payload);
+  okT.textContent = "✅ Turno creado.";
+  // refrescar slots para que desaparezca el tomado
+  await cargarSlots();
+}
 
-  btn.classList.remove("saving");
-  btn.disabled = false;
+/* ===== Sobreturno UI ===== */
+function syncSobreturnoUI(){
+  const sob = chkSob.checked;
+  lblSob.style.display = sob ? "inline-block" : "none";
+  elHoraManual.disabled = !sob;
+  elSlot.disabled = sob;
+}
+chkSob.onchange = syncSobreturnoUI;
 
-  if (error){
-    console.error(error);
-    elErrT.textContent = error.message + " (¿ya creamos la RPC admin_crear_turno?)";
-    return;
-  }
+/* ===== Botones ===== */
+document.getElementById("btnBuscar").onclick = buscarPaciente;
+document.getElementById("btnGuardarPaciente").onclick = guardarPaciente;
+document.getElementById("btnHistorial").onclick = abrirHistorial;
+document.getElementById("btnCrearTurno").onclick = crearTurno;
 
-  elResumen.innerHTML = `
-    <span class="pill">Turno ID: <b>${data}</b></span>
-    <span class="pill">Paciente: <b>${nombre || dni}</b></span>
-  `;
-  toastOk(elOkT, "✅ Turno creado");
+document.getElementById("btnLimpiar").onclick = ()=>{
+  errP.textContent=""; okP.textContent="";
+  currentPacienteId = null;
+  btnHistorial.disabled = true;
+  btnCrear.disabled = true;
+  warnAusente.style.display = "none";
+  elNombre.value=""; elTel.value=""; elEmail.value=""; elOS.value=""; elAf.value="";
 };
 
-/* ====== Limpiar ====== */
-document.getElementById("btnLimpiar").onclick = () => {
-  resetMsgs();
-  setPacienteId(null);
-  elDni.value=""; elNombre.value=""; elTel.value=""; elEmail.value="";
-  elOS.value=""; elNA.value="";
-  elCopago.value=""; elNota.value="";
-  elResumen.innerHTML="";
-};
-
-/* ====== Init ====== */
-elFecha.value = isoDateARNow();
+/* ===== Init ===== */
 (async () => {
+  elFecha.value = isoDateARNow();
   await cargarMedicos();
+  await cargarSlots();
+  syncSobreturnoUI();
+
+  elMedico.onchange = cargarSlots;
+  elFecha.onchange = cargarSlots;
+
+  // Enter en DNI = buscar
+  elDni.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); buscarPaciente(); } });
 })();
 </script>
 </body>
