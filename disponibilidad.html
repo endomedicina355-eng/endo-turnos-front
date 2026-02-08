@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ENDO · Disponibilidad</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f7f8;color:#111}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .header{display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .brand{font-weight:900}
+    .muted{color:#666;font-size:13px}
+    .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .card{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:16px;margin:12px 0}
+    .grid2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+    @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+    .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
+    @media(max-width:900px){.row{grid-template-columns:1fr}}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
+    textarea{min-height:44px;resize:vertical}
+    button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
+    button.primary{background:#111;color:#fff;border:0;font-weight:800}
+    button.small{padding:8px 10px;border-radius:10px;font-size:13px}
+    .error{color:#b00020;font-size:13px;margin-top:8px}
+    .ok{color:#0a7a27;font-size:13px;margin-top:8px}
+    .hr{height:1px;background:#eee;margin:14px 0}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+    .tag{font-size:12px;border:1px solid #ddd;border-radius:999px;padding:4px 8px;display:inline-block}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
+    th{color:#666;font-weight:700;text-align:left;font-size:12px}
+
+    .mini{font-size:12px;color:#666}
+    .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .w120{max-width:140px}
+    .w160{max-width:190px}
+    .danger{background:#fde2e6;border-color:#f2b7c2;color:#842029;font-weight:800}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="brand">ENDO · Médicos / Disponibilidad</div>
+      <div class="muted">Alta de médico · Duración · Ventanas horarias · Ausencias · Feriados/Bloqueos</div>
+    </div>
+    <div class="right">
+      <button id="btnBack" class="small" type="button">Volver a agenda</button>
+      <button id="btnLogout" class="small" type="button">Salir</button>
+    </div>
+  </div>
+
+  <!-- 1) Alta de médico -->
+  <div class="card">
+    <div class="brand">1) Alta de médico</div>
+    <div class="muted">Crea un médico nuevo (activo) con duración inicial.</div>
+    <div class="hr"></div>
+
+    <div class="row">
+      <div>
+        <div class="muted">Nombre</div>
+        <input id="m_nombre" placeholder="Dr / Dra ..." />
+      </div>
+      <div>
+        <div class="muted">Especialidad (opcional)</div>
+        <input id="m_especialidad" placeholder="Otorrino, Endocrino..." />
+      </div>
+      <div>
+        <div class="muted">Duración (min)</div>
+        <select id="m_duracion">
+          <option value="10">10</option>
+          <option value="15" selected>15</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+          <option value="60">60</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:12px">
+      <label class="inline" style="gap:8px">
+        <input id="m_activo" type="checkbox" checked />
+        <span><b>Activo</b></span>
+      </label>
+
+      <button id="btnCrearMedico" class="primary" type="button">Crear médico</button>
+      <div class="error" id="errAlta"></div>
+      <div class="ok" id="okAlta"></div>
+    </div>
+  </div>
+
+  <!-- 2) Duración + selector médico -->
+  <div class="card">
+    <div class="brand">2) Configurar duración</div>
+    <div class="muted">Seleccioná médico y guardá duración (min).</div>
+    <div class="hr"></div>
+
+    <div class="row">
+      <div>
+        <div class="muted">Médico</div>
+        <select id="selMedicoDur"></select>
+      </div>
+      <div>
+        <div class="muted">Duración (min)</div>
+        <select id="duracionMin">
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+          <option value="60">60</option>
+        </select>
+      </div>
+      <div class="inline" style="align-items:flex-end">
+        <button id="btnGuardarDur" class="primary" type="button">Guardar duración</button>
+      </div>
+    </div>
+
+    <div class="error" id="errDur"></div>
+    <div class="ok" id="okDur"></div>
+  </div>
+
+  <!-- 3) Disponibilidad (multi-ventana por día) -->
+  <div class="card">
+    <div class="brand">3) Disponibilidad (días y ventanas horarias)</div>
+    <div class="muted">Cada día puede tener 0, 1 o 2 ventanas (mañana/tarde).</div>
+    <div class="hr"></div>
+
+    <div class="row">
+      <div>
+        <div class="muted">Médico</div>
+        <select id="selMedicoDispo"></select>
+      </div>
+      <div class="inline" style="align-items:flex-end">
+        <button id="btnCargarDispo" type="button">Cargar</button>
+        <button id="btnGuardarDispo" class="primary" type="button">Guardar disponibilidad</button>
+      </div>
+      <div class="mini">
+        Tip: para “dos horarios”, cargá 2 ventanas en el mismo día.
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div id="dispoBox"></div>
+
+    <div class="error" id="errDispo"></div>
+    <div class="ok" id="okDispo"></div>
+  </div>
+
+  <!-- 4) Ausencias -->
+  <div class="card">
+    <div class="brand">4) Ausencias / bloqueos por médico</div>
+    <div class="muted">Bloquea un rango (parcial o día completo). Se refleja en todos los slots.</div>
+    <div class="hr"></div>
+
+    <div class="row">
+      <div>
+        <div class="muted">Médico</div>
+        <select id="selMedicoAus"></select>
+      </div>
+      <div>
+        <div class="muted">Desde</div>
+        <input id="ausDesde" type="datetime-local" />
+      </div>
+      <div>
+        <div class="muted">Hasta</div>
+        <input id="ausHasta" type="datetime-local" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <div class="muted">Motivo (opcional)</div>
+        <input id="ausMotivo" placeholder="Congreso, enfermedad, etc." />
+      </div>
+      <div class="inline" style="align-items:flex-end">
+        <button id="btnAddAus" class="primary" type="button">Agregar ausencia</button>
+      </div>
+      <div></div>
+    </div>
+
+    <div class="error" id="errAus"></div>
+    <div class="ok" id="okAus"></div>
+
+    <div class="hr"></div>
+    <div class="brand" style="font-weight:800">Próximas ausencias</div>
+    <div class="muted">Se listan las futuras (y podés eliminar).</div>
+
+    <div class="hr"></div>
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Desde</th>
+            <th>Hasta</th>
+            <th>Motivo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="ausBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 5) Feriados / bloqueos globales -->
+  <div class="card">
+    <div class="brand">5) Feriados / bloqueos globales</div>
+    <div class="muted">Bloquea fechas/rangos para TODOS los médicos (ej: 9 de julio). Puede ser día entero o parcial.</div>
+    <div class="hr"></div>
+
+    <div class="row">
+      <div>
+        <div class="muted">Desde</div>
+        <input id="gDesde" type="datetime-local" />
+      </div>
+      <div>
+        <div class="muted">Hasta</div>
+        <input id="gHasta" type="datetime-local" />
+      </div>
+      <div>
+        <div class="muted">Motivo (opcional)</div>
+        <input id="gMotivo" placeholder="Feriado, evento, mantenimiento..." />
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:12px">
+      <button id="btnAddGlobal" class="primary" type="button">Agregar bloqueo global</button>
+      <span class="pill danger">Impacta todas las agendas</span>
+      <div class="error" id="errG"></div>
+      <div class="ok" id="okG"></div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="brand" style="font-weight:800">Bloqueos globales futuros</div>
+    <div class="hr"></div>
+
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Desde</th>
+            <th>Hasta</th>
+            <th>Motivo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="gBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ===== CONFIG ===== */
+const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
+const SUPABASE_ANON_KEY = "TU_ANON_KEY";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const AR_TZ = "America/Argentina/Buenos_Aires";
+const fmtDT = (ts)=> new Date(ts).toLocaleString("es-AR",{ timeZone: AR_TZ, year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit" });
+
+/* ===== NAV ===== */
+document.getElementById("btnBack").onclick = ()=> window.location.href = "./secretaria.html";
+
+/* ===== AUTH ===== */
+(async () => {
+  const { data } = await sb.auth.getUser();
+  if (!data?.user) { window.location.href = "./login.html"; return; }
+
+  document.getElementById("btnLogout").onclick = async () => {
+    await sb.auth.signOut();
+    window.location.href = "./login.html";
+  };
+})();
+
+/* ===== DOM ===== */
+const errAlta = document.getElementById("errAlta");
+const okAlta  = document.getElementById("okAlta");
+
+const errDur  = document.getElementById("errDur");
+const okDur   = document.getElementById("okDur");
+
+const errDispo = document.getElementById("errDispo");
+const okDispo  = document.getElementById("okDispo");
+
+const errAus = document.getElementById("errAus");
+const okAus  = document.getElementById("okAus");
+const ausBody = document.getElementById("ausBody");
+
+const errG = document.getElementById("errG");
+const okG  = document.getElementById("okG");
+const gBody = document.getElementById("gBody");
+
+const dispoBox = document.getElementById("dispoBox");
+
+const selMedicoDur  = document.getElementById("selMedicoDur");
+const selMedicoDispo= document.getElementById("selMedicoDispo");
+const selMedicoAus  = document.getElementById("selMedicoAus");
+
+const duracionMin = document.getElementById("duracionMin");
+
+/* ===== Helpers ===== */
+function clearMsgs(){ [errAlta,okAlta,errDur,okDur,errDispo,okDispo,errAus,okAus,errG,okG].forEach(x=>x.textContent=""); }
+function setOk(el,msg){ el.textContent = msg; setTimeout(()=>{ if(el.textContent===msg) el.textContent=""; }, 1600); }
+function setErr(el,msg){ el.textContent = msg; }
+
+async function cargarMedicosSelects(){
+  const { data, error } = await sb.rpc("get_medicos_activos");
+  if (error) throw error;
+
+  const meds = data || [];
+  const fills = [selMedicoDur, selMedicoDispo, selMedicoAus];
+  fills.forEach(sel=>{
+    sel.innerHTML = "";
+    meds.forEach(m=>{
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = m.nombre;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+/* ===== 1) Alta médico ===== */
+document.getElementById("btnCrearMedico").onclick = async ()=>{
+  clearMsgs();
+  try{
+    const nombre = (document.getElementById("m_nombre").value||"").trim();
+    const especialidad = (document.getElementById("m_especialidad").value||"").trim() || null;
+    const duracion = Number(document.getElementById("m_duracion").value);
+    const activo = document.getElementById("m_activo").checked;
+
+    if(!nombre) return setErr(errAlta,"Ingresá nombre.");
+
+    // RPC sugerida:
+    // admin_crear_medico(p_nombre text, p_especialidad text, p_activo bool, p_duracion_min int) returns uuid
+    const { data, error } = await sb.rpc("admin_crear_medico", {
+      p_nombre: nombre,
+      p_especialidad: especialidad,
+      p_activo: activo,
+      p_duracion_min: duracion
+    });
+    if(error) throw error;
+
+    setOk(okAlta,"✅ Médico creado.");
+    await cargarMedicosSelects();
+  }catch(e){
+    setErr(errAlta, e.message || String(e));
+  }
+};
+
+/* ===== 2) Duración ===== */
+document.getElementById("btnGuardarDur").onclick = async ()=>{
+  clearMsgs();
+  try{
+    const medicoId = selMedicoDur.value;
+    const dur = Number(duracionMin.value);
+    if(!medicoId) return setErr(errDur,"Elegí médico.");
+
+    // RPC sugerida:
+    // admin_set_duracion_medico(p_medico_id uuid, p_duracion_min int) returns void
+    const { error } = await sb.rpc("admin_set_duracion_medico", {
+      p_medico_id: medicoId,
+      p_duracion_min: dur
+    });
+    if(error) throw error;
+
+    setOk(okDur,"✅ Duración guardada.");
+  }catch(e){
+    setErr(errDur, e.message || String(e));
+  }
+};
+
+/* ===== 3) Disponibilidad multi-ventana =====
+   UI: 7 días. Por día: lista de "ventanas" editables (hasta 2 por defecto)
+*/
+const DIAS = [
+  {i:1, label:"Lun"},
+  {i:2, label:"Mar"},
+  {i:3, label:"Mié"},
+  {i:4, label:"Jue"},
+  {i:5, label:"Vie"},
+  {i:6, label:"Sáb"},
+  {i:0, label:"Dom"},
+];
+
+function renderDispo(dispMap){
+  // dispMap: { dia_semana: [ {hora_inicio:"09:00:00", hora_fin:"12:00:00"}, ... ] }
+  dispoBox.innerHTML = "";
+
+  DIAS.forEach(d=>{
+    const list = dispMap[d.i] || [];
+    const box = document.createElement("div");
+    box.className = "card";
+    box.style.margin = "10px 0";
+
+    box.innerHTML = `
+      <div class="inline" style="justify-content:space-between">
+        <div>
+          <b>${d.label}</b>
+          <span class="mini">· ${list.length} ventana(s)</span>
+        </div>
+        <div class="inline">
+          <button type="button" class="small" data-add="${d.i}">+ Ventana</button>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div id="day_${d.i}"></div>
+    `;
+
+    dispoBox.appendChild(box);
+
+    const cont = box.querySelector(`#day_${d.i}`);
+    if(!list.length){
+      cont.innerHTML = `<div class="muted">No atiende.</div>`;
+    }else{
+      list.forEach((w, idx)=>{
+        const row = document.createElement("div");
+        row.className = "inline";
+        row.style.marginBottom = "8px";
+        row.innerHTML = `
+          <span class="tag">Ventana ${idx+1}</span>
+          <input class="w160" type="time" value="${(w.hora_inicio||"09:00:00").slice(0,5)}" data-hi="${d.i}" data-idx="${idx}" />
+          <span class="mini">a</span>
+          <input class="w160" type="time" value="${(w.hora_fin||"12:00:00").slice(0,5)}" data-hf="${d.i}" data-idx="${idx}" />
+          <button type="button" class="small" data-del="${d.i}" data-idx="${idx}">Eliminar</button>
+        `;
+        cont.appendChild(row);
+      });
+    }
+  });
+
+  // handlers add/del
+  dispoBox.querySelectorAll("[data-add]").forEach(btn=>{
+    btn.onclick = ()=>{
+      const d = Number(btn.getAttribute("data-add"));
+      const arr = dispMap[d] || [];
+      if(arr.length >= 2) return alert("Máximo 2 ventanas por día (por ahora).");
+      arr.push({hora_inicio:"09:00:00", hora_fin:"12:00:00"});
+      dispMap[d] = arr;
+      renderDispo(dispMap);
+    };
+  });
+
+  dispoBox.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.onclick = ()=>{
+      const d = Number(btn.getAttribute("data-del"));
+      const idx = Number(btn.getAttribute("data-idx"));
+      const arr = dispMap[d] || [];
+      arr.splice(idx,1);
+      dispMap[d] = arr;
+      renderDispo(dispMap);
+    };
+  });
+
+  // live edit time => update map
+  dispoBox.querySelectorAll("[data-hi]").forEach(inp=>{
+    inp.onchange = ()=>{
+      const d = Number(inp.getAttribute("data-hi"));
+      const idx = Number(inp.getAttribute("data-idx"));
+      dispMap[d][idx].hora_inicio = inp.value + ":00";
+    };
+  });
+  dispoBox.querySelectorAll("[data-hf]").forEach(inp=>{
+    inp.onchange = ()=>{
+      const d = Number(inp.getAttribute("data-hf"));
+      const idx = Number(inp.getAttribute("data-idx"));
+      dispMap[d][idx].hora_fin = inp.value + ":00";
+    };
+  });
+}
+
+let dispoDraft = {}; // map día -> ventanas
+
+async function cargarDispo(){
+  clearMsgs();
+  try{
+    const medicoId = selMedicoDispo.value;
+    if(!medicoId) return setErr(errDispo,"Elegí médico.");
+
+    // RPC sugerida:
+    // admin_get_disponibilidad(p_medico_id uuid) returns setof (dia_semana int, hora_inicio time, hora_fin time)
+    const { data, error } = await sb.rpc("admin_get_disponibilidad", { p_medico_id: medicoId });
+    if(error) throw error;
+
+    const rows = data || [];
+    const map = {};
+    rows.forEach(r=>{
+      const d = Number(r.dia_semana);
+      map[d] ||= [];
+      map[d].push({ hora_inicio: r.hora_inicio, hora_fin: r.hora_fin });
+    });
+
+    // orden por hora
+    Object.keys(map).forEach(k=>{
+      map[k].sort((a,b)=> (a.hora_inicio||"").localeCompare(b.hora_inicio||""));
+    });
+
+    dispoDraft = map;
+    renderDispo(dispoDraft);
+    setOk(okDispo,"✅ Disponibilidad cargada.");
+  }catch(e){
+    setErr(errDispo, e.message || String(e));
+  }
+}
+
+document.getElementById("btnCargarDispo").onclick = cargarDispo;
+
+document.getElementById("btnGuardarDispo").onclick = async ()=>{
+  clearMsgs();
+  try{
+    const medicoId = selMedicoDispo.value;
+    if(!medicoId) return setErr(errDispo,"Elegí médico.");
+
+    // normalizar: solo ventanas con hi<hf
+    const payload = [];
+    Object.entries(dispoDraft).forEach(([dia, arr])=>{
+      (arr||[]).forEach(w=>{
+        if(!w.hora_inicio || !w.hora_fin) return;
+        if(w.hora_inicio >= w.hora_fin) return;
+        payload.push({ dia_semana:Number(dia), hora_inicio:w.hora_inicio, hora_fin:w.hora_fin });
+      });
+    });
+
+    // RPC sugerida:
+    // admin_set_disponibilidad(p_medico_id uuid, p_ventanas jsonb) returns void
+    const { error } = await sb.rpc("admin_set_disponibilidad", {
+      p_medico_id: medicoId,
+      p_ventanas: payload
+    });
+    if(error) throw error;
+
+    setOk(okDispo,"✅ Disponibilidad guardada.");
+    await cargarDispo();
+  }catch(e){
+    setErr(errDispo, e.message || String(e));
+  }
+};
+
+/* ===== 4) Ausencias por médico ===== */
+async function cargarAusencias(){
+  ausBody.innerHTML = "";
+  clearMsgs();
+  try{
+    const medicoId = selMedicoAus.value;
+    if(!medicoId) return;
+
+    // RPC sugerida:
+    // admin_list_ausencias(p_medico_id uuid) returns setof (id uuid, desde timestamptz, hasta timestamptz, motivo text)
+    const { data, error } = await sb.rpc("admin_list_ausencias", { p_medico_id: medicoId });
+    if(error) throw error;
+
+    const rows = data || [];
+    if(!rows.length){
+      ausBody.innerHTML = `<tr><td colspan="4" class="muted">Sin ausencias futuras.</td></tr>`;
+      return;
+    }
+
+    rows.forEach(r=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${fmtDT(r.desde)}</td>
+        <td>${fmtDT(r.hasta)}</td>
+        <td>${r.motivo || "-"}</td>
+        <td><button class="small" type="button" data-del-aus="${r.id}">Eliminar</button></td>
+      `;
+      ausBody.appendChild(tr);
+    });
+
+    ausBody.querySelectorAll("[data-del-aus]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        clearMsgs();
+        try{
+          const id = btn.getAttribute("data-del-aus");
+          // RPC sugerida: admin_delete_ausencia(p_id uuid) returns void
+          const { error } = await sb.rpc("admin_delete_ausencia", { p_id: id });
+          if(error) throw error;
+          setOk(okAus,"✅ Ausencia eliminada.");
+          await cargarAusencias();
+        }catch(e){
+          setErr(errAus, e.message || String(e));
+        }
+      };
+    });
+
+  }catch(e){
+    setErr(errAus, e.message || String(e));
+  }
+}
+
+document.getElementById("btnAddAus").onclick = async ()=>{
+  clearMsgs();
+  try{
+    const medicoId = selMedicoAus.value;
+    const desde = document.getElementById("ausDesde").value;
+    const hasta = document.getElementById("ausHasta").value;
+    const motivo = (document.getElementById("ausMotivo").value||"").trim() || null;
+
+    if(!medicoId) return setErr(errAus,"Elegí médico.");
+    if(!desde || !hasta) return setErr(errAus,"Completá desde/hasta.");
+    if(desde >= hasta) return setErr(errAus,"Rango inválido.");
+
+    // RPC sugerida:
+    // admin_add_ausencia(p_medico_id uuid, p_desde timestamptz, p_hasta timestamptz, p_motivo text) returns uuid
+    const { error } = await sb.rpc("admin_add_ausencia", {
+      p_medico_id: medicoId,
+      p_desde: new Date(desde).toISOString(),
+      p_hasta: new Date(hasta).toISOString(),
+      p_motivo: motivo
+    });
+    if(error) throw error;
+
+    setOk(okAus,"✅ Ausencia agregada.");
+    await cargarAusencias();
+  }catch(e){
+    setErr(errAus, e.message || String(e));
+  }
+};
+
+selMedicoAus.onchange = cargarAusencias;
+
+/* ===== 5) Bloqueos globales ===== */
+async function cargarGlobales(){
+  gBody.innerHTML = "";
+  clearMsgs();
+  try{
+    // RPC sugerida:
+    // admin_list_bloqueos_globales() returns setof (id uuid, desde timestamptz, hasta timestamptz, motivo text)
+    const { data, error } = await sb.rpc("admin_list_bloqueos_globales");
+    if(error) throw error;
+
+    const rows = data || [];
+    if(!rows.length){
+      gBody.innerHTML = `<tr><td colspan="4" class="muted">Sin bloqueos globales futuros.</td></tr>`;
+      return;
+    }
+
+    rows.forEach(r=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${fmtDT(r.desde)}</td>
+        <td>${fmtDT(r.hasta)}</td>
+        <td>${r.motivo || "-"}</td>
+        <td><button class="small" type="button" data-del-g="${r.id}">Eliminar</button></td>
+      `;
+      gBody.appendChild(tr);
+    });
+
+    gBody.querySelectorAll("[data-del-g]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        clearMsgs();
+        try{
+          const id = btn.getAttribute("data-del-g");
+          // RPC sugerida: admin_delete_bloqueo_global(p_id uuid)
+          const { error } = await sb.rpc("admin_delete_bloqueo_global", { p_id: id });
+          if(error) throw error;
+          setOk(okG,"✅ Bloqueo eliminado.");
+          await cargarGlobales();
+        }catch(e){
+          setErr(errG, e.message || String(e));
+        }
+      };
+    });
+
+  }catch(e){
+    setErr(errG, e.message || String(e));
+  }
+}
+
+document.getElementById("btnAddGlobal").onclick = async ()=>{
+  clearMsgs();
+  try{
+    const desde = document.getElementById("gDesde").value;
+    const hasta = document.getElementById("gHasta").value;
+    const motivo = (document.getElementById("gMotivo").value||"").trim() || null;
+
+    if(!desde || !hasta) return setErr(errG,"Completá desde/hasta.");
+    if(desde >= hasta) return setErr(errG,"Rango inválido.");
+
+    // RPC sugerida:
+    // admin_add_bloqueo_global(p_desde timestamptz, p_hasta timestamptz, p_motivo text) returns uuid
+    const { error } = await sb.rpc("admin_add_bloqueo_global", {
+      p_desde: new Date(desde).toISOString(),
+      p_hasta: new Date(hasta).toISOString(),
+      p_motivo: motivo
+    });
+    if(error) throw error;
+
+    setOk(okG,"✅ Bloqueo global agregado.");
+    await cargarGlobales();
+  }catch(e){
+    setErr(errG, e.message || String(e));
+  }
+};
+
+/* ===== INIT ===== */
+document.addEventListener("DOMContentLoaded", async ()=>{
+  // si querés, default dur 15
+  duracionMin.value = "15";
+
+  await cargarMedicosSelects();
+  await cargarDispo();
+  await cargarAusencias();
+  await cargarGlobales();
+});
+</script>
+</body>
+</html>
