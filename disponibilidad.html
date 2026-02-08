@@ -258,7 +258,7 @@
 <script>
 /* ===== CONFIG ===== */
 const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
-const SUPABASE_ANON_KEY = "TU_ANON_KEY";
+const SUPABASE_ANON_KEY = "TU_ANON_KEY"; // <-- pegá tu key real
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
@@ -298,9 +298,9 @@ const gBody = document.getElementById("gBody");
 
 const dispoBox = document.getElementById("dispoBox");
 
-const selMedicoDur  = document.getElementById("selMedicoDur");
-const selMedicoDispo= document.getElementById("selMedicoDispo");
-const selMedicoAus  = document.getElementById("selMedicoAus");
+const selMedicoDur   = document.getElementById("selMedicoDur");
+const selMedicoDispo = document.getElementById("selMedicoDispo");
+const selMedicoAus   = document.getElementById("selMedicoAus");
 
 const duracionMin = document.getElementById("duracionMin");
 
@@ -309,7 +309,14 @@ function clearMsgs(){ [errAlta,okAlta,errDur,okDur,errDispo,okDispo,errAus,okAus
 function setOk(el,msg){ el.textContent = msg; setTimeout(()=>{ if(el.textContent===msg) el.textContent=""; }, 1600); }
 function setErr(el,msg){ el.textContent = msg; }
 
+function toISOFromLocal(dtLocalStr){
+  // dt-local viene sin TZ; lo convertimos a ISO con TZ del navegador
+  return new Date(dtLocalStr).toISOString();
+}
+
+/* ===== Médicos (usa tu RPC actual) ===== */
 async function cargarMedicosSelects(){
+  // Si querés ver inactivos también, podés cambiar a cfg_list_medicos.
   const { data, error } = await sb.rpc("get_medicos_activos");
   if (error) throw error;
 
@@ -326,7 +333,7 @@ async function cargarMedicosSelects(){
   });
 }
 
-/* ===== 1) Alta médico ===== */
+/* ===== 1) Alta médico (cfg_crear_medico) ===== */
 document.getElementById("btnCrearMedico").onclick = async ()=>{
   clearMsgs();
   try{
@@ -337,9 +344,7 @@ document.getElementById("btnCrearMedico").onclick = async ()=>{
 
     if(!nombre) return setErr(errAlta,"Ingresá nombre.");
 
-    // RPC sugerida:
-    // admin_crear_medico(p_nombre text, p_especialidad text, p_activo bool, p_duracion_min int) returns uuid
-    const { data, error } = await sb.rpc("admin_crear_medico", {
+    const { error } = await sb.rpc("cfg_crear_medico", {
       p_nombre: nombre,
       p_especialidad: especialidad,
       p_activo: activo,
@@ -354,7 +359,7 @@ document.getElementById("btnCrearMedico").onclick = async ()=>{
   }
 };
 
-/* ===== 2) Duración ===== */
+/* ===== 2) Duración (cfg_set_duracion_medico) ===== */
 document.getElementById("btnGuardarDur").onclick = async ()=>{
   clearMsgs();
   try{
@@ -362,9 +367,7 @@ document.getElementById("btnGuardarDur").onclick = async ()=>{
     const dur = Number(duracionMin.value);
     if(!medicoId) return setErr(errDur,"Elegí médico.");
 
-    // RPC sugerida:
-    // admin_set_duracion_medico(p_medico_id uuid, p_duracion_min int) returns void
-    const { error } = await sb.rpc("admin_set_duracion_medico", {
+    const { error } = await sb.rpc("cfg_set_duracion_medico", {
       p_medico_id: medicoId,
       p_duracion_min: dur
     });
@@ -376,9 +379,7 @@ document.getElementById("btnGuardarDur").onclick = async ()=>{
   }
 };
 
-/* ===== 3) Disponibilidad multi-ventana =====
-   UI: 7 días. Por día: lista de "ventanas" editables (hasta 2 por defecto)
-*/
+/* ===== 3) Disponibilidad multi-ventana (cfg_get / cfg_set_disponibilidad_ventanas) ===== */
 const DIAS = [
   {i:1, label:"Lun"},
   {i:2, label:"Mar"},
@@ -390,7 +391,6 @@ const DIAS = [
 ];
 
 function renderDispo(dispMap){
-  // dispMap: { dia_semana: [ {hora_inicio:"09:00:00", hora_fin:"12:00:00"}, ... ] }
   dispoBox.innerHTML = "";
 
   DIAS.forEach(d=>{
@@ -435,7 +435,6 @@ function renderDispo(dispMap){
     }
   });
 
-  // handlers add/del
   dispoBox.querySelectorAll("[data-add]").forEach(btn=>{
     btn.onclick = ()=>{
       const d = Number(btn.getAttribute("data-add"));
@@ -458,7 +457,6 @@ function renderDispo(dispMap){
     };
   });
 
-  // live edit time => update map
   dispoBox.querySelectorAll("[data-hi]").forEach(inp=>{
     inp.onchange = ()=>{
       const d = Number(inp.getAttribute("data-hi"));
@@ -483,9 +481,7 @@ async function cargarDispo(){
     const medicoId = selMedicoDispo.value;
     if(!medicoId) return setErr(errDispo,"Elegí médico.");
 
-    // RPC sugerida:
-    // admin_get_disponibilidad(p_medico_id uuid) returns setof (dia_semana int, hora_inicio time, hora_fin time)
-    const { data, error } = await sb.rpc("admin_get_disponibilidad", { p_medico_id: medicoId });
+    const { data, error } = await sb.rpc("cfg_get_disponibilidad_ventanas", { p_medico_id: medicoId });
     if(error) throw error;
 
     const rows = data || [];
@@ -496,7 +492,6 @@ async function cargarDispo(){
       map[d].push({ hora_inicio: r.hora_inicio, hora_fin: r.hora_fin });
     });
 
-    // orden por hora
     Object.keys(map).forEach(k=>{
       map[k].sort((a,b)=> (a.hora_inicio||"").localeCompare(b.hora_inicio||""));
     });
@@ -517,21 +512,25 @@ document.getElementById("btnGuardarDispo").onclick = async ()=>{
     const medicoId = selMedicoDispo.value;
     if(!medicoId) return setErr(errDispo,"Elegí médico.");
 
-    // normalizar: solo ventanas con hi<hf
+    // normalizar: solo ventanas válidas
     const payload = [];
     Object.entries(dispoDraft).forEach(([dia, arr])=>{
       (arr||[]).forEach(w=>{
         if(!w.hora_inicio || !w.hora_fin) return;
         if(w.hora_inicio >= w.hora_fin) return;
-        payload.push({ dia_semana:Number(dia), hora_inicio:w.hora_inicio, hora_fin:w.hora_fin });
+        payload.push({
+          dia_semana: Number(dia),
+          hora_inicio: w.hora_inicio,
+          hora_fin: w.hora_fin,
+          activo: true
+        });
       });
     });
 
-    // RPC sugerida:
-    // admin_set_disponibilidad(p_medico_id uuid, p_ventanas jsonb) returns void
-    const { error } = await sb.rpc("admin_set_disponibilidad", {
+    // cfg_set_disponibilidad_ventanas(p_medico_id uuid, p_windows jsonb)
+    const { error } = await sb.rpc("cfg_set_disponibilidad_ventanas", {
       p_medico_id: medicoId,
-      p_ventanas: payload
+      p_windows: payload
     });
     if(error) throw error;
 
@@ -542,7 +541,7 @@ document.getElementById("btnGuardarDispo").onclick = async ()=>{
   }
 };
 
-/* ===== 4) Ausencias por médico ===== */
+/* ===== 4) Ausencias por médico (bloqueos) ===== */
 async function cargarAusencias(){
   ausBody.innerHTML = "";
   clearMsgs();
@@ -550,9 +549,13 @@ async function cargarAusencias(){
     const medicoId = selMedicoAus.value;
     if(!medicoId) return;
 
-    // RPC sugerida:
-    // admin_list_ausencias(p_medico_id uuid) returns setof (id uuid, desde timestamptz, hasta timestamptz, motivo text)
-    const { data, error } = await sb.rpc("admin_list_ausencias", { p_medico_id: medicoId });
+    const desde = new Date();
+    desde.setHours(0,0,0,0);
+
+    const { data, error } = await sb.rpc("cfg_list_bloqueos_medico", {
+      p_medico_id: medicoId,
+      p_desde: desde.toISOString()
+    });
     if(error) throw error;
 
     const rows = data || [];
@@ -564,8 +567,8 @@ async function cargarAusencias(){
     rows.forEach(r=>{
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${fmtDT(r.desde)}</td>
-        <td>${fmtDT(r.hasta)}</td>
+        <td>${fmtDT(r.inicio)}</td>
+        <td>${fmtDT(r.fin)}</td>
         <td>${r.motivo || "-"}</td>
         <td><button class="small" type="button" data-del-aus="${r.id}">Eliminar</button></td>
       `;
@@ -577,8 +580,7 @@ async function cargarAusencias(){
         clearMsgs();
         try{
           const id = btn.getAttribute("data-del-aus");
-          // RPC sugerida: admin_delete_ausencia(p_id uuid) returns void
-          const { error } = await sb.rpc("admin_delete_ausencia", { p_id: id });
+          const { error } = await sb.rpc("cfg_delete_bloqueo_medico", { p_bloqueo_id: id });
           if(error) throw error;
           setOk(okAus,"✅ Ausencia eliminada.");
           await cargarAusencias();
@@ -605,12 +607,10 @@ document.getElementById("btnAddAus").onclick = async ()=>{
     if(!desde || !hasta) return setErr(errAus,"Completá desde/hasta.");
     if(desde >= hasta) return setErr(errAus,"Rango inválido.");
 
-    // RPC sugerida:
-    // admin_add_ausencia(p_medico_id uuid, p_desde timestamptz, p_hasta timestamptz, p_motivo text) returns uuid
-    const { error } = await sb.rpc("admin_add_ausencia", {
+    const { error } = await sb.rpc("cfg_add_bloqueo_medico", {
       p_medico_id: medicoId,
-      p_desde: new Date(desde).toISOString(),
-      p_hasta: new Date(hasta).toISOString(),
+      p_inicio: toISOFromLocal(desde),
+      p_fin: toISOFromLocal(hasta),
       p_motivo: motivo
     });
     if(error) throw error;
@@ -629,9 +629,12 @@ async function cargarGlobales(){
   gBody.innerHTML = "";
   clearMsgs();
   try{
-    // RPC sugerida:
-    // admin_list_bloqueos_globales() returns setof (id uuid, desde timestamptz, hasta timestamptz, motivo text)
-    const { data, error } = await sb.rpc("admin_list_bloqueos_globales");
+    const desde = new Date();
+    desde.setHours(0,0,0,0);
+
+    const { data, error } = await sb.rpc("cfg_list_bloqueos_globales", {
+      p_desde: desde.toISOString()
+    });
     if(error) throw error;
 
     const rows = data || [];
@@ -643,8 +646,8 @@ async function cargarGlobales(){
     rows.forEach(r=>{
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${fmtDT(r.desde)}</td>
-        <td>${fmtDT(r.hasta)}</td>
+        <td>${fmtDT(r.inicio)}</td>
+        <td>${fmtDT(r.fin)}</td>
         <td>${r.motivo || "-"}</td>
         <td><button class="small" type="button" data-del-g="${r.id}">Eliminar</button></td>
       `;
@@ -656,8 +659,7 @@ async function cargarGlobales(){
         clearMsgs();
         try{
           const id = btn.getAttribute("data-del-g");
-          // RPC sugerida: admin_delete_bloqueo_global(p_id uuid)
-          const { error } = await sb.rpc("admin_delete_bloqueo_global", { p_id: id });
+          const { error } = await sb.rpc("cfg_delete_bloqueo_global", { p_id: id });
           if(error) throw error;
           setOk(okG,"✅ Bloqueo eliminado.");
           await cargarGlobales();
@@ -682,11 +684,9 @@ document.getElementById("btnAddGlobal").onclick = async ()=>{
     if(!desde || !hasta) return setErr(errG,"Completá desde/hasta.");
     if(desde >= hasta) return setErr(errG,"Rango inválido.");
 
-    // RPC sugerida:
-    // admin_add_bloqueo_global(p_desde timestamptz, p_hasta timestamptz, p_motivo text) returns uuid
-    const { error } = await sb.rpc("admin_add_bloqueo_global", {
-      p_desde: new Date(desde).toISOString(),
-      p_hasta: new Date(hasta).toISOString(),
+    const { error } = await sb.rpc("cfg_add_bloqueo_global", {
+      p_inicio: toISOFromLocal(desde),
+      p_fin: toISOFromLocal(hasta),
       p_motivo: motivo
     });
     if(error) throw error;
@@ -700,9 +700,7 @@ document.getElementById("btnAddGlobal").onclick = async ()=>{
 
 /* ===== INIT ===== */
 document.addEventListener("DOMContentLoaded", async ()=>{
-  // si querés, default dur 15
   duracionMin.value = "15";
-
   await cargarMedicosSelects();
   await cargarDispo();
   await cargarAusencias();
