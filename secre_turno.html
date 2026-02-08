@@ -12,8 +12,6 @@
     .muted{color:#666;font-size:13px}
     .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .card{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:16px;margin:12px 0}
-    .grid2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
-    @media(max-width:900px){.grid2{grid-template-columns:1fr}}
     .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
     @media(max-width:900px){.row{grid-template-columns:1fr}}
     input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
@@ -29,6 +27,7 @@
     .pill.red{border-color:#f2b7c2;background:#fde2e6;color:#842029;font-weight:800}
     .pill.green{border-color:#a7e1b7;background:#dff5e5;color:#0f5132;font-weight:800}
     .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .tag{font-size:12px;border:1px solid #ddd;border-radius:999px;padding:4px 8px;display:inline-block}
 
     /* Modal */
     .modalBg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:18px;z-index:999}
@@ -38,7 +37,6 @@
     table{width:100%;border-collapse:collapse}
     th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
     th{color:#666;font-weight:700;text-align:left;font-size:12px}
-    .tag{font-size:12px;border:1px solid #ddd;border-radius:999px;padding:4px 8px;display:inline-block}
   </style>
 </head>
 <body>
@@ -110,74 +108,65 @@
     </div>
   </div>
 
-  <!-- 2) Crear turno -->
+  <!-- 2) Crear turno (stack) -->
   <div class="card">
     <div class="brand" style="font-weight:900">Crear turno</div>
     <div class="muted">Elegí médico + fecha. Si NO es sobreturno, usás slots disponibles. Si es sobreturno, ponés la hora manual.</div>
 
     <div class="hr"></div>
 
-    <div class="grid2">
+    <div class="row">
       <div>
-        <div class="row">
-          <div>
-            <div class="muted">Médico</div>
-            <select id="medico"></select>
-          </div>
-          <div>
-            <div class="muted">Fecha</div>
-            <input id="fecha" type="date" />
-          </div>
-          <div>
-            <div class="muted">Duración (min)</div>
-            <input id="duracion" inputmode="numeric" value="15" />
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px">
-          <div>
-            <div class="muted">Slot disponible</div>
-            <select id="slot"></select>
-          </div>
-          <div>
-            <div class="muted">Hora manual (sobreturno)</div>
-            <input id="horaManual" type="time" disabled />
-          </div>
-          <div>
-            <div class="muted">Copago (opcional)</div>
-            <input id="copago" inputmode="numeric" placeholder="0" />
-          </div>
-        </div>
-
-        <div style="margin-top:10px" class="inline">
-          <label class="inline" style="gap:8px">
-            <input id="chkSobreturno" type="checkbox" />
-            <span><b>Sobreturno</b> (se marca como sobreturno)</span>
-          </label>
-          <span id="lblSobreturno" class="tag" style="display:none"><b>SOBRETURNO</b></span>
-        </div>
-
-        <div style="margin-top:10px">
-          <div class="muted">Nota (opcional)</div>
-          <textarea id="nota" placeholder="Opcional"></textarea>
-        </div>
-
-        <div class="actions" style="margin-top:12px">
-          <button id="btnCrearTurno" class="primary" disabled>Crear</button>
-          <div class="error" id="errT"></div>
-          <div class="ok" id="okT"></div>
-        </div>
+        <div class="muted">Médico</div>
+        <select id="medico"></select>
       </div>
-
       <div>
-        <div class="pill green">Tip</div>
-        <div class="muted" style="margin-top:10px">
-          1) Buscá paciente por DNI (o crealo).<br/>
-          2) Elegí médico y fecha.<br/>
-          3) Si sobreturno: tildá “Sobreturno” y poné hora manual.<br/>
-          4) Crear.
-        </div>
+        <div class="muted">Fecha</div>
+        <input id="fecha" type="date" />
       </div>
+      <div>
+        <div class="muted">Copago (opcional)</div>
+        <input id="copago" inputmode="numeric" placeholder="0" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <div class="muted">Slot disponible</div>
+        <select id="slot"></select>
+      </div>
+      <div>
+        <div class="muted">Hora manual (sobreturno)</div>
+        <input id="horaManual" type="time" disabled />
+      </div>
+      <div>
+        <div class="muted"> </div>
+        <label class="inline" style="gap:8px;margin-top:8px">
+          <input id="chkSobreturno" type="checkbox" />
+          <span><b>Sobreturno</b></span>
+        </label>
+        <span id="lblSobreturno" class="tag" style="display:none;margin-top:8px"><b>SOBRETURNO</b></span>
+      </div>
+    </div>
+
+    <div style="margin-top:10px">
+      <div class="muted">Nota (opcional)</div>
+      <textarea id="nota" placeholder="Opcional"></textarea>
+    </div>
+
+    <div class="actions" style="margin-top:12px">
+      <button id="btnCrearTurno" class="primary" disabled>Crear</button>
+      <div class="error" id="errT"></div>
+      <div class="ok" id="okT"></div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="pill green">Tip</div>
+    <div class="muted" style="margin-top:10px">
+      1) Buscá paciente por DNI (o crealo).<br/>
+      2) Elegí médico y fecha (por defecto el primer día con turnos).<br/>
+      3) Si sobreturno: tildá “Sobreturno” y poné hora manual.<br/>
+      4) Crear.
     </div>
   </div>
 </div>
@@ -225,15 +214,27 @@ function isoDateARNow(){
   const d = parts.find(p=>p.type==="day").value;
   return `${y}-${m}-${d}`;
 }
+function addDaysISO(iso, n){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  dt.setUTCDate(dt.getUTCDate()+n);
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth()+1).padStart(2,"0");
+  const dd = String(dt.getUTCDate()).padStart(2,"0");
+  return `${yy}-${mm}-${dd}`;
+}
+function diffMinutes(a,b){
+  return Math.round((new Date(b).getTime() - new Date(a).getTime())/60000);
+}
 
 /* ===== GUARD + LOGOUT ===== */
 (async () => {
   const { data } = await sb.auth.getUser();
-  if (!data?.user) { window.location.href = "./login"; return; }
+  if (!data?.user) { window.location.href = "./login.html"; return; }
 
   document.getElementById("btnLogout").onclick = async () => {
     await sb.auth.signOut();
-    window.location.href = "./login";
+    window.location.href = "./login.html";
   };
 })();
 
@@ -251,12 +252,11 @@ const okP = document.getElementById("okP");
 
 const elMedico = document.getElementById("medico");
 const elFecha = document.getElementById("fecha");
-const elDur = document.getElementById("duracion");
 const elSlot = document.getElementById("slot");
 const elHoraManual = document.getElementById("horaManual");
 const elCopago = document.getElementById("copago");
 const elNota = document.getElementById("nota");
-const chkSob = document.getElementById("chkSobturno") || document.getElementById("chkSobreturno");
+const chkSob = document.getElementById("chkSobreturno");
 const lblSob = document.getElementById("lblSobreturno");
 const btnCrear = document.getElementById("btnCrearTurno");
 const errT = document.getElementById("errT");
@@ -270,10 +270,10 @@ const histBody = document.getElementById("histBody");
 const histTitle = document.getElementById("histTitle");
 
 let currentPacienteId = null;
+let currentDurMin = 15; // se setea desde slots (duración real)
 
 /* ===== Médicos ===== */
 async function cargarMedicos(){
-  // usa tu RPC existente
   const { data, error } = await sb.rpc("get_medicos_activos");
   if (error) throw error;
 
@@ -286,17 +286,40 @@ async function cargarMedicos(){
   });
 }
 
-/* ===== Slots ===== */
+/* ===== Fecha: primer día con slots ===== */
+async function setFechaPrimerDiaConSlots(){
+  if (!elMedico.value) return;
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 60);
+
+  const { data, error } = await sb.rpc("get_dias_con_slots", {
+    p_medico_id: elMedico.value,
+    p_desde: desde,
+    p_hasta: hasta
+  });
+  if (error) return; // si falla, no bloquea
+
+  const dias = (data||[]).map(x => x.fecha || x.dia || x.p_fecha || x); // tolerante
+  if (dias.length){
+    // si devuelve objetos con "fecha", se toma eso. Si devuelve date plano, también.
+    elFecha.value = (typeof dias[0] === "string") ? dias[0] : dias[0]?.toString?.() || desde;
+  } else {
+    elFecha.value = desde;
+  }
+}
+
+/* ===== Slots (RPC correcto: get_slots_dia) ===== */
 async function cargarSlots(){
   errT.textContent = "";
   elSlot.innerHTML = "";
 
   if (!elMedico.value || !elFecha.value) return;
 
-  const { data, error } = await sb.rpc("get_slots", {
+  const { data, error } = await sb.rpc("get_slots_dia", {
     p_medico_id: elMedico.value,
     p_fecha: elFecha.value
   });
+
   if (error){ errT.textContent = error.message; return; }
 
   const slots = data || [];
@@ -307,6 +330,9 @@ async function cargarSlots(){
     elSlot.appendChild(opt);
     return;
   }
+
+  // duración real (min) desde el primer slot
+  currentDurMin = diffMinutes(slots[0].inicio_slot, slots[0].fin_slot) || 15;
 
   slots.forEach(s=>{
     const opt = document.createElement("option");
@@ -347,18 +373,16 @@ async function buscarPaciente(){
   btnHistorial.disabled = false;
   btnCrear.disabled = false;
 
-  // warning ausentes
   const w = await sb.rpc("secre_warning_paciente", { p_paciente_id: currentPacienteId, p_anios: 2 });
   const aus = (w.data||[])[0]?.ausentes ?? 0;
   if (aus > 0){
     warnAusente.className = "pill red";
     warnAusente.textContent = `⚠ ${aus} ausente(s) en últimos 2 años`;
-    warnAusente.style.display = "inline-flex";
   } else {
     warnAusente.className = "pill green";
     warnAusente.textContent = "✅ Sin ausentes (2 años)";
-    warnAusente.style.display = "inline-flex";
   }
+  warnAusente.style.display = "inline-flex";
 }
 
 /* ===== Guardar paciente ===== */
@@ -428,21 +452,14 @@ async function crearTurno(){
   if (!elMedico.value){ errT.textContent="Elegí médico."; return; }
   if (!elFecha.value){ errT.textContent="Elegí fecha."; return; }
 
-  const dur = Number((elDur.value||"15").trim());
-  if (!dur || Number.isNaN(dur)){ errT.textContent="Duración inválida."; return; }
-
   const sob = chkSob.checked;
-
   let inicioISO = null;
 
   if (sob){
     const hm = (elHoraManual.value||"").trim();
     if (!hm){ errT.textContent="Ingresá hora manual."; return; }
-    // construir inicio en AR y pasar ISO en UTC via Date
-    const [hh, mm] = hm.split(":").map(Number);
-    const local = new Date(`${elFecha.value}T${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:00`);
-    // el backend ya usa timestamptz; mandamos ISO
-    inicioISO = local.toISOString();
+    // forzamos offset AR (evita líos de TZ del dispositivo)
+    inicioISO = `${elFecha.value}T${hm}:00-03:00`;
   } else {
     inicioISO = elSlot.value;
     if (!inicioISO){ errT.textContent="No hay slot disponible."; return; }
@@ -452,11 +469,11 @@ async function crearTurno(){
   const copagoNum = cop === "" ? null : Number(cop);
   if (cop !== "" && Number.isNaN(copagoNum)){ errT.textContent="Copago inválido."; return; }
 
-  const { data, error } = await sb.rpc("secre_crear_turno", {
+  const { error } = await sb.rpc("secre_crear_turno", {
     p_medico_id: elMedico.value,
     p_paciente_id: currentPacienteId,
     p_inicio: inicioISO,
-    p_duracion_min: dur,
+    p_duracion_min: currentDurMin,   // ✅ duración real (no UI)
     p_copago: copagoNum,
     p_nota: (elNota.value||"").trim() || null,
     p_sobreturno: sob,
@@ -466,8 +483,7 @@ async function crearTurno(){
   if (error){ errT.textContent = error.message; return; }
 
   okT.textContent = "✅ Turno creado.";
-  // refrescar slots para que desaparezca el tomado
-  await cargarSlots();
+  await cargarSlots(); // desaparece el slot tomado
 }
 
 /* ===== Sobreturno UI ===== */
@@ -496,12 +512,18 @@ document.getElementById("btnLimpiar").onclick = ()=>{
 
 /* ===== Init ===== */
 (async () => {
-  elFecha.value = isoDateARNow();
   await cargarMedicos();
+
+  // fecha por defecto = primer día con slots (si existe)
+  await setFechaPrimerDiaConSlots();
+
   await cargarSlots();
   syncSobreturnoUI();
 
-  elMedico.onchange = cargarSlots;
+  elMedico.onchange = async () => {
+    await setFechaPrimerDiaConSlots();
+    await cargarSlots();
+  };
   elFecha.onchange = cargarSlots;
 
   // Enter en DNI = buscar
