@@ -3,24 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ENDO · Secretaría</title>
+  <title>Secretaría · Turnos</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f7f8;color:#111}
+    :root{
+      --primary:#111;
+      --bg:#f6f7f8;
+      --card:#fff;
+      --border:#e7e7e7;
+      --muted:#666;
+      --danger:#b00020;
+      --ok:#0a7a27;
+    }
+
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:#111}
     .wrap{max-width:1100px;margin:0 auto;padding:18px}
     .header{display:flex;justify-content:space-between;gap:12px;align-items:center}
     .brand{font-weight:900}
-    .muted{color:#666;font-size:13px}
+    .muted{color:var(--muted);font-size:13px}
     .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .card{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:16px;margin:12px 0}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
     .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
     @media(max-width:900px){.row{grid-template-columns:1fr}}
+
     input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
     textarea{min-height:44px;resize:vertical}
+
     button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
-    button.primary{background:#111;color:#fff;border:0;font-weight:800}
+    button.primary{background:var(--primary);color:#fff;border:0;font-weight:800}
     button.small{padding:8px 10px;border-radius:10px;font-size:13px}
-    .error{color:#b00020;font-size:13px;margin-top:8px}
-    .ok{color:#0a7a27;font-size:13px;margin-top:8px}
+
+    .error{color:var(--danger);font-size:13px;margin-top:8px}
+    .ok{color:var(--ok);font-size:13px;margin-top:8px}
     .hr{height:1px;background:#eee;margin:14px 0}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
@@ -39,12 +52,14 @@
     th{color:#666;font-weight:700;text-align:left;font-size:12px}
   </style>
 </head>
+
 <body>
 <div class="wrap">
   <div class="header">
     <div>
-      <div class="brand">ENDO · Secretaría</div>
-      <div class="muted">Alta de turnos / sobreturnos</div>
+      <!-- Marca blanca -->
+      <div class="brand" id="brandTitle">Secretaría</div>
+      <div class="muted" id="brandSubtitle">Alta de turnos / sobreturnos</div>
     </div>
     <div class="right">
       <button id="btnBack" class="small">Volver a agenda</button>
@@ -108,7 +123,7 @@
     </div>
   </div>
 
-  <!-- 2) Crear turno (stack) -->
+  <!-- 2) Crear turno -->
   <div class="card">
     <div class="brand" style="font-weight:900">Crear turno</div>
     <div class="muted">Elegí médico + fecha. Si NO es sobreturno, usás slots disponibles. Si es sobreturno, ponés la hora manual.</div>
@@ -196,17 +211,90 @@
   </div>
 </div>
 
+<!-- ✅ config.js (NO hardcode anon key acá) -->
+<script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 /* ===== CONFIG ===== */
-const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A";
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  alert("Falta config.js (window.__SB__). Creá config.js junto al HTML.");
+}
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 const fmtDate = (ts)=> new Date(ts).toLocaleDateString("es-AR",{ timeZone: AR_TZ });
 const fmtHour = (ts)=> new Date(ts).toLocaleTimeString("es-AR",{ timeZone: AR_TZ, hour:"2-digit", minute:"2-digit" });
 
+/* ===== TENANT (por URL) =====
+   - recomendado: ?t=endo (slug)
+   - opcional: ?tenant_id=<uuid>
+*/
+const params = new URLSearchParams(window.location.search);
+const TENANT_SLUG_QS = (params.get("t") || "").trim();
+const TENANT_ID_QS   = (params.get("tenant_id") || "").trim();
+
+let TENANT_ID = null;
+let TENANT_SLUG = TENANT_SLUG_QS || null;
+
+function withTenant(url){
+  const u = new URL(url, window.location.href);
+  if (TENANT_SLUG) u.searchParams.set("t", TENANT_SLUG);
+  if (TENANT_ID) u.searchParams.set("tenant_id", TENANT_ID);
+  return u.pathname + (u.search ? u.search : "");
+}
+
+/* ===== Auto logout (inactividad) ===== */
+const IDLE_MIN = 20;
+let idleTimer = null;
+function resetIdle(){
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(async ()=>{
+    try{ await sb.auth.signOut(); }catch(e){}
+    window.location.href = withTenant("./login.html");
+  }, IDLE_MIN * 60 * 1000);
+}
+["click","keydown","mousemove","touchstart","scroll"].forEach(ev=> window.addEventListener(ev, resetIdle, {passive:true}));
+resetIdle();
+
+/* ===== DOM ===== */
+const brandTitle = document.getElementById("brandTitle");
+const brandSubtitle = document.getElementById("brandSubtitle");
+
+const elDni = document.getElementById("dni");
+const elNombre = document.getElementById("nombre");
+const elTel = document.getElementById("telefono");
+const elEmail = document.getElementById("email");
+const elOS = document.getElementById("obra_social");
+const elAf = document.getElementById("numero_afiliado");
+const errP = document.getElementById("errP");
+const okP = document.getElementById("okP");
+
+const elMedico = document.getElementById("medico");
+const elFecha = document.getElementById("fecha");
+const elSlot = document.getElementById("slot");
+const elHoraManual = document.getElementById("horaManual");
+const elCopago = document.getElementById("copago");
+const elNota = document.getElementById("nota");
+const chkSob = document.getElementById("chkSobturno") || document.getElementById("chkSobreturno"); // tolerante
+const lblSob = document.getElementById("lblSobreturno");
+const btnCrear = document.getElementById("btnCrearTurno");
+const errT = document.getElementById("errT");
+const okT = document.getElementById("okT");
+
+const btnHistorial = document.getElementById("btnHistorial");
+const warnAusente = document.getElementById("warnAusente");
+const modalBg = document.getElementById("modalBg");
+const btnCerrarModal = document.getElementById("btnCerrarModal");
+const histBody = document.getElementById("histBody");
+const histTitle = document.getElementById("histTitle");
+
+let currentPacienteId = null;
+let currentDurMin = 15;
+
+/* ===== Helpers ===== */
 function isoDateARNow(){
   const parts = new Intl.DateTimeFormat("en-CA",{ timeZone: AR_TZ, year:"numeric", month:"2-digit", day:"2-digit"}).formatToParts(new Date());
   const y = parts.find(p=>p.type==="year").value;
@@ -227,58 +315,97 @@ function diffMinutes(a,b){
   return Math.round((new Date(b).getTime() - new Date(a).getTime())/60000);
 }
 
-/* ===== GUARD + LOGOUT ===== */
-(async () => {
+/* ===== Auth guard + logout ===== */
+async function guard(){
   const { data } = await sb.auth.getUser();
-  if (!data?.user) { window.location.href = "./login.html"; return; }
+  if (!data?.user) { window.location.href = withTenant("./login.html"); return false; }
 
   document.getElementById("btnLogout").onclick = async () => {
     await sb.auth.signOut();
-    window.location.href = "./login.html";
+    window.location.href = withTenant("./login.html");
   };
-})();
+  return true;
+}
 
-document.getElementById("btnBack").onclick = ()=> window.location.href = "./secretaria.html";
+/* ===== Tenant branding ===== */
+async function cargarTenantBranding(){
+  // Si viene tenant_id directo
+  if (TENANT_ID_QS) TENANT_ID = TENANT_ID_QS;
 
-/* ===== DOM ===== */
-const elDni = document.getElementById("dni");
-const elNombre = document.getElementById("nombre");
-const elTel = document.getElementById("telefono");
-const elEmail = document.getElementById("email");
-const elOS = document.getElementById("obra_social");
-const elAf = document.getElementById("numero_afiliado");
-const errP = document.getElementById("errP");
-const okP = document.getElementById("okP");
+  // Si hay slug y no hay id, buscamos en Tenants
+  if (!TENANT_ID && TENANT_SLUG){
+    const { data, error } = await sb
+      .from("Tenants")
+      .select("id,nombre,theme,color_primario,color_secundario")
+      .eq("slug", TENANT_SLUG)
+      .eq("activo", true)
+      .maybeSingle();
 
-const elMedico = document.getElementById("medico");
-const elFecha = document.getElementById("fecha");
-const elSlot = document.getElementById("slot");
-const elHoraManual = document.getElementById("horaManual");
-const elCopago = document.getElementById("copago");
-const elNota = document.getElementById("nota");
-const chkSob = document.getElementById("chkSobreturno");
-const lblSob = document.getElementById("lblSobreturno");
-const btnCrear = document.getElementById("btnCrearTurno");
-const errT = document.getElementById("errT");
-const okT = document.getElementById("okT");
+    if (!error && data?.id){
+      TENANT_ID = data.id;
 
-const btnHistorial = document.getElementById("btnHistorial");
-const warnAusente = document.getElementById("warnAusente");
-const modalBg = document.getElementById("modalBg");
-const btnCerrarModal = document.getElementById("btnCerrarModal");
-const histBody = document.getElementById("histBody");
-const histTitle = document.getElementById("histTitle");
+      const title = data?.theme?.header?.title || data?.nombre || "Secretaría";
+      const subtitle = data?.theme?.header?.subtitle || "Alta de turnos / sobreturnos";
+      brandTitle.textContent = title;
+      brandSubtitle.textContent = subtitle;
 
-let currentPacienteId = null;
-let currentDurMin = 15; // se setea desde slots (duración real)
+      const c1 = data.color_primario || "#111";
+      const c2 = data.color_secundario || "#f6f7f8";
+      document.documentElement.style.setProperty("--primary", c1);
+      document.documentElement.style.setProperty("--bg", c2);
+      document.title = `${title} · Turnos Secretaría`;
+      return;
+    }
+  }
 
-/* ===== Médicos ===== */
-async function cargarMedicos(){
-  const { data, error } = await sb.rpc("get_medicos_activos");
-  if (error) throw error;
+  // Si no hay tenant, queda marca blanca
+  brandTitle.textContent = "Secretaría";
+  brandSubtitle.textContent = "Alta de turnos / sobreturnos";
+}
 
+/* ===== Médicos por tenant ===== */
+let MEDICOS_TENANT = [];
+let MEDICOS_TENANT_SET = new Set();
+
+async function cargarMedicosTenant(){
+  errT.textContent = "";
   elMedico.innerHTML = "";
-  (data||[]).forEach(m=>{
+
+  if (!TENANT_ID){
+    // sin tenant: no cargamos nada (mejor bloquear)
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Falta ?t=... o ?tenant_id=...";
+    elMedico.appendChild(opt);
+    MEDICOS_TENANT = [];
+    MEDICOS_TENANT_SET = new Set();
+    return;
+  }
+
+  const { data, error } = await sb
+    .from("Medicos")
+    .select('id,"Nombre",activo,tenant_id')
+    .eq("tenant_id", TENANT_ID)
+    .eq("activo", true)
+    .order("Nombre", { ascending:true });
+
+  if (error){
+    errT.textContent = `No pude cargar médicos del tenant. ${error.message}`;
+    return;
+  }
+
+  MEDICOS_TENANT = (data||[]).map(m=>({ id:m.id, nombre:m["Nombre"] }));
+  MEDICOS_TENANT_SET = new Set(MEDICOS_TENANT.map(m=>String(m.id)));
+
+  if (!MEDICOS_TENANT.length){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Sin médicos activos";
+    elMedico.appendChild(opt);
+    return;
+  }
+
+  MEDICOS_TENANT.forEach(m=>{
     const opt = document.createElement("option");
     opt.value = m.id;
     opt.textContent = m.nombre;
@@ -289,6 +416,9 @@ async function cargarMedicos(){
 /* ===== Fecha: primer día con slots ===== */
 async function setFechaPrimerDiaConSlots(){
   if (!elMedico.value) return;
+  // seguridad: el médico seleccionado debe pertenecer al tenant
+  if (!MEDICOS_TENANT_SET.has(String(elMedico.value))) return;
+
   const desde = isoDateARNow();
   const hasta = addDaysISO(desde, 60);
 
@@ -297,23 +427,27 @@ async function setFechaPrimerDiaConSlots(){
     p_desde: desde,
     p_hasta: hasta
   });
-  if (error) return; // si falla, no bloquea
-
-  const dias = (data||[]).map(x => x.fecha || x.dia || x.p_fecha || x); // tolerante
-  if (dias.length){
-    // si devuelve objetos con "fecha", se toma eso. Si devuelve date plano, también.
-    elFecha.value = (typeof dias[0] === "string") ? dias[0] : dias[0]?.toString?.() || desde;
-  } else {
+  if (error) {
+    // fallback
     elFecha.value = desde;
+    return;
   }
+
+  const dias = (data||[]).map(x => x.dia ?? x.fecha ?? x.p_fecha ?? x);
+  if (dias.length && typeof dias[0] === "string") elFecha.value = dias[0];
+  else elFecha.value = desde;
 }
 
-/* ===== Slots (RPC correcto: get_slots_dia) ===== */
+/* ===== Slots ===== */
 async function cargarSlots(){
   errT.textContent = "";
   elSlot.innerHTML = "";
 
   if (!elMedico.value || !elFecha.value) return;
+  if (!MEDICOS_TENANT_SET.has(String(elMedico.value))) {
+    errT.textContent = "Médico inválido para este tenant.";
+    return;
+  }
 
   const { data, error } = await sb.rpc("get_slots_dia", {
     p_medico_id: elMedico.value,
@@ -331,12 +465,11 @@ async function cargarSlots(){
     return;
   }
 
-  // duración real (min) desde el primer slot
   currentDurMin = diffMinutes(slots[0].inicio_slot, slots[0].fin_slot) || 15;
 
   slots.forEach(s=>{
     const opt = document.createElement("option");
-    opt.value = s.inicio_slot; // timestamptz string
+    opt.value = s.inicio_slot;
     opt.textContent = fmtHour(s.inicio_slot);
     elSlot.appendChild(opt);
   });
@@ -450,6 +583,7 @@ async function crearTurno(){
   errT.textContent=""; okT.textContent="";
   if (!currentPacienteId){ errT.textContent="Primero buscá/guardá el paciente."; return; }
   if (!elMedico.value){ errT.textContent="Elegí médico."; return; }
+  if (!MEDICOS_TENANT_SET.has(String(elMedico.value))){ errT.textContent="Médico inválido para este tenant."; return; }
   if (!elFecha.value){ errT.textContent="Elegí fecha."; return; }
 
   const sob = chkSob.checked;
@@ -458,7 +592,6 @@ async function crearTurno(){
   if (sob){
     const hm = (elHoraManual.value||"").trim();
     if (!hm){ errT.textContent="Ingresá hora manual."; return; }
-    // forzamos offset AR (evita líos de TZ del dispositivo)
     inicioISO = `${elFecha.value}T${hm}:00-03:00`;
   } else {
     inicioISO = elSlot.value;
@@ -473,7 +606,7 @@ async function crearTurno(){
     p_medico_id: elMedico.value,
     p_paciente_id: currentPacienteId,
     p_inicio: inicioISO,
-    p_duracion_min: currentDurMin,   // ✅ duración real (no UI)
+    p_duracion_min: currentDurMin,
     p_copago: copagoNum,
     p_nota: (elNota.value||"").trim() || null,
     p_sobreturno: sob,
@@ -483,7 +616,7 @@ async function crearTurno(){
   if (error){ errT.textContent = error.message; return; }
 
   okT.textContent = "✅ Turno creado.";
-  await cargarSlots(); // desaparece el slot tomado
+  await cargarSlots();
 }
 
 /* ===== Sobreturno UI ===== */
@@ -510,14 +643,26 @@ document.getElementById("btnLimpiar").onclick = ()=>{
   elNombre.value=""; elTel.value=""; elEmail.value=""; elOS.value=""; elAf.value="";
 };
 
+/* ===== Nav ===== */
+document.getElementById("btnBack").onclick = ()=> window.location.href = withTenant("./secretaria.html");
+
 /* ===== Init ===== */
 (async () => {
-  await cargarMedicos();
+  const ok = await guard();
+  if (!ok) return;
 
-  // fecha por defecto = primer día con slots (si existe)
-  await setFechaPrimerDiaConSlots();
+  await cargarTenantBranding();
+  await cargarMedicosTenant();
 
-  await cargarSlots();
+  // defaults
+  elFecha.value = isoDateARNow();
+
+  // si hay médicos, setear primer día con slots
+  if (elMedico.value){
+    await setFechaPrimerDiaConSlots();
+    await cargarSlots();
+  }
+
   syncSobreturnoUI();
 
   elMedico.onchange = async () => {
