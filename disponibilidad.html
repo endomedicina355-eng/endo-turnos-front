@@ -3,15 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ENDO · Disponibilidad</title>
+  <title>Disponibilidad</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f7f8;color:#111}
+    :root{
+      --primary:#111;
+      --bg:#f6f7f8;
+      --card:#fff;
+      --border:#e7e7e7;
+      --muted:#666;
+      --danger:#b00020;
+      --ok:#0a7a27;
+    }
+
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:#111}
     .wrap{max-width:1100px;margin:0 auto;padding:18px}
     .header{display:flex;justify-content:space-between;gap:12px;align-items:center}
     .brand{font-weight:900}
-    .muted{color:#666;font-size:13px}
+    .muted{color:var(--muted);font-size:13px}
     .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .card{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:16px;margin:12px 0}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
     .grid2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
     @media(max-width:900px){.grid2{grid-template-columns:1fr}}
     .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
@@ -19,31 +29,38 @@
     input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
     textarea{min-height:44px;resize:vertical}
     button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
-    button.primary{background:#111;color:#fff;border:0;font-weight:800}
+    button.primary{background:var(--primary);color:#fff;border:0;font-weight:800}
     button.small{padding:8px 10px;border-radius:10px;font-size:13px}
-    .error{color:#b00020;font-size:13px;margin-top:8px}
-    .ok{color:#0a7a27;font-size:13px;margin-top:8px}
+    button.danger{background:#fde2e6;border-color:#f2b7c2;color:#842029;font-weight:900}
+    .error{color:var(--danger);font-size:13px;margin-top:8px}
+    .ok{color:var(--ok);font-size:13px;margin-top:8px}
     .hr{height:1px;background:#eee;margin:14px 0}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+    .pill.danger{background:#fde2e6;border-color:#f2b7c2;color:#842029;font-weight:800}
     .tag{font-size:12px;border:1px solid #ddd;border-radius:999px;padding:4px 8px;display:inline-block}
     table{width:100%;border-collapse:collapse}
     th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
     th{color:#666;font-weight:700;text-align:left;font-size:12px}
 
-    .mini{font-size:12px;color:#666}
+    .mini{font-size:12px;color:var(--muted)}
     .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .w120{max-width:140px}
     .w160{max-width:190px}
-    .danger{background:#fde2e6;border-color:#f2b7c2;color:#842029;font-weight:800}
+
+    .statePill{display:inline-flex;align-items:center;gap:8px;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+    .statePill.on{background:#dff5e5;border-color:#a7e1b7;color:#0f5132;font-weight:900}
+    .statePill.off{background:#fde2e6;border-color:#f2b7c2;color:#842029;font-weight:900}
   </style>
 </head>
+
 <body>
 <div class="wrap">
   <div class="header">
     <div>
-      <div class="brand">ENDO · Médicos / Disponibilidad</div>
-      <div class="muted">Alta de médico · Duración · Ventanas horarias · Ausencias · Feriados/Bloqueos</div>
+      <!-- Marca blanca -->
+      <div class="brand" id="brandTitle">Médicos / Disponibilidad</div>
+      <div class="muted" id="brandSubtitle">Alta · Duración · Ventanas · Ausencias · Bloqueos globales</div>
     </div>
     <div class="right">
       <button id="btnBack" class="small" type="button">Volver a agenda</button>
@@ -91,10 +108,10 @@
     </div>
   </div>
 
-  <!-- 2) Duración + selector médico -->
+  <!-- 2) Duración + activar/inactivar -->
   <div class="card">
     <div class="brand">2) Configurar duración</div>
-    <div class="muted">Seleccioná médico y guardá duración (min).</div>
+    <div class="muted">Seleccioná médico y guardá duración (min). También podés activar/inactivar.</div>
     <div class="hr"></div>
 
     <div class="row">
@@ -118,11 +135,21 @@
       </div>
     </div>
 
+    <div class="inline" style="margin-top:10px; justify-content:space-between">
+      <div class="inline">
+        <span class="statePill" id="medicoEstadoPill">Estado: —</span>
+        <span class="mini" id="medicoEstadoHint"></span>
+      </div>
+      <div class="inline">
+        <button id="btnToggleActivo" class="danger small" type="button" disabled>Inactivar</button>
+      </div>
+    </div>
+
     <div class="error" id="errDur"></div>
     <div class="ok" id="okDur"></div>
   </div>
 
-  <!-- 3) Disponibilidad (multi-ventana por día) -->
+  <!-- 3) Disponibilidad -->
   <div class="card">
     <div class="brand">3) Disponibilidad (días y ventanas horarias)</div>
     <div class="muted">Cada día puede tener 0, 1 o 2 ventanas (mañana/tarde).</div>
@@ -205,10 +232,10 @@
     </div>
   </div>
 
-  <!-- 5) Feriados / bloqueos globales -->
+  <!-- 5) Bloqueos globales -->
   <div class="card">
     <div class="brand">5) Feriados / bloqueos globales</div>
-    <div class="muted">Bloquea fechas/rangos para TODOS los médicos (ej: 9 de julio). Puede ser día entero o parcial.</div>
+    <div class="muted">Bloquea fechas/rangos para TODOS los médicos.</div>
     <div class="hr"></div>
 
     <div class="row">
@@ -254,29 +281,94 @@
 
 </div>
 
+<!-- ✅ config.js (NO hardcode anon key acá) -->
+<script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ===== CONFIG ===== */
-const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A"; // <-- pegá tu key real
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) alert("Falta config.js (window.__SB__).");
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 const fmtDT = (ts)=> new Date(ts).toLocaleString("es-AR",{ timeZone: AR_TZ, year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit" });
 
-/* ===== NAV ===== */
-document.getElementById("btnBack").onclick = ()=> window.location.href = "./secretaria.html";
+/* ===== TENANT (por URL) ===== */
+const params = new URLSearchParams(window.location.search);
+const TENANT_SLUG_QS = (params.get("t") || "").trim();
+const TENANT_ID_QS   = (params.get("tenant_id") || "").trim();
 
-/* ===== AUTH ===== */
-(async () => {
+let TENANT_ID = null;
+let TENANT_SLUG = TENANT_SLUG_QS || null;
+
+function withTenant(url){
+  const u = new URL(url, window.location.href);
+  if (TENANT_SLUG) u.searchParams.set("t", TENANT_SLUG);
+  if (TENANT_ID) u.searchParams.set("tenant_id", TENANT_ID);
+  return u.pathname + (u.search ? u.search : "");
+}
+
+/* ===== Auto logout (inactividad) ===== */
+const IDLE_MIN = 20;
+let idleTimer = null;
+function resetIdle(){
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(async ()=>{
+    try{ await sb.auth.signOut(); }catch(e){}
+    window.location.href = withTenant("./login.html");
+  }, IDLE_MIN * 60 * 1000);
+}
+["click","keydown","mousemove","touchstart","scroll"].forEach(ev=> window.addEventListener(ev, resetIdle, {passive:true}));
+resetIdle();
+
+/* ===== NAV ===== */
+document.getElementById("btnBack").onclick = ()=> window.location.href = withTenant("./secretaria.html");
+
+/* ===== AUTH GUARD ===== */
+async function guard(){
   const { data } = await sb.auth.getUser();
-  if (!data?.user) { window.location.href = "./login.html"; return; }
+  if (!data?.user) { window.location.href = withTenant("./login.html"); return false; }
 
   document.getElementById("btnLogout").onclick = async () => {
     await sb.auth.signOut();
-    window.location.href = "./login.html";
+    window.location.href = withTenant("./login.html");
   };
-})();
+  return true;
+}
+
+/* ===== Branding tenant ===== */
+const brandTitle = document.getElementById("brandTitle");
+const brandSubtitle = document.getElementById("brandSubtitle");
+
+async function cargarTenantBranding(){
+  if (TENANT_ID_QS) TENANT_ID = TENANT_ID_QS;
+
+  if (!TENANT_ID && TENANT_SLUG){
+    const { data, error } = await sb
+      .from("Tenants")
+      .select("id,nombre,theme,color_primario,color_secundario")
+      .eq("slug", TENANT_SLUG)
+      .eq("activo", true)
+      .maybeSingle();
+
+    if (!error && data?.id){
+      TENANT_ID = data.id;
+
+      const title = data?.theme?.header?.title || data?.nombre || "Disponibilidad";
+      const subtitle = data?.theme?.header?.subtitle || "Médicos / Disponibilidad";
+      brandTitle.textContent = `${title} · Médicos / Disponibilidad`;
+      brandSubtitle.textContent = subtitle;
+
+      const c1 = data.color_primario || "#111";
+      const c2 = data.color_secundario || "#f6f7f8";
+      document.documentElement.style.setProperty("--primary", c1);
+      document.documentElement.style.setProperty("--bg", c2);
+      document.title = `${title} · Disponibilidad`;
+      return;
+    }
+  }
+}
 
 /* ===== DOM ===== */
 const errAlta = document.getElementById("errAlta");
@@ -304,39 +396,89 @@ const selMedicoAus   = document.getElementById("selMedicoAus");
 
 const duracionMin = document.getElementById("duracionMin");
 
+const medicoEstadoPill = document.getElementById("medicoEstadoPill");
+const medicoEstadoHint = document.getElementById("medicoEstadoHint");
+const btnToggleActivo  = document.getElementById("btnToggleActivo");
+
 /* ===== Helpers ===== */
 function clearMsgs(){ [errAlta,okAlta,errDur,okDur,errDispo,okDispo,errAus,okAus,errG,okG].forEach(x=>x.textContent=""); }
 function setOk(el,msg){ el.textContent = msg; setTimeout(()=>{ if(el.textContent===msg) el.textContent=""; }, 1600); }
 function setErr(el,msg){ el.textContent = msg; }
+function toISOFromLocal(dtLocalStr){ return new Date(dtLocalStr).toISOString(); }
 
-function toISOFromLocal(dtLocalStr){
-  // dt-local viene sin TZ; lo convertimos a ISO con TZ del navegador
-  return new Date(dtLocalStr).toISOString();
-}
+/* ===== Médicos por tenant ===== */
+let MEDICOS_TENANT = []; // {id,nombre,activo,especialidad,duracion_min}
+let MEDICOS_MAP = new Map();
 
-/* ===== Médicos (usa tu RPC actual) ===== */
 async function cargarMedicosSelects(){
-  // Si querés ver inactivos también, podés cambiar a cfg_list_medicos.
-  const { data, error } = await sb.rpc("get_medicos_activos");
-  if (error) throw error;
+  clearMsgs();
 
-  const meds = data || [];
+  if (!TENANT_ID){
+    setErr(errDur, "Falta tenant en URL. Usá ?t=endo o ?tenant_id=...");
+    [selMedicoDur, selMedicoDispo, selMedicoAus].forEach(s=> s.innerHTML = `<option value="">—</option>`);
+    return;
+  }
+
+  // Traemos activos e inactivos (para poder reactivar)
+  const { data, error } = await sb
+    .from("Medicos")
+    .select('id,"Nombre",especialidad,activo,duracion_min,tenant_id')
+    .eq("tenant_id", TENANT_ID)
+    .order("Nombre", { ascending:true });
+
+  if (error){ setErr(errDur, error.message); return; }
+
+  MEDICOS_TENANT = (data||[]).map(m=>({
+    id: m.id,
+    nombre: m["Nombre"] || "—",
+    especialidad: m.especialidad || null,
+    activo: !!m.activo,
+    duracion_min: m.duracion_min ?? null
+  }));
+  MEDICOS_MAP = new Map(MEDICOS_TENANT.map(m=>[String(m.id), m]));
+
   const fills = [selMedicoDur, selMedicoDispo, selMedicoAus];
   fills.forEach(sel=>{
     sel.innerHTML = "";
-    meds.forEach(m=>{
+    MEDICOS_TENANT.forEach(m=>{
       const opt = document.createElement("option");
       opt.value = m.id;
-      opt.textContent = m.nombre;
+      opt.textContent = `${m.nombre}${m.activo ? "" : " (INACTIVO)"}`;
       sel.appendChild(opt);
     });
   });
+
+  // sincronizar estado UI
+  syncMedicoEstadoUI();
 }
 
-/* ===== 1) Alta médico (cfg_crear_medico) ===== */
+function syncMedicoEstadoUI(){
+  const mid = selMedicoDur.value;
+  const m = MEDICOS_MAP.get(String(mid));
+  if (!m){
+    medicoEstadoPill.textContent = "Estado: —";
+    medicoEstadoPill.className = "statePill";
+    medicoEstadoHint.textContent = "";
+    btnToggleActivo.disabled = true;
+    return;
+  }
+
+  const isOn = !!m.activo;
+  medicoEstadoPill.textContent = "Estado: " + (isOn ? "Activo" : "Inactivo");
+  medicoEstadoPill.className = "statePill " + (isOn ? "on" : "off");
+  medicoEstadoHint.textContent = isOn ? "Se muestra para autogestión y agenda." : "No aparece en autogestión (y podés reactivarlo).";
+
+  btnToggleActivo.disabled = false;
+  btnToggleActivo.textContent = isOn ? "Inactivar" : "Activar";
+  btnToggleActivo.className = (isOn ? "danger small" : "small"); // activar = neutro
+}
+
+/* ===== 1) Alta médico ===== */
 document.getElementById("btnCrearMedico").onclick = async ()=>{
   clearMsgs();
   try{
+    if (!TENANT_ID) return setErr(errAlta,"Falta tenant en URL.");
+
     const nombre = (document.getElementById("m_nombre").value||"").trim();
     const especialidad = (document.getElementById("m_especialidad").value||"").trim() || null;
     const duracion = Number(document.getElementById("m_duracion").value);
@@ -344,7 +486,9 @@ document.getElementById("btnCrearMedico").onclick = async ()=>{
 
     if(!nombre) return setErr(errAlta,"Ingresá nombre.");
 
+    // ⚠️ RPC debe setear tenant_id = TENANT_ID
     const { error } = await sb.rpc("cfg_crear_medico", {
+      p_tenant_id: TENANT_ID,
       p_nombre: nombre,
       p_especialidad: especialidad,
       p_activo: activo,
@@ -359,7 +503,7 @@ document.getElementById("btnCrearMedico").onclick = async ()=>{
   }
 };
 
-/* ===== 2) Duración (cfg_set_duracion_medico) ===== */
+/* ===== 2) Duración ===== */
 document.getElementById("btnGuardarDur").onclick = async ()=>{
   clearMsgs();
   try{
@@ -379,15 +523,50 @@ document.getElementById("btnGuardarDur").onclick = async ()=>{
   }
 };
 
-/* ===== 3) Disponibilidad multi-ventana (cfg_get / cfg_set_disponibilidad_ventanas) ===== */
+/* ===== ✅ Activar / Inactivar médico ===== */
+btnToggleActivo.onclick = async ()=>{
+  clearMsgs();
+  try{
+    const medicoId = selMedicoDur.value;
+    const m = MEDICOS_MAP.get(String(medicoId));
+    if (!m) return;
+
+    const wantActive = !m.activo;
+    const msg = wantActive
+      ? `¿Reactivar a ${m.nombre}?`
+      : `¿Inactivar a ${m.nombre}?\n\n⚠️ Deja de aparecer para autogestión y agenda (historial no se borra).`;
+    if (!confirm(msg)) return;
+
+    // ✅ RPC recomendada
+    const { error } = await sb.rpc("cfg_set_medico_activo", {
+      p_medico_id: medicoId,
+      p_activo: wantActive
+    });
+    if (error) throw error;
+
+    setOk(okDur, wantActive ? "✅ Médico activado." : "✅ Médico inactivado.");
+
+    // refresca cache + selects
+    await cargarMedicosSelects();
+
+    // si el médico inactivado estaba seleccionado en otros bloques, mantenemos selección si existe
+    // (ya se recargó el select; por simplicidad, queda seleccionado el primero si no coincide)
+  }catch(e){
+    setErr(errDur, e.message || String(e));
+  }
+};
+
+selMedicoDur.onchange = ()=> {
+  // sugerir duración actual si viene en datos
+  const m = MEDICOS_MAP.get(String(selMedicoDur.value));
+  if (m?.duracion_min) duracionMin.value = String(m.duracion_min);
+  syncMedicoEstadoUI();
+};
+
+/* ===== 3) Disponibilidad multi-ventana ===== */
 const DIAS = [
-  {i:1, label:"Lun"},
-  {i:2, label:"Mar"},
-  {i:3, label:"Mié"},
-  {i:4, label:"Jue"},
-  {i:5, label:"Vie"},
-  {i:6, label:"Sáb"},
-  {i:0, label:"Dom"},
+  {i:1, label:"Lun"}, {i:2, label:"Mar"}, {i:3, label:"Mié"}, {i:4, label:"Jue"},
+  {i:5, label:"Vie"}, {i:6, label:"Sáb"}, {i:0, label:"Dom"},
 ];
 
 function renderDispo(dispMap){
@@ -473,13 +652,21 @@ function renderDispo(dispMap){
   });
 }
 
-let dispoDraft = {}; // map día -> ventanas
+let dispoDraft = {};
 
 async function cargarDispo(){
   clearMsgs();
   try{
     const medicoId = selMedicoDispo.value;
     if(!medicoId) return setErr(errDispo,"Elegí médico.");
+
+    // opcional: impedir configurar dispo de inactivos (a tu gusto)
+    const m = MEDICOS_MAP.get(String(medicoId));
+    if (m && !m.activo){
+      setErr(errDispo,"Este médico está INACTIVO. Activarlo para configurar disponibilidad.");
+      dispoBox.innerHTML = "";
+      return;
+    }
 
     const { data, error } = await sb.rpc("cfg_get_disponibilidad_ventanas", { p_medico_id: medicoId });
     if(error) throw error;
@@ -491,7 +678,6 @@ async function cargarDispo(){
       map[d] ||= [];
       map[d].push({ hora_inicio: r.hora_inicio, hora_fin: r.hora_fin });
     });
-
     Object.keys(map).forEach(k=>{
       map[k].sort((a,b)=> (a.hora_inicio||"").localeCompare(b.hora_inicio||""));
     });
@@ -512,22 +698,15 @@ document.getElementById("btnGuardarDispo").onclick = async ()=>{
     const medicoId = selMedicoDispo.value;
     if(!medicoId) return setErr(errDispo,"Elegí médico.");
 
-    // normalizar: solo ventanas válidas
     const payload = [];
     Object.entries(dispoDraft).forEach(([dia, arr])=>{
       (arr||[]).forEach(w=>{
         if(!w.hora_inicio || !w.hora_fin) return;
         if(w.hora_inicio >= w.hora_fin) return;
-        payload.push({
-          dia_semana: Number(dia),
-          hora_inicio: w.hora_inicio,
-          hora_fin: w.hora_fin,
-          activo: true
-        });
+        payload.push({ dia_semana:Number(dia), hora_inicio:w.hora_inicio, hora_fin:w.hora_fin, activo:true });
       });
     });
 
-    // cfg_set_disponibilidad_ventanas(p_medico_id uuid, p_windows jsonb)
     const { error } = await sb.rpc("cfg_set_disponibilidad_ventanas", {
       p_medico_id: medicoId,
       p_windows: payload
@@ -541,7 +720,7 @@ document.getElementById("btnGuardarDispo").onclick = async ()=>{
   }
 };
 
-/* ===== 4) Ausencias por médico (bloqueos) ===== */
+/* ===== 4) Ausencias ===== */
 async function cargarAusencias(){
   ausBody.innerHTML = "";
   clearMsgs();
@@ -624,7 +803,7 @@ document.getElementById("btnAddAus").onclick = async ()=>{
 
 selMedicoAus.onchange = cargarAusencias;
 
-/* ===== 5) Bloqueos globales ===== */
+/* ===== 5) Globales ===== */
 async function cargarGlobales(){
   gBody.innerHTML = "";
   clearMsgs();
@@ -700,11 +879,28 @@ document.getElementById("btnAddGlobal").onclick = async ()=>{
 
 /* ===== INIT ===== */
 document.addEventListener("DOMContentLoaded", async ()=>{
+  const ok = await guard();
+  if (!ok) return;
+
+  await cargarTenantBranding();
+
   duracionMin.value = "15";
   await cargarMedicosSelects();
+
+  // defaults de selects / estado
+  syncMedicoEstadoUI();
+
+  // Si hay duración guardada en el médico seleccionado, la aplico
+  const m0 = MEDICOS_MAP.get(String(selMedicoDur.value));
+  if (m0?.duracion_min) duracionMin.value = String(m0.duracion_min);
+
   await cargarDispo();
   await cargarAusencias();
   await cargarGlobales();
+
+  // recargar dispo/aus al cambiar medico
+  selMedicoDispo.onchange = cargarDispo;
+  selMedicoAus.onchange = cargarAusencias;
 });
 </script>
 </body>
