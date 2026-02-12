@@ -3,16 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ENDO Medicina · Turnos</title>
+  <title>Turnos online</title>
 
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; background:#f6f7f8; color:#111;}
+    :root{
+      --primary:#111111;
+      --bg:#f6f7f8;
+      --card:#ffffff;
+      --border:#e7e7e7;
+      --muted:#666;
+      --danger:#b00020;
+      --ok:#0a7a27;
+      --selBg: rgba(17,17,17,.10);
+      --selBorder:#111;
+    }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; background:var(--bg); color:#111;}
     .wrap{max-width:980px; margin:0 auto; padding:18px;}
-    .card{background:#fff; border:1px solid #e7e7e7; border-radius:14px; padding:16px; margin:12px 0;}
+    .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin:12px 0;}
     .header{display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
-    .brand{font-weight:800}
-    .muted{color:#666; font-size:13px}
+    .brand{font-weight:900; font-size:20px; line-height:1.1}
+    .muted{color:var(--muted); font-size:13px}
     .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #ddd; font-size:12px; background:#fff}
+
+    /* Info médico más grande */
+    #medicoLine{font-size:16px; font-weight:800; color:#111; margin-top:6px}
+    #espLine{font-size:14px; font-weight:700; color:#333; margin-top:2px}
 
     .grid{display:grid; grid-template-columns:1fr; gap:12px;}
     @media(min-width:900px){ .grid{grid-template-columns:1.1fr .9fr;} }
@@ -21,29 +36,46 @@
     .calWrap{display:grid; gap:12px;}
     @media(min-width:740px){ .calWrap{grid-template-columns:1fr 1fr;} }
     .month{border:1px solid #eee; border-radius:14px; padding:12px;}
-    .monthTitle{font-weight:800; margin:0 0 8px 0;}
+    .monthTitle{font-weight:900; margin:0 0 8px 0;}
     .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px;}
     .dow div{font-size:12px; color:#777; text-align:center;}
     .daysGrid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
-    .dayCell{height:38px; border-radius:10px; border:1px solid #eee; background:#fff; cursor:pointer; font-size:13px;}
+
+    .dayCell{
+      height:38px;
+      border-radius:12px;
+      border:1px solid #eee;
+      background:#fff;
+      cursor:pointer;
+      font-size:13px;
+      transition: transform .05s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .dayCell:hover:not(:disabled){ box-shadow:0 2px 10px rgba(0,0,0,.06); transform:translateY(-1px); }
     .dayCell:disabled{opacity:.35; cursor:not-allowed; background:#fafafa;}
-    .dayCell.active{border-color:#111; box-shadow:0 1px 0 rgba(0,0,0,.06)}
     .dayCell.inRange{border-color:#ddd;}
-    .dayCell.empty{border:0; background:transparent; cursor:default;}
+    .dayCell.empty{border:0; background:transparent; cursor:default; box-shadow:none;}
+
+    /* ✅ Seleccionado bien visible */
+    .dayCell.active{
+      background: var(--selBg);
+      border-color: var(--selBorder);
+      box-shadow: 0 0 0 2px rgba(17,17,17,.12);
+      font-weight:900;
+    }
 
     .slots{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
     @media(max-width:520px){ .slots{grid-template-columns:repeat(2, minmax(0,1fr));} }
     .slotbtn{border:1px solid #ddd; background:#fff; border-radius:12px; padding:10px; cursor:pointer; text-align:center}
-    .slotbtn.active{border-color:#111}
+    .slotbtn.active{border-color:var(--primary); box-shadow:0 0 0 2px rgba(17,17,17,.10); font-weight:900}
 
     .row{display:grid; gap:10px; grid-template-columns:1fr 1fr}
     @media(max-width:700px){ .row{grid-template-columns:1fr} }
 
     input{width:100%; padding:10px 12px; border-radius:12px; border:1px solid #ddd; font-size:14px}
-    button.primary{background:#111; color:#fff; border:0; border-radius:12px; padding:12px 14px; font-weight:700; cursor:pointer; width:100%}
+    button.primary{background:var(--primary); color:#fff; border:0; border-radius:12px; padding:12px 14px; font-weight:900; cursor:pointer; width:100%}
     button.primary:disabled{opacity:.45}
-    .error{color:#b00020; font-size:13px}
-    .ok{color:#0a7a27; font-size:13px}
+    .error{color:var(--danger); font-size:13px}
+    .ok{color:var(--ok); font-size:13px}
 
     .checks{display:flex; gap:14px; flex-wrap:wrap; margin-top:10px;}
     .checkItem{display:flex; align-items:center; gap:8px; font-size:13px; color:#333;}
@@ -57,7 +89,7 @@
     }
     .modal{
       width:min(560px, 100%);
-      background:#fff; border-radius:16px; border:1px solid #e7e7e7;
+      background:#fff; border-radius:16px; border:1px solid var(--border);
       padding:16px;
       box-shadow:0 10px 40px rgba(0,0,0,.25);
     }
@@ -68,11 +100,11 @@
     .modalBtns{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
     .btnGhost{
       background:#fff; border:1px solid #ddd; border-radius:12px; padding:12px 14px;
-      font-weight:700; cursor:pointer; width:100%;
+      font-weight:900; cursor:pointer; width:100%;
     }
     .btnDanger{
       background:#fff; border:1px solid #ddd; border-radius:12px; padding:12px 14px;
-      font-weight:700; cursor:pointer; width:100%;
+      font-weight:900; cursor:pointer; width:100%;
     }
   </style>
 </head>
@@ -81,8 +113,10 @@
 <div class="wrap">
   <div class="header">
     <div>
-      <div class="brand">ENDO Medicina</div>
-      <div class="muted">Turnos online</div>
+      <!-- ✅ Marca blanca: se llena desde Tenants -->
+      <div class="brand" id="tenantTitle">Turnos online</div>
+      <div class="muted" id="tenantSubtitle">Reservá tu turno</div>
+
       <div class="muted" id="medicoLine">Médico: —</div>
       <div class="muted" id="espLine"></div>
     </div>
@@ -97,13 +131,13 @@
 
   <div class="grid">
     <div class="card">
-      <div style="font-weight:800" id="dayTitle">Horarios</div>
+      <div style="font-weight:900" id="dayTitle">Horarios</div>
       <div class="slots" id="slots"></div>
       <div class="error" id="errSlots"></div>
     </div>
 
     <div class="card">
-      <div style="font-weight:800">Confirmar turno</div>
+      <div style="font-weight:900">Confirmar turno</div>
       <div class="muted">Seleccionado: <b id="chosenSlot">—</b></div>
 
       <div class="row" style="margin-top:10px">
@@ -167,8 +201,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ================= PARAMS ================= */
 const params = new URLSearchParams(window.location.search);
-const MEDICO_ID_QS = params.get("medico_id"); // legacy
-const SLUG_QS = params.get("m");              // nuevo: ?m=slug
+const TENANT_SLUG_QS = params.get("t");        // ✅ nuevo: ?t=endo
+const MEDICO_ID_QS   = params.get("medico_id"); // legacy
+const SLUG_QS        = params.get("m");         // ?m=slug
 
 /* ================= DOM ================= */
 const medicoLine   = document.getElementById("medicoLine");
@@ -191,6 +226,10 @@ const chkParticular= document.getElementById("chkParticular");
 const inEmail      = document.getElementById("email");
 const inOS         = document.getElementById("obra_social");
 const inAf         = document.getElementById("numero_afiliado");
+
+/* Tenant header */
+const tenantTitle = document.getElementById("tenantTitle");
+const tenantSubtitle = document.getElementById("tenantSubtitle");
 
 /* Modal */
 const modalBack = document.getElementById("modalBack");
@@ -253,7 +292,9 @@ function openModal() { modalBack.style.display = "flex"; }
 function closeModal() { modalBack.style.display = "none"; }
 
 /* ================= STATE ================= */
+let TENANT_ID = null;
 let MEDICO_ID = null;
+
 let medicoNombre = null;
 let medicoEsp = null;
 let medicoHorizonte = 30;
@@ -283,22 +324,83 @@ chkParticular.addEventListener("change", () => {
   } else {
     inOS.disabled = false;
     inAf.disabled = false;
-    // opcional: si quedó PARTICULAR, lo borramos para obligar a completar
     if ((inOS.value || "").trim().toUpperCase() === "PARTICULAR") inOS.value = "";
   }
 });
 
-/* ================= RESOLVE MEDICO (id o slug) ================= */
+/* ================= TENANT (slug en URL o subdominio) ================= */
+function guessTenantSlugFromHost(){
+  // ej: endo.tudominio.com -> "endo"
+  const host = (window.location.hostname || "").toLowerCase();
+  const parts = host.split(".");
+  if (parts.length >= 3) return parts[0];
+  return null;
+}
+
+async function resolveTenant(){
+  daysErr.textContent = "";
+
+  const tenantSlug = (TENANT_SLUG_QS || guessTenantSlugFromHost() || "").trim();
+  if (!tenantSlug){
+    daysErr.textContent = "Falta t (clínica) en la URL. Ej: ?t=endo&m=dr-xxx";
+    throw new Error("Missing tenant");
+  }
+
+  const { data, error } = await sb
+    .from("Tenants")
+    .select("id,nombre,theme,color_primario,color_secundario,logo_url,logo_alt")
+    .eq("slug", tenantSlug)
+    .eq("activo", true)
+    .maybeSingle();
+
+  if (error || !data?.id){
+    daysErr.textContent = "No se encontró la clínica (tenant).";
+    throw new Error("Tenant not found");
+  }
+
+  TENANT_ID = data.id;
+
+  // Marca blanca: se pinta con datos del tenant
+  const title = data?.theme?.header?.title || data.nombre || "Turnos online";
+  const subtitle = data?.theme?.header?.subtitle || "Reservá tu turno";
+  tenantTitle.textContent = title;
+  tenantSubtitle.textContent = subtitle;
+
+  // CSS variables por tenant
+  const primary = data.color_primario || "#111111";
+  const bg = data.color_secundario || "#f6f7f8";
+  document.documentElement.style.setProperty("--primary", primary);
+  document.documentElement.style.setProperty("--selBorder", primary);
+  document.documentElement.style.setProperty("--selBg", `${primary}1A`); // ~10% en hex (si no es hex, no pasa nada grave)
+  document.documentElement.style.setProperty("--bg", bg);
+
+  document.title = title + " · Turnos";
+}
+
+/* ================= RESOLVE MEDICO (id o slug) con tenant ================= */
 async function resolveMedico() {
   daysErr.textContent = "";
 
   if (MEDICO_ID_QS) {
-    MEDICO_ID = MEDICO_ID_QS;
+    // valida pertenencia al tenant
+    const { data, error } = await sb
+      .from("Medicos")
+      .select("id")
+      .eq("id", MEDICO_ID_QS)
+      .eq("tenant_id", TENANT_ID)
+      .maybeSingle();
+
+    if (error || !data?.id) {
+      daysErr.textContent = "El médico no pertenece a esta clínica.";
+      throw new Error("Medico not in tenant");
+    }
+
+    MEDICO_ID = data.id;
     return;
   }
 
   if (!SLUG_QS) {
-    daysErr.textContent = "Falta medico_id o m (slug) en la URL.";
+    daysErr.textContent = "Falta m (slug del médico) en la URL. Ej: ?t=endo&m=dr-xxx";
     throw new Error("Missing medico identifier");
   }
 
@@ -306,11 +408,12 @@ async function resolveMedico() {
     .from("Medicos")
     .select("id")
     .eq("slug", SLUG_QS)
+    .eq("tenant_id", TENANT_ID)
     .maybeSingle();
 
   if (error || !data?.id) {
-    daysErr.textContent = "No se encontró el médico por slug.";
-    throw new Error("Slug not found");
+    daysErr.textContent = "No se encontró el médico en esta clínica.";
+    throw new Error("Slug not found in tenant");
   }
 
   MEDICO_ID = data.id;
@@ -322,6 +425,7 @@ async function cargarMedico() {
     .from("Medicos")
     .select("Nombre, especialidad, horizonte_dias, duracion_min")
     .eq("id", MEDICO_ID)
+    .eq("tenant_id", TENANT_ID)
     .maybeSingle();
 
   if (error || !data) return;
@@ -371,7 +475,6 @@ async function cargarDias() {
     renderMonth(mk, desde, hasta);
     if (mk === endMk) break;
     mk = nextMonthKey(mk);
-    // safety: por si algo raro
     if (!mk) break;
   }
 
@@ -494,7 +597,7 @@ async function cargarSlots(fechaISO) {
   });
 }
 
-/* ================= BOOKING (RPC largo) ================= */
+/* ================= BOOKING ================= */
 btnBook.onclick = async () => {
   errBook.textContent = "";
   okBook.textContent = "";
@@ -510,14 +613,12 @@ btnBook.onclick = async () => {
   let obra_social = (document.getElementById("obra_social").value || "").trim();
   let numero_afiliado = (document.getElementById("numero_afiliado").value || "").trim();
 
-  // reglas de checkboxes
   if (chkNoEmail.checked) email = "";
   if (chkParticular.checked) {
     obra_social = "PARTICULAR";
     numero_afiliado = "";
   }
 
-  // VALIDACIONES (obligatorio salvo excepciones)
   if (!nombre || !dni || !telefono) {
     errBook.textContent = "Completá nombre, DNI y teléfono.";
     return;
@@ -540,7 +641,7 @@ btnBook.onclick = async () => {
   try {
     const token = crypto.randomUUID().replaceAll("-", "");
 
-    const { data, error } = await sb.rpc("reservar_turno", {
+    const { error } = await sb.rpc("reservar_turno", {
       p_medico_id: MEDICO_ID,
       p_dni: dni,
       p_nombre: nombre,
@@ -561,7 +662,6 @@ btnBook.onclick = async () => {
       return;
     }
 
-    // Mostrar checkout modal
     const fecha = fmtDMY(selectedDateISO);
     const hora = fmtHora(slot.inicio_slot);
 
@@ -575,8 +675,8 @@ btnBook.onclick = async () => {
       ["Teléfono", telefono],
       ["Email", chkNoEmail.checked ? "—" : (email || "—")],
       ["Obra social", obra_social],
-      ["N° afiliado", chkParticular.checked ? "—" : (numero_afiliado || "—")],
-      ["Código", token] // útil para soporte / auditoría
+      ["N° afiliado", chkParticular.checked ? "—" : (numero_afiliado || "—")]
+      // ✅ sin código
     ];
 
     kvBox.innerHTML = "";
@@ -586,17 +686,15 @@ btnBook.onclick = async () => {
       kvBox.appendChild(div);
     });
 
-    // Texto para compartir/copiar
     const shareText =
-`ENDO Medicina - Confirmación de turno
+`${tenantTitle.textContent} - Confirmación de turno
 Médico: ${medicoNombre || "-"} (${medicoEsp || "-"})
 Fecha: ${fecha}  Hora: ${hora}
 Paciente: ${nombre}  DNI: ${dni}
 Tel: ${telefono}
 ${chkNoEmail.checked ? "" : ("Email: " + email + "\n")}
 Obra social: ${obra_social}
-${chkParticular.checked ? "" : ("Afiliado: " + numero_afiliado + "\n")}
-Código: ${token}`;
+${chkParticular.checked ? "" : ("Afiliado: " + numero_afiliado + "\n")}`;
 
     btnShare.onclick = async () => {
       try {
@@ -617,18 +715,12 @@ Código: ${token}`;
     };
 
     btnPrint.onclick = () => window.print();
-
-    btnClose.onclick = () => {
-      // recarga para volver “home” limpio (ideal para tótem)
-      window.location.reload();
-    };
+    btnClose.onclick = () => window.location.reload();
 
     openModal();
 
-    // refrescar slots para que desaparezca el tomado
     await cargarSlots(selectedDateISO);
 
-    // limpieza de form (por seguridad)
     ["nombre","dni","telefono","email","obra_social","numero_afiliado"].forEach(id => {
       const el = document.getElementById(id);
       if (el && !el.disabled) el.value = "";
@@ -648,7 +740,8 @@ Código: ${token}`;
 document.getElementById("tzPill").textContent = "TZ: AR (Buenos Aires)";
 
 (async function init(){
-  await resolveMedico();
+  await resolveTenant();  // ✅ primero tenant
+  await resolveMedico();  // ✅ luego médico filtrado por tenant
   await cargarMedico();
   await cargarDias();
 })();
