@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Login Secretaría · ENDO</title>
+  <title>Acceso · Secretaría</title>
 
   <style>
     body{
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
       background:#f6f7f8;
       margin:0;
+      color:#111;
     }
     .card{
       max-width:360px;
@@ -19,7 +20,9 @@
       border-radius:14px;
       padding:20px;
     }
-    h2{margin:0 0 14px 0}
+    h2{margin:0 0 6px 0}
+    .muted{color:#666;font-size:13px;margin:0 0 14px 0}
+
     input{
       width:100%;
       padding:10px 12px;
@@ -27,6 +30,7 @@
       border:1px solid #ddd;
       margin:8px 0;
       font-size:14px;
+      box-sizing:border-box;
     }
     button{
       width:100%;
@@ -42,16 +46,49 @@
     button:disabled{opacity:.5}
     .err{color:#b00020;font-size:13px;margin-top:10px}
     .ok{color:#0a7a27;font-size:13px;margin-top:10px}
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+    .check{
+      display:flex; align-items:center; gap:8px;
+      font-size:13px; color:#333;
+      user-select:none;
+    }
+    .check input{ width:auto; margin:0; }
+    .link{
+      font-size:13px;
+      color:#111;
+      text-decoration:underline;
+      text-underline-offset:3px;
+      cursor:pointer;
+      opacity:.8;
+    }
   </style>
 </head>
 
 <body>
-
   <div class="card">
     <h2>Secretaría</h2>
+    <p class="muted">Ingresá con tu usuario para ver la agenda.</p>
 
-    <input id="email" placeholder="Email" />
-    <input id="pass" type="password" placeholder="Contraseña" />
+    <input id="email" placeholder="Email" autocomplete="username" />
+    <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password" />
+
+    <div class="row">
+      <!-- Opcional: si lo tildás, NO persistimos sesión (útil para PC compartida) -->
+      <label class="check" title="Si usás una PC compartida, activalo para no dejar la sesión guardada.">
+        <input type="checkbox" id="chkKiosco" />
+        Modo compartido
+      </label>
+
+      <span class="link" id="btnClear">Borrar</span>
+    </div>
 
     <button id="btn">Entrar</button>
 
@@ -59,41 +96,98 @@
     <div id="ok" class="ok"></div>
   </div>
 
-  <!-- Supabase -->
+  <script src="./config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A";
+    const SUPABASE_URL = window.__SB__?.url;
+    const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      alert("Falta config.js (Supabase URL / anonKey).");
+      throw new Error("Missing Supabase config");
+    }
 
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Creamos el cliente una vez (persistSession por default true)
+    // Si el usuario marca "modo compartido", deshabilitamos persistencia en ese intento.
+    function makeClient(persistSession=true){
+      return supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        }
+      });
+    }
+
+    let sb = makeClient(true);
 
     const btn = document.getElementById("btn");
     const err = document.getElementById("err");
     const ok  = document.getElementById("ok");
+    const inEmail = document.getElementById("email");
+    const inPass = document.getElementById("pass");
+    const chkKiosco = document.getElementById("chkKiosco");
+    const btnClear = document.getElementById("btnClear");
 
-    btn.onclick = async () => {
+    // Si ya hay sesión, vamos directo
+    (async function boot(){
+      try{
+        const { data } = await sb.auth.getSession();
+        if (data?.session) window.location.href = "./secretaria.html";
+      }catch(e){}
+    })();
+
+    function setLoading(isLoading){
+      btn.disabled = isLoading;
+      btn.textContent = isLoading ? "Ingresando…" : "Entrar";
+    }
+
+    btnClear.onclick = () => {
+      err.textContent = "";
+      ok.textContent = "";
+      inEmail.value = "";
+      inPass.value = "";
+      inEmail.focus();
+    };
+
+    async function doLogin(){
       err.textContent = "";
       ok.textContent  = "";
-      btn.disabled = true;
 
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("pass").value;
+      const email = inEmail.value.trim();
+      const password = inPass.value;
 
-      const { error } = await sb.auth.signInWithPassword({
-        email,
-        password
-      });
+      if (!email || !password){
+        err.textContent = "Completá email y contraseña.";
+        return;
+      }
+
+      // modo compartido: no persistimos sesión
+      sb = makeClient(!chkKiosco.checked);
+
+      setLoading(true);
+
+      const { error } = await sb.auth.signInWithPassword({ email, password });
 
       if (error) {
-        err.textContent = "Usuario o contraseña incorrectos";
-        btn.disabled = false;
+        // Mensaje simple (sin filtrar detalles sensibles)
+        err.textContent = "Usuario o contraseña incorrectos.";
+        setLoading(false);
         return;
       }
 
       ok.textContent = "✅ Acceso correcto";
-      window.location.href = "./secretaria.html";    };
-  </script>
+      window.location.href = "./secretaria.html";
+    }
 
+    btn.onclick = doLogin;
+
+    // Enter para login
+    [inEmail, inPass].forEach(el=>{
+      el.addEventListener("keydown", (e)=>{
+        if (e.key === "Enter") doLogin();
+      });
+    });
+  </script>
 </body>
 </html>
