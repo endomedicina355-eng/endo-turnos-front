@@ -431,14 +431,14 @@ async function resolveMedico() {
 async function cargarMedico() {
   const { data, error } = await sb
     .from("Medicos")
-    .select(' "Nombre", especialidad, horizonte_dias, duracion_min ')
+    .select(' "Nombre", nombre, especialidad, horizonte_dias, duracion_min ')
     .eq("id", MEDICO_ID)
     .eq("tenant_id", TENANT_ID)
     .maybeSingle();
 
   if (error || !data) return;
 
-  medicoNombre = data["Nombre"] || null;
+  medicoNombre = (data["Nombre"] ?? data.nombre ?? null);
   medicoEsp = data.especialidad || null;
   medicoHorizonte = Number.isFinite(Number(data.horizonte_dias)) ? Number(data.horizonte_dias) : 30;
   medicoDuracion = Number.isFinite(Number(data.duracion_min)) ? Number(data.duracion_min) : 15;
