@@ -199,25 +199,10 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ================= PARAMS ================= */
 const params = new URLSearchParams(window.location.search);
-const TENANT_SLUG_QS = (params.get("t") || "").trim();
+const TENANT_SLUG_QS = (params.get("t") || "").trim();     // ✅ requerido
 const MEDICO_ID_QS   = (params.get("medico_id") || "").trim();
-const SLUG_QS        = (params.get("m") || "").trim();
+const SLUG_QS        = (params.get("m") || "").trim();     // slug médico
 
-/* DEBUG VISIBLE (iPad friendly) */
-(function showDebug(){
-  const box = document.createElement("div");
-  box.style.cssText = "position:sticky;top:0;z-index:99999;background:#fff3cd;border:1px solid #ffeeba;padding:10px 12px;border-radius:12px;margin:10px 0;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap";
-  box.textContent =
-`DEBUG URL
-path: ${location.pathname}
-search: ${location.search}
-
-t (tenant): "${TENANT_SLUG_QS}"
-m (medico slug): "${SLUG_QS}"
-medico_id: "${MEDICO_ID_QS}"`;
-  document.querySelector(".wrap")?.prepend(box);
-})();
-  
 /* ================= DOM ================= */
 const medicoLine   = document.getElementById("medicoLine");
 const espLine      = document.getElementById("espLine");
@@ -343,13 +328,6 @@ chkParticular.addEventListener("change", () => {
 async function resolveTenant(){
   daysErr.textContent = "";
 
-  const { data, error } = await sb
-    .from("Tenants")
-    .select("*")
-    .limit(5);
-
-  alert(JSON.stringify(data));
-}
   if (!TENANT_SLUG_QS){
     daysErr.textContent = "Falta t (clínica) en la URL. Ej: ?t=endo&m=dr-xxx";
     throw new Error("Missing tenant slug");
@@ -431,14 +409,14 @@ async function resolveMedico() {
 async function cargarMedico() {
   const { data, error } = await sb
     .from("Medicos")
-    .select(' "Nombre", nombre, especialidad, horizonte_dias, duracion_min ')
+    .select(' "Nombre", especialidad, horizonte_dias, duracion_min ')
     .eq("id", MEDICO_ID)
     .eq("tenant_id", TENANT_ID)
     .maybeSingle();
 
   if (error || !data) return;
 
-  medicoNombre = (data["Nombre"] ?? data.nombre ?? null);
+  medicoNombre = data["Nombre"] || null;
   medicoEsp = data.especialidad || null;
   medicoHorizonte = Number.isFinite(Number(data.horizonte_dias)) ? Number(data.horizonte_dias) : 30;
   medicoDuracion = Number.isFinite(Number(data.duracion_min)) ? Number(data.duracion_min) : 15;
