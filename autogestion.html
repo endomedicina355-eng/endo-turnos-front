@@ -199,10 +199,25 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ================= PARAMS ================= */
 const params = new URLSearchParams(window.location.search);
-const TENANT_SLUG_QS = (params.get("t") || "").trim();     // ✅ requerido
+const TENANT_SLUG_QS = (params.get("t") || "").trim();
 const MEDICO_ID_QS   = (params.get("medico_id") || "").trim();
-const SLUG_QS        = (params.get("m") || "").trim();     // slug médico
+const SLUG_QS        = (params.get("m") || "").trim();
 
+/* DEBUG VISIBLE (iPad friendly) */
+(function showDebug(){
+  const box = document.createElement("div");
+  box.style.cssText = "position:sticky;top:0;z-index:99999;background:#fff3cd;border:1px solid #ffeeba;padding:10px 12px;border-radius:12px;margin:10px 0;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap";
+  box.textContent =
+`DEBUG URL
+path: ${location.pathname}
+search: ${location.search}
+
+t (tenant): "${TENANT_SLUG_QS}"
+m (medico slug): "${SLUG_QS}"
+medico_id: "${MEDICO_ID_QS}"`;
+  document.querySelector(".wrap")?.prepend(box);
+})();
+  
 /* ================= DOM ================= */
 const medicoLine   = document.getElementById("medicoLine");
 const espLine      = document.getElementById("espLine");
