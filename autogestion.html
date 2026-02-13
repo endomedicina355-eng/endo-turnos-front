@@ -343,6 +343,13 @@ chkParticular.addEventListener("change", () => {
 async function resolveTenant(){
   daysErr.textContent = "";
 
+  const { data, error } = await sb
+    .from("Tenants")
+    .select("*")
+    .limit(5);
+
+  alert(JSON.stringify(data));
+}
   if (!TENANT_SLUG_QS){
     daysErr.textContent = "Falta t (clínica) en la URL. Ej: ?t=endo&m=dr-xxx";
     throw new Error("Missing tenant slug");
