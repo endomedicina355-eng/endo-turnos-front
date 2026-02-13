@@ -4,71 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Acceso · Secretaría</title>
-
   <style>
-    body{
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:#f6f7f8;
-      margin:0;
-      color:#111;
-    }
-    .card{
-      max-width:360px;
-      margin:90px auto;
-      background:#fff;
-      border:1px solid #e7e7e7;
-      border-radius:14px;
-      padding:20px;
-    }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f7f8;margin:0;color:#111}
+    .card{max-width:360px;margin:90px auto;background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:20px}
     h2{margin:0 0 6px 0}
     .muted{color:#666;font-size:13px;margin:0 0 14px 0}
-
-    input{
-      width:100%;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid #ddd;
-      margin:8px 0;
-      font-size:14px;
-      box-sizing:border-box;
-    }
-    button{
-      width:100%;
-      padding:12px;
-      border-radius:12px;
-      border:0;
-      background:#111;
-      color:#fff;
-      font-weight:800;
-      cursor:pointer;
-      margin-top:10px;
-    }
+    input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;margin:8px 0;font-size:14px;box-sizing:border-box}
+    button{width:100%;padding:12px;border-radius:12px;border:0;background:#111;color:#fff;font-weight:800;cursor:pointer;margin-top:10px}
     button:disabled{opacity:.5}
     .err{color:#b00020;font-size:13px;margin-top:10px}
     .ok{color:#0a7a27;font-size:13px;margin-top:10px}
-
-    .row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-top:10px;
-      flex-wrap:wrap;
-    }
-    .check{
-      display:flex; align-items:center; gap:8px;
-      font-size:13px; color:#333;
-      user-select:none;
-    }
-    .check input{ width:auto; margin:0; }
-    .link{
-      font-size:13px;
-      color:#111;
-      text-decoration:underline;
-      text-underline-offset:3px;
-      cursor:pointer;
-      opacity:.8;
-    }
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .check{display:flex;align-items:center;gap:8px;font-size:13px;color:#333;user-select:none}
+    .check input{width:auto;margin:0}
+    .link{font-size:13px;color:#111;text-decoration:underline;text-underline-offset:3px;cursor:pointer;opacity:.8}
   </style>
 </head>
 
@@ -81,7 +30,6 @@
     <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password" />
 
     <div class="row">
-      <!-- Opcional: si lo tildás, NO persistimos sesión (útil para PC compartida) -->
       <label class="check" title="Si usás una PC compartida, activalo para no dejar la sesión guardada.">
         <input type="checkbox" id="chkKiosco" />
         Modo compartido
@@ -91,31 +39,20 @@
     </div>
 
     <button id="btn">Entrar</button>
-
     <div id="err" class="err"></div>
     <div id="ok" class="ok"></div>
   </div>
 
   <script src="./config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <script>
     const SUPABASE_URL = window.__SB__?.url;
     const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      alert("Falta config.js (Supabase URL / anonKey).");
-      throw new Error("Missing Supabase config");
-    }
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) { alert("Falta config.js"); throw new Error("Missing config"); }
 
-    // Creamos el cliente una vez (persistSession por default true)
-    // Si el usuario marca "modo compartido", deshabilitamos persistencia en ese intento.
     function makeClient(persistSession=true){
       return supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {
-          persistSession,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-        }
+        auth:{ persistSession, autoRefreshToken:true, detectSessionInUrl:true }
       });
     }
 
@@ -129,7 +66,6 @@
     const chkKiosco = document.getElementById("chkKiosco");
     const btnClear = document.getElementById("btnClear");
 
-    // Si ya hay sesión, vamos directo
     (async function boot(){
       try{
         const { data } = await sb.auth.getSession();
@@ -137,57 +73,39 @@
       }catch(e){}
     })();
 
-    function setLoading(isLoading){
-      btn.disabled = isLoading;
-      btn.textContent = isLoading ? "Ingresando…" : "Entrar";
+    function setLoading(v){
+      btn.disabled = v;
+      btn.textContent = v ? "Ingresando…" : "Entrar";
     }
 
     btnClear.onclick = () => {
-      err.textContent = "";
-      ok.textContent = "";
-      inEmail.value = "";
-      inPass.value = "";
+      err.textContent=""; ok.textContent="";
+      inEmail.value=""; inPass.value="";
       inEmail.focus();
     };
 
     async function doLogin(){
-      err.textContent = "";
-      ok.textContent  = "";
-
+      err.textContent=""; ok.textContent="";
       const email = inEmail.value.trim();
       const password = inPass.value;
+      if(!email || !password){ err.textContent="Completá email y contraseña."; return; }
 
-      if (!email || !password){
-        err.textContent = "Completá email y contraseña.";
-        return;
-      }
-
-      // modo compartido: no persistimos sesión
       sb = makeClient(!chkKiosco.checked);
-
       setLoading(true);
 
       const { error } = await sb.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        // Mensaje simple (sin filtrar detalles sensibles)
-        err.textContent = "Usuario o contraseña incorrectos.";
+      if (error){
+        err.textContent="Usuario o contraseña incorrectos.";
         setLoading(false);
         return;
       }
 
-      ok.textContent = "✅ Acceso correcto";
+      ok.textContent="✅ Acceso correcto";
       window.location.href = "./secretaria.html";
     }
 
     btn.onclick = doLogin;
-
-    // Enter para login
-    [inEmail, inPass].forEach(el=>{
-      el.addEventListener("keydown", (e)=>{
-        if (e.key === "Enter") doLogin();
-      });
-    });
+    [inEmail,inPass].forEach(el=> el.addEventListener("keydown",(e)=>{ if(e.key==="Enter") doLogin(); }));
   </script>
 </body>
 </html>
