@@ -1,3 +1,4 @@
+<!-- autogestion.html (PUBLICO: ?t=tenantSlug&m=medicoSlug o ?medico_id=... ; usa config.js, NO hardcode) -->
 <!doctype html>
 <html lang="es">
 <head>
@@ -25,14 +26,12 @@
     .muted{color:var(--muted); font-size:13px}
     .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #ddd; font-size:12px; background:#fff}
 
-    /* Info médico más grande */
     #medicoLine{font-size:16px; font-weight:800; color:#111; margin-top:6px}
     #espLine{font-size:14px; font-weight:700; color:#333; margin-top:2px}
 
     .grid{display:grid; grid-template-columns:1fr; gap:12px;}
     @media(min-width:900px){ .grid{grid-template-columns:1.1fr .9fr;} }
 
-    /* Calendar */
     .calWrap{display:grid; gap:12px;}
     @media(min-width:740px){ .calWrap{grid-template-columns:1fr 1fr;} }
     .month{border:1px solid #eee; border-radius:14px; padding:12px;}
@@ -54,8 +53,6 @@
     .dayCell:disabled{opacity:.35; cursor:not-allowed; background:#fafafa;}
     .dayCell.inRange{border-color:#ddd;}
     .dayCell.empty{border:0; background:transparent; cursor:default; box-shadow:none;}
-
-    /* ✅ Seleccionado bien visible */
     .dayCell.active{
       background: var(--selBg);
       border-color: var(--selBorder);
@@ -81,7 +78,6 @@
     .checkItem{display:flex; align-items:center; gap:8px; font-size:13px; color:#333;}
     .checkItem input{width:auto}
 
-    /* Modal confirm */
     .modalBack{
       position:fixed; inset:0; background:rgba(0,0,0,.45);
       display:none; align-items:center; justify-content:center;
@@ -113,7 +109,6 @@
 <div class="wrap">
   <div class="header">
     <div>
-      <!-- ✅ Marca blanca: se llena desde Tenants -->
       <div class="brand" id="tenantTitle">Turnos online</div>
       <div class="muted" id="tenantSubtitle">Reservá tu turno</div>
 
@@ -175,7 +170,6 @@
   </div>
 </div>
 
-<!-- Modal Confirmación -->
 <div class="modalBack" id="modalBack">
   <div class="modal">
     <h3>✅ Turno confirmado</h3>
@@ -191,19 +185,23 @@
   </div>
 </div>
 
+<script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-/* ================= CONFIG ================= */
-const SUPABASE_URL = "https://qqfjvxspiyecuthislnq.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxZmp2eHNwaXllY3V0aGlzbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MjE2OTQsImV4cCI6MjA4NTE5NzY5NH0.xHIldO1nBfhHJYLuskqJbkX95EbxRAjc4Y3SqHhlx3A";
+/* ================= CONFIG (NO hardcode) ================= */
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  alert("Falta config.js (window.__SB__).");
+  throw new Error("Missing Supabase config");
+}
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ================= PARAMS ================= */
 const params = new URLSearchParams(window.location.search);
-const TENANT_SLUG_QS = params.get("t");        // ✅ nuevo: ?t=endo
-const MEDICO_ID_QS   = params.get("medico_id"); // legacy
-const SLUG_QS        = params.get("m");         // ?m=slug
+const TENANT_SLUG_QS = (params.get("t") || "").trim();     // ✅ requerido
+const MEDICO_ID_QS   = (params.get("medico_id") || "").trim();
+const SLUG_QS        = (params.get("m") || "").trim();     // slug médico
 
 /* ================= DOM ================= */
 const medicoLine   = document.getElementById("medicoLine");
@@ -227,11 +225,9 @@ const inEmail      = document.getElementById("email");
 const inOS         = document.getElementById("obra_social");
 const inAf         = document.getElementById("numero_afiliado");
 
-/* Tenant header */
 const tenantTitle = document.getElementById("tenantTitle");
 const tenantSubtitle = document.getElementById("tenantSubtitle");
 
-/* Modal */
 const modalBack = document.getElementById("modalBack");
 const kvBox     = document.getElementById("kvBox");
 const btnShare  = document.getElementById("btnShare");
@@ -328,28 +324,19 @@ chkParticular.addEventListener("change", () => {
   }
 });
 
-/* ================= TENANT (slug en URL o subdominio) ================= */
-function guessTenantSlugFromHost(){
-  // ej: endo.tudominio.com -> "endo"
-  const host = (window.location.hostname || "").toLowerCase();
-  const parts = host.split(".");
-  if (parts.length >= 3) return parts[0];
-  return null;
-}
-
+/* ================= TENANT: por slug en URL ================= */
 async function resolveTenant(){
   daysErr.textContent = "";
 
-  const tenantSlug = (TENANT_SLUG_QS || guessTenantSlugFromHost() || "").trim();
-  if (!tenantSlug){
+  if (!TENANT_SLUG_QS){
     daysErr.textContent = "Falta t (clínica) en la URL. Ej: ?t=endo&m=dr-xxx";
-    throw new Error("Missing tenant");
+    throw new Error("Missing tenant slug");
   }
 
   const { data, error } = await sb
     .from("Tenants")
     .select("id,nombre,theme,color_primario,color_secundario,logo_url,logo_alt")
-    .eq("slug", tenantSlug)
+    .eq("slug", TENANT_SLUG_QS)
     .eq("activo", true)
     .maybeSingle();
 
@@ -360,39 +347,37 @@ async function resolveTenant(){
 
   TENANT_ID = data.id;
 
-  // Marca blanca: se pinta con datos del tenant
   const title = data?.theme?.header?.title || data.nombre || "Turnos online";
   const subtitle = data?.theme?.header?.subtitle || "Reservá tu turno";
   tenantTitle.textContent = title;
   tenantSubtitle.textContent = subtitle;
 
-  // CSS variables por tenant
   const primary = data.color_primario || "#111111";
   const bg = data.color_secundario || "#f6f7f8";
   document.documentElement.style.setProperty("--primary", primary);
   document.documentElement.style.setProperty("--selBorder", primary);
-  document.documentElement.style.setProperty("--selBg", `${primary}1A`); // ~10% en hex (si no es hex, no pasa nada grave)
+  document.documentElement.style.setProperty("--selBg", `${primary}1A`);
   document.documentElement.style.setProperty("--bg", bg);
 
   document.title = title + " · Turnos";
 }
 
-/* ================= RESOLVE MEDICO (id o slug) con tenant ================= */
+/* ================= MEDICO: id o slug, SIEMPRE filtrado por tenant ================= */
 async function resolveMedico() {
   daysErr.textContent = "";
 
   if (MEDICO_ID_QS) {
-    // valida pertenencia al tenant
     const { data, error } = await sb
       .from("Medicos")
       .select("id")
       .eq("id", MEDICO_ID_QS)
       .eq("tenant_id", TENANT_ID)
+      .eq("activo", true)
       .maybeSingle();
 
     if (error || !data?.id) {
-      daysErr.textContent = "El médico no pertenece a esta clínica.";
-      throw new Error("Medico not in tenant");
+      daysErr.textContent = "El médico no pertenece a esta clínica (o está inactivo).";
+      throw new Error("Medico invalid");
     }
 
     MEDICO_ID = data.id;
@@ -401,7 +386,7 @@ async function resolveMedico() {
 
   if (!SLUG_QS) {
     daysErr.textContent = "Falta m (slug del médico) en la URL. Ej: ?t=endo&m=dr-xxx";
-    throw new Error("Missing medico identifier");
+    throw new Error("Missing medico slug");
   }
 
   const { data, error } = await sb
@@ -409,11 +394,12 @@ async function resolveMedico() {
     .select("id")
     .eq("slug", SLUG_QS)
     .eq("tenant_id", TENANT_ID)
+    .eq("activo", true)
     .maybeSingle();
 
   if (error || !data?.id) {
-    daysErr.textContent = "No se encontró el médico en esta clínica.";
-    throw new Error("Slug not found in tenant");
+    daysErr.textContent = "No se encontró el médico en esta clínica (o está inactivo).";
+    throw new Error("Medico slug not found");
   }
 
   MEDICO_ID = data.id;
@@ -423,20 +409,20 @@ async function resolveMedico() {
 async function cargarMedico() {
   const { data, error } = await sb
     .from("Medicos")
-    .select("Nombre, especialidad, horizonte_dias, duracion_min")
+    .select(' "Nombre", especialidad, horizonte_dias, duracion_min ')
     .eq("id", MEDICO_ID)
     .eq("tenant_id", TENANT_ID)
     .maybeSingle();
 
   if (error || !data) return;
 
-  medicoNombre = data.Nombre || null;
+  medicoNombre = data["Nombre"] || null;
   medicoEsp = data.especialidad || null;
   medicoHorizonte = Number.isFinite(Number(data.horizonte_dias)) ? Number(data.horizonte_dias) : 30;
   medicoDuracion = Number.isFinite(Number(data.duracion_min)) ? Number(data.duracion_min) : 15;
 
-  if (medicoNombre) medicoLine.textContent = "Médico: " + medicoNombre;
-  if (medicoEsp) espLine.textContent = medicoEsp;
+  medicoLine.textContent = "Médico: " + (medicoNombre || "—");
+  espLine.textContent = medicoEsp ? medicoEsp : "";
   horizonLine.textContent = `Próximos ${medicoHorizonte} días`;
 }
 
@@ -455,20 +441,11 @@ async function cargarDias() {
     p_hasta: hasta
   });
 
-  if (error) {
-    console.error(error);
-    daysErr.textContent = error.message;
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    daysErr.textContent = "No hay días con disponibilidad en el rango.";
-    return;
-  }
+  if (error) { daysErr.textContent = error.message; return; }
+  if (!data || data.length === 0) { daysErr.textContent = "No hay días con disponibilidad en el rango."; return; }
 
   availableDaysSet = new Set(data.map(r => r.dia));
 
-  // Render todos los meses entre desde..hasta
   let mk = monthKey(desde);
   const endMk = monthKey(hasta);
   while (true) {
@@ -567,15 +544,8 @@ async function cargarSlots(fechaISO) {
     p_fecha: fechaISO
   });
 
-  if (error) {
-    console.error(error);
-    errSlots.textContent = error.message;
-    return;
-  }
-  if (!data || data.length === 0) {
-    errSlots.textContent = "Ese día no tiene horarios.";
-    return;
-  }
+  if (error) { errSlots.textContent = error.message; return; }
+  if (!data || data.length === 0) { errSlots.textContent = "Ese día no tiene horarios."; return; }
 
   data.forEach(s => {
     const hora = fmtHora(s.inicio_slot);
@@ -656,7 +626,6 @@ btnBook.onclick = async () => {
     });
 
     if (error) {
-      console.error(error);
       errBook.textContent = error.message;
       btnBook.disabled = false;
       return;
@@ -666,6 +635,7 @@ btnBook.onclick = async () => {
     const hora = fmtHora(slot.inicio_slot);
 
     const resumen = [
+      ["Clínica", tenantTitle.textContent],
       ["Médico", medicoNombre || "—"],
       ["Especialidad", medicoEsp || "—"],
       ["Fecha", fecha],
@@ -676,7 +646,6 @@ btnBook.onclick = async () => {
       ["Email", chkNoEmail.checked ? "—" : (email || "—")],
       ["Obra social", obra_social],
       ["N° afiliado", chkParticular.checked ? "—" : (numero_afiliado || "—")]
-      // ✅ sin código
     ];
 
     kvBox.innerHTML = "";
@@ -716,7 +685,6 @@ ${chkParticular.checked ? "" : ("Afiliado: " + numero_afiliado + "\n")}`;
 
     btnPrint.onclick = () => window.print();
     btnClose.onclick = () => window.location.reload();
-
     openModal();
 
     await cargarSlots(selectedDateISO);
@@ -730,18 +698,19 @@ ${chkParticular.checked ? "" : ("Afiliado: " + numero_afiliado + "\n")}`;
     window.SLOT_SELECCIONADO = null;
 
   } catch (e) {
-    console.error(e);
     errBook.textContent = "Error inesperado. Revisá consola.";
     btnBook.disabled = false;
   }
 };
 
-/* ================= INIT ================= */
 document.getElementById("tzPill").textContent = "TZ: AR (Buenos Aires)";
+document.getElementById("btnClose")?.addEventListener("click", closeModal);
+document.getElementById("modalBack").addEventListener("click", (e)=>{ if(e.target===modalBack) closeModal(); });
 
+/* ================= INIT ================= */
 (async function init(){
-  await resolveTenant();  // ✅ primero tenant
-  await resolveMedico();  // ✅ luego médico filtrado por tenant
+  await resolveTenant();  // ✅ tenant por slug
+  await resolveMedico();  // ✅ medico filtrado por tenant
   await cargarMedico();
   await cargarDias();
 })();
