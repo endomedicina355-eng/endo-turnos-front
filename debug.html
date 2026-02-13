@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DEBUG Turnos</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f7f8;color:#111}
+    .wrap{max-width:980px;margin:0 auto;padding:18px}
+    .card{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:16px;margin:12px 0}
+    .k{color:#666;font-size:12px;font-weight:700}
+    pre{white-space:pre-wrap;word-break:break-word;background:#0b1020;color:#d7e3ff;padding:12px;border-radius:12px;overflow:auto}
+    .bad{color:#b00020;font-weight:800}
+    .ok{color:#0a7a27;font-weight:800}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="k">URL actual</div>
+    <div id="url"></div>
+    <div style="height:8px"></div>
+    <div class="k">QueryString</div>
+    <div id="qs"></div>
+  </div>
+
+  <div class="card">
+    <div class="k">config.js (window.__SB__)</div>
+    <pre id="cfg">Cargando…</pre>
+  </div>
+
+  <div class="card">
+    <div class="k">TEST 1: SELECT Tenants WHERE slug=t AND activo=true</div>
+    <div id="tStatus"></div>
+    <pre id="tOut">Cargando…</pre>
+  </div>
+
+  <div class="card">
+    <div class="k">TEST 2: SELECT Medicos WHERE slug=m AND tenant_id=TENANT_ID AND activo=true</div>
+    <div id="mStatus"></div>
+    <pre id="mOut">Esperando tenant…</pre>
+  </div>
+</div>
+
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const t = (params.get("t")||"").trim();
+const m = (params.get("m")||"").trim();
+
+document.getElementById("url").textContent = window.location.href;
+document.getElementById("qs").textContent = `t="${t}" | m="${m}"`;
+
+const cfgEl = document.getElementById("cfg");
+cfgEl.textContent = JSON.stringify(window.__SB__ || null, null, 2);
+
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  cfgEl.textContent = "FALTA window.__SB__ en config.js";
+  throw new Error("Missing config");
+}
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function show(idStatus, ok, msg){
+  const el = document.getElementById(idStatus);
+  el.className = ok ? "ok" : "bad";
+  el.textContent = msg;
+}
+
+(async () => {
+  // TEST 1: Tenants
+  try{
+    const { data, error } = await sb
+      .from("Tenants")
+      .select("id,nombre,slug,activo")
+      .eq("slug", t)
+      .eq("activo", true);
+
+    if (error){
+      show("tStatus", false, "ERROR en SELECT Tenants (ver abajo)");
+      document.getElementById("tOut").textContent = JSON.stringify(error, null, 2);
+      return;
+    }
+
+    show("tStatus", true, `OK · filas: ${data?.length || 0}`);
+    document.getElementById("tOut").textContent = JSON.stringify(data, null, 2);
+
+    const tenantId = data?.[0]?.id;
+    if (!tenantId){
+      // si no encuentra, también probamos sin el filtro activo para ver si está inactivo o RLS
+      const r2 = await sb.from("Tenants").select("id,nombre,slug,activo").eq("slug", t);
+      document.getElementById("tOut").textContent += "\n\n---\nPrueba extra (sin activo=true):\n" + JSON.stringify(r2, null, 2);
+      return;
+    }
+
+    // TEST 2: Medicos
+    document.getElementById("mOut").textContent = "Cargando…";
+
+    const { data: md, error: me } = await sb
+      .from("Medicos")
+      .select("id,slug,tenant_id,activo,Nombre:Nombre")
+      .eq("slug", m)
+      .eq("tenant_id", tenantId)
+      .eq("activo", true);
+
+    if (me){
+      show("mStatus", false, "ERROR en SELECT Medicos (ver abajo)");
+      document.getElementById("mOut").textContent = JSON.stringify(me, null, 2);
+      return;
+    }
+
+    show("mStatus", true, `OK · filas: ${md?.length || 0}`);
+    document.getElementById("mOut").textContent = JSON.stringify(md, null, 2);
+
+  }catch(e){
+    show("tStatus", false, "EXCEPCIÓN JS (ver abajo)");
+    document.getElementById("tOut").textContent = String(e?.message || e);
+  }
+})();
+</script>
+</body>
+</html>
