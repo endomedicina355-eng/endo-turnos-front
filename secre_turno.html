@@ -330,6 +330,7 @@ async function resolveTenantFromPersonal(){
     throw new Error("No pude obtener email del usuario logueado.");
   }
 
+  // ✅ FIX: antes decía "Personal", ahora es "personal"
   const { data, error } = await sb
     .from("personal")
     .select("tenant_id,activo,rol,nombre")
@@ -669,7 +670,7 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
   if (!ok) return;
 
   try{
-    await resolveTenantFromPersonal();   // ✅ tenant desde tabla personal
+    await resolveTenantFromPersonal();
   }catch(e){
     errT.textContent = `No pude resolver tenant: ${e.message || e}`;
     elMedico.innerHTML = `<option value="">Error: sin tenant</option>`;
