@@ -498,7 +498,7 @@ document.getElementById("btnCrearMedico").onclick = async ()=>{
     if(!nombre) return setErr(errAlta,"Ingresá nombre.");
 
     const { error } = await sb.rpc("cfg_crear_medico", {
-      p_tenant_id: TENANT_ID,     // ✅ desde personal
+      p_tenant_id: TENANT_ID,
       p_nombre: nombre,
       p_especialidad: especialidad,
       p_activo: activo,
@@ -506,13 +506,13 @@ document.getElementById("btnCrearMedico").onclick = async ()=>{
     });
     if(error) throw error;
 
-    setOk(okAlta,"✅ Médico creado.");
     await cargarMedicosSelects();
+    setOk(okAlta,"✅ Médico creado.");
   }catch(e){
     setErr(errAlta, e.message || String(e));
   }
 };
-
+  
 /* ===== 2) Duración ===== */
 document.getElementById("btnGuardarDur").onclick = async ()=>{
   clearMsgs();
