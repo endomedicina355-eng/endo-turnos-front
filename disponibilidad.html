@@ -421,13 +421,13 @@ async function cargarTenantBranding(){
    Por defecto: sólo admin.
 */
 function enforceRole(){
-  const canEdit = (USER_ROL === "admin");
+  const canEdit = (USER_ROL === "admin" || USER_ROL === "secre");
   if (!canEdit){
     roleBlock.style.display = "block";
     [cardAlta, cardDur, cardDispo, cardAus, cardGlob].forEach(x=> x.style.display = "none");
   }
 }
-
+  
 /* ===== Médicos por tenant ===== */
 let MEDICOS_TENANT = []; // {id,nombre,activo,especialidad,duracion_min}
 let MEDICOS_MAP = new Map();
@@ -890,8 +890,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     enforceRole();                       // ✅ por rol (admin)
 
     // si no es admin, ya escondimos todo
-    if (USER_ROL !== "admin") return;
-
+    if (USER_ROL !== "admin" && USER_ROL !== "secre") return;
     duracionMin.value = "15";
     await cargarMedicosSelects();
 
