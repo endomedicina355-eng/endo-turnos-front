@@ -153,9 +153,11 @@
 
 <div class="inline">
   <span class="muted">Link autogestión:</span>
-  <input id="linkAutogestion" readonly style="max-width:420px"/>
+  <input id="linkAutogestion" readonly style="max-width:420px;cursor:pointer"/>
   <button id="btnCopyLink" class="small">Copiar</button>
 </div>
+    </div>
+  
   <!-- 3) Disponibilidad -->
   <div class="card" id="cardDispo">
     <div class="brand">3) Disponibilidad (días y ventanas horarias)</div>
@@ -902,6 +904,27 @@ document.getElementById("btnAddGlobal").onclick = async ()=>{
     setErr(errG, e.message || String(e));
   }
 };
+  /* ===== COPIAR LINK AUTOGESTION ===== */
+function copiarLinkAutogestion(){
+  if(!linkAutogestion.value) return;
+
+  navigator.clipboard.writeText(linkAutogestion.value)
+  .then(()=>{
+    btnCopyLink.textContent = "Copiado ✓";
+
+    setTimeout(()=>{
+      btnCopyLink.textContent = "Copiar";
+    },1200);
+  })
+  .catch(()=>{
+    alert("No se pudo copiar el link");
+  });
+}
+
+btnCopyLink?.addEventListener("click", copiarLinkAutogestion);
+linkAutogestion?.addEventListener("click", copiarLinkAutogestion);
+  
+  
 /* ===== INIT ===== */
 document.addEventListener("DOMContentLoaded", async ()=>{
   const ok = await guard();
@@ -929,9 +952,15 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     await cargarAusencias();
     await cargarGlobales();
 
-    selMedicoDispo.onchange = cargarDispo;
-    selMedicoAus.onchange = cargarAusencias;
+    selMedicoDispo.onchange = ()=>{
+  syncMedicoEstadoUI();
+  cargarDispo();
+};
 
+selMedicoAus.onchange = ()=>{
+  syncMedicoEstadoUI();
+  cargarAusencias();
+};
   }catch(e){
     roleBlock.style.display = "block";
     roleBlock.querySelector(".muted").textContent = e?.message || "Error iniciando disponibilidad.";
