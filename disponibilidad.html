@@ -440,6 +440,12 @@ function enforceRole(){
 /* ===== Médicos por tenant ===== */
 let MEDICOS_TENANT = []; // {id,nombre,activo,especialidad,duracion_min}
 let MEDICOS_MAP = new Map();
+  function syncAllMedicoSelects(medicoId){
+  if(!medicoId) return;
+  selMedicoDur.value = medicoId;
+  selMedicoDispo.value = medicoId;
+  selMedicoAus.value = medicoId;
+}
 
 async function cargarMedicosSelects(){
   clearMsgs();
@@ -523,17 +529,24 @@ document.getElementById("btnCrearMedico").onclick = async ()=>{
 
     if(!nombre) return setErr(errAlta,"Ingresá nombre.");
 
-    const { error } = await sb.rpc("cfg_crear_medico", {
-      p_tenant_id: TENANT_ID,
-      p_nombre: nombre,
-      p_especialidad: especialidad,
-      p_activo: activo,
-      p_duracion_min: duracion
-    });
-    if(error) throw error;
+    const { data: nuevoMedicoId, error } = await sb.rpc("cfg_crear_medico", {
+  p_tenant_id: TENANT_ID,
+  p_nombre: nombre,
+  p_especialidad: especialidad,
+  p_activo: activo,
+  p_duracion_min: duracion
+});
+if(error) throw error;
 
-    await cargarMedicosSelects();
-    setOk(okAlta,"✅ Médico creado.");
+await cargarMedicosSelects();
+
+if(nuevoMedicoId){
+  syncAllMedicoSelects(nuevoMedicoId);
+  duracionMin.value = String(duracion);
+  syncMedicoEstadoUI();
+}
+
+setOk(okAlta,"✅ Médico creado.");
   }catch(e){
     setErr(errAlta, e.message || String(e));
   }
@@ -548,12 +561,17 @@ document.getElementById("btnGuardarDur").onclick = async ()=>{
     if(!medicoId) return setErr(errDur,"Elegí médico.");
 
     const { error } = await sb.rpc("cfg_set_duracion_medico", {
-      p_medico_id: medicoId,
-      p_duracion_min: dur
-    });
-    if(error) throw error;
+  p_medico_id: medicoId,
+  p_duracion_min: dur
+});
+if(error) throw error;
 
-    setOk(okDur,"✅ Duración guardada.");
+await cargarMedicosSelects();
+syncAllMedicoSelects(medicoId);
+duracionMin.value = String(dur);
+syncMedicoEstadoUI();
+
+setOk(okDur,"✅ Duración guardada.");
   }catch(e){
     setErr(errDur, e.message || String(e));
   }
@@ -579,16 +597,25 @@ btnToggleActivo.onclick = async ()=>{
     });
     if (error) throw error;
 
-    setOk(okDur, wantActive ? "✅ Médico activado." : "✅ Médico inactivado.");
     await cargarMedicosSelects();
+syncAllMedicoSelects(medicoId);
+
+const m2 = MEDICOS_MAP.get(String(medicoId));
+if (m2?.duracion_min) duracionMin.value = String(m2.duracion_min);
+
+syncMedicoEstadoUI();
+setOk(okDur, wantActive ? "✅ Médico activado." : "✅ Médico inactivado.");
   }catch(e){
     setErr(errDur, e.message || String(e));
   }
 };
 
 selMedicoDur.onchange = ()=> {
+  syncAllMedicoSelects(selMedicoDur.value);
+
   const m = MEDICOS_MAP.get(String(selMedicoDur.value));
   if (m?.duracion_min) duracionMin.value = String(m.duracion_min);
+
   syncMedicoEstadoUI();
 };
 
@@ -829,7 +856,6 @@ document.getElementById("btnAddAus").onclick = async ()=>{
   }
 };
 
-selMedicoAus.onchange = cargarAusencias;
 
 /* ===== 5) Globales ===== */
 async function cargarGlobales(){
@@ -953,11 +979,20 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     await cargarGlobales();
 
     selMedicoDispo.onchange = ()=>{
+  syncAllMedicoSelects(selMedicoDispo.value);
+
+  const m = MEDICOS_MAP.get(String(selMedicoDur.value));
+  if (m?.duracion_min) duracionMin.value = String(m.duracion_min);
+
   syncMedicoEstadoUI();
   cargarDispo();
 };
-
 selMedicoAus.onchange = ()=>{
+  syncAllMedicoSelects(selMedicoAus.value);
+
+  const m = MEDICOS_MAP.get(String(selMedicoDur.value));
+  if (m?.duracion_min) duracionMin.value = String(m.duracion_min);
+
   syncMedicoEstadoUI();
   cargarAusencias();
 };
