@@ -146,8 +146,15 @@
 
     <div class="row" style="margin-top:10px">
       <div>
-        <div class="muted">Slot disponible</div>
-        <select id="slot"></select>
+        <div class="muted">Próximo turno</div>
+
+<div class="inline">
+<button id="slotPrev" class="small">←</button>
+
+<select id="slot"></select>
+
+<button id="slotNext" class="small">→</button>
+</div>
       </div>
       <div>
         <div class="muted">Hora manual (sobreturno)</div>
@@ -269,6 +276,9 @@ let MEDICOS_TENANT_SET = new Set();
 
 let currentPacienteId = null;
 let currentDurMin = 15;
+let SLOT_CACHE = {};
+let CURRENT_SLOTS = [];
+let CURRENT_SLOT_INDEX = 0;  
 
 /* ================= HELPERS ================= */
 function isoDateARNow(){
@@ -447,14 +457,19 @@ async function setFechaPrimerDiaConSlots(){
     p_hasta: hasta
   });
 
-  if (error) {
+  if (error){
     elFecha.value = desde;
     return;
   }
 
-  const dias = (data||[]).map(x => x.dia ?? x.fecha ?? x.p_fecha ?? x);
-  if (dias.length && typeof dias[0] === "string") elFecha.value = dias[0];
-  else elFecha.value = desde;
+  const dias = (data || [])
+    .map(x => x.dia || x.fecha || x.p_fecha || x);
+
+  if (dias.length && typeof dias[0] === "string"){
+    elFecha.value = dias[0];
+  } else {
+    elFecha.value = desde;
+  }
 }
 
 /* ================= Slots ================= */
@@ -463,38 +478,87 @@ async function cargarSlots(){
   elSlot.innerHTML = "";
 
   if (!elMedico.value || !elFecha.value) return;
-  if (!MEDICOS_TENANT_SET.has(String(elMedico.value))) {
-    errT.textContent = "Médico inválido para este tenant.";
+
+  const cacheKey = elMedico.value + "_" + elFecha.value;
+
+  if (SLOT_CACHE[cacheKey]) {
+    CURRENT_SLOTS = SLOT_CACHE[cacheKey];
+  } else {
+    const { data, error } = await sb.rpc("get_slots_dia", {
+      p_medico_id: elMedico.value,
+      p_fecha: elFecha.value
+    });
+
+    if (error){
+      errT.textContent = error.message;
+      return;
+    }
+
+    CURRENT_SLOTS = data || [];
+    SLOT_CACHE[cacheKey] = CURRENT_SLOTS;
+  }
+
+  if (!CURRENT_SLOTS.length){
+    elSlot.innerHTML = `<option value="">Sin disponibilidad</option>`;
+    btnCrear.disabled = true;
     return;
   }
 
-  const { data, error } = await sb.rpc("get_slots_dia", {
-    p_medico_id: elMedico.value,
-    p_fecha: elFecha.value
-  });
+  currentDurMin = diffMinutes(
+    CURRENT_SLOTS[0].inicio_slot,
+    CURRENT_SLOTS[0].fin_slot
+  ) || 15;
 
-  if (error){ errT.textContent = error.message; return; }
+  CURRENT_SLOT_INDEX = 0;
+  renderSlotActual();
+}
 
-  const slots = data || [];
-  if (!slots.length){
+function renderSlotActual(){
+  elSlot.innerHTML = "";
+
+  if (!CURRENT_SLOTS.length){
     const opt = document.createElement("option");
     opt.value = "";
     opt.textContent = "Sin disponibilidad";
     elSlot.appendChild(opt);
+    btnCrear.disabled = true;
     return;
   }
 
-  currentDurMin = diffMinutes(slots[0].inicio_slot, slots[0].fin_slot) || 15;
+  const slot = CURRENT_SLOTS[CURRENT_SLOT_INDEX];
 
-  slots.forEach(s=>{
-    const opt = document.createElement("option");
-    opt.value = s.inicio_slot;
-    opt.textContent = fmtHour(s.inicio_slot);
-    elSlot.appendChild(opt);
-  });
+  const opt = document.createElement("option");
+  opt.value = slot.inicio_slot;
+  const d = new Date(slot.inicio_slot);
+  const fecha = d.toLocaleDateString("es-AR",{ weekday:"short", timeZone:AR_TZ });
+  const hora = fmtHour(slot.inicio_slot);
+opt.textContent = `${fecha} ${hora}`;
+  elSlot.appendChild(opt);
+  elSlot.value = slot.inicio_slot;
+
+  btnCrear.disabled = !currentPacienteId;
+
+  const btnPrev = document.getElementById("slotPrev");
+  const btnNext = document.getElementById("slotNext");
+
+  if (btnPrev) btnPrev.disabled = CURRENT_SLOT_INDEX <= 0;
+  if (btnNext) btnNext.disabled = CURRENT_SLOT_INDEX >= CURRENT_SLOTS.length - 1;
 }
 
-/* ================= Buscar paciente ================= */
+function slotNext(){
+  if (CURRENT_SLOT_INDEX < CURRENT_SLOTS.length - 1){
+    CURRENT_SLOT_INDEX++;
+    renderSlotActual();
+  }
+}
+
+function slotPrev(){
+  if (CURRENT_SLOT_INDEX > 0){
+    CURRENT_SLOT_INDEX--;
+    renderSlotActual();
+  }
+}
+  /* ================= Buscar paciente ================= */
 async function buscarPaciente(){
   errP.textContent = ""; okP.textContent = "";
   btnHistorial.disabled = true;
@@ -634,6 +698,7 @@ async function crearTurno(){
   if (error){ errT.textContent = error.message; return; }
 
   okT.textContent = "✅ Turno creado.";
+  delete SLOT_CACHE[elMedico.value + "_" + elFecha.value];
   await cargarSlots();
 }
 
@@ -651,6 +716,8 @@ document.getElementById("btnBuscar").onclick = buscarPaciente;
 document.getElementById("btnGuardarPaciente").onclick = guardarPaciente;
 document.getElementById("btnHistorial").onclick = abrirHistorial;
 document.getElementById("btnCrearTurno").onclick = crearTurno;
+document.getElementById("slotNext").onclick = slotNext;
+document.getElementById("slotPrev").onclick = slotPrev;  
 
 document.getElementById("btnLimpiar").onclick = ()=>{
   errP.textContent=""; okP.textContent="";
@@ -690,10 +757,17 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
   syncSobturnoUI();
 
   elMedico.onchange = async () => {
-    await setFechaPrimerDiaConSlots();
-    await cargarSlots();
-  };
-  elFecha.onchange = cargarSlots;
+  CURRENT_SLOTS = [];
+  CURRENT_SLOT_INDEX = 0;
+  elSlot.innerHTML = "";
+  await setFechaPrimerDiaConSlots();
+  await cargarSlots();
+};
+  elFecha.onchange = async () => {
+  CURRENT_SLOTS = [];
+  CURRENT_SLOT_INDEX = 0;
+  await cargarSlots();
+};
 
   elDni.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); buscarPaciente(); } });
 })();
