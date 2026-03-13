@@ -149,8 +149,13 @@
 
     <div class="error" id="errDur"></div>
     <div class="ok" id="okDur"></div>
-  </div>
+    <div class="hr"></div>
 
+<div class="inline">
+  <span class="muted">Link autogestión:</span>
+  <input id="linkAutogestion" readonly style="max-width:420px"/>
+  <button id="btnCopyLink" class="small">Copiar</button>
+</div>
   <!-- 3) Disponibilidad -->
   <div class="card" id="cardDispo">
     <div class="brand">3) Disponibilidad (días y ventanas horarias)</div>
@@ -350,6 +355,8 @@ const duracionMin = document.getElementById("duracionMin");
 const medicoEstadoPill = document.getElementById("medicoEstadoPill");
 const medicoEstadoHint = document.getElementById("medicoEstadoHint");
 const btnToggleActivo  = document.getElementById("btnToggleActivo");
+const linkAutogestion = document.getElementById("linkAutogestion");
+const btnCopyLink = document.getElementById("btnCopyLink");  
 
 /* ===== STATE ===== */
 let TENANT_ID = null;
@@ -437,19 +444,21 @@ async function cargarMedicosSelects(){
 
   const { data, error } = await sb
     .from("Medicos")
-    .select('id,"Nombre",especialidad,activo,duracion_min,tenant_id')
+    .select('id,"Nombre",especialidad,activo,duracion_min,tenant_id,slug,"Web autogestion"')
     .eq("tenant_id", TENANT_ID)
     .order("Nombre", { ascending:true });
 
   if (error){ setErr(errDur, error.message); return; }
 
   MEDICOS_TENANT = (data||[]).map(m=>({
-    id: m.id,
-    nombre: m["Nombre"] || "—",
-    especialidad: m.especialidad || null,
-    activo: !!m.activo,
-    duracion_min: m.duracion_min ?? null
-  }));
+  id: m.id,
+  nombre: m["Nombre"] || "—",
+  especialidad: m.especialidad || null,
+  activo: !!m.activo,
+  duracion_min: m.duracion_min ?? null,
+  slug: m.slug || null,
+  link: m["Web autogestion"] || null
+}));
   MEDICOS_MAP = new Map(MEDICOS_TENANT.map(m=>[String(m.id), m]));
 
   [selMedicoDur, selMedicoDispo, selMedicoAus].forEach(sel=>{
@@ -464,26 +473,41 @@ async function cargarMedicosSelects(){
 
   syncMedicoEstadoUI();
 }
-
 function syncMedicoEstadoUI(){
   const mid = selMedicoDur.value;
   const m = MEDICOS_MAP.get(String(mid));
+
   if (!m){
     medicoEstadoPill.textContent = "Estado: —";
     medicoEstadoPill.className = "statePill";
     medicoEstadoHint.textContent = "";
     btnToggleActivo.disabled = true;
+
+    if(linkAutogestion){
+      linkAutogestion.value = "";
+    }
+
     return;
   }
 
   const isOn = !!m.activo;
+
   medicoEstadoPill.textContent = "Estado: " + (isOn ? "Activo" : "Inactivo");
   medicoEstadoPill.className = "statePill " + (isOn ? "on" : "off");
-  medicoEstadoHint.textContent = isOn ? "Se muestra para autogestión y agenda." : "No aparece en autogestión (y podés reactivarlo).";
+
+  medicoEstadoHint.textContent =
+    isOn
+      ? "Se muestra para autogestión y agenda."
+      : "No aparece en autogestión (y podés reactivarlo).";
 
   btnToggleActivo.disabled = false;
   btnToggleActivo.textContent = isOn ? "Inactivar" : "Activar";
-  btnToggleActivo.className = (isOn ? "danger small" : "small");
+  btnToggleActivo.className = isOn ? "danger small" : "small";
+
+  /* NUEVO: mostrar link de autogestión */
+  if(linkAutogestion){
+    linkAutogestion.value = m.link || "";
+  }
 }
 
 /* ===== 1) Alta médico (tenant_id siempre desde personal) ===== */
@@ -878,24 +902,28 @@ document.getElementById("btnAddGlobal").onclick = async ()=>{
     setErr(errG, e.message || String(e));
   }
 };
-
 /* ===== INIT ===== */
 document.addEventListener("DOMContentLoaded", async ()=>{
   const ok = await guard();
   if (!ok) return;
 
   try{
-    await resolveTenantFromPersonal();    // ✅ tenant desde personal (min)
+    await resolveTenantFromPersonal();    // tenant desde personal
     await cargarTenantBranding();
-    enforceRole();                       // ✅ por rol (admin)
+    enforceRole();
 
-    // si no es admin, ya escondimos todo
     if (USER_ROL !== "admin" && USER_ROL !== "secre") return;
+
     duracionMin.value = "15";
+
     await cargarMedicosSelects();
 
     const m0 = MEDICOS_MAP.get(String(selMedicoDur.value));
-    if (m0?.duracion_min) duracionMin.value = String(m0.duracion_min);
+    if (m0?.duracion_min){
+      duracionMin.value = String(m0.duracion_min);
+    }
+
+    syncMedicoEstadoUI();   // 👈 esto actualiza estado + link autogestión
 
     await cargarDispo();
     await cargarAusencias();
@@ -903,8 +931,8 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 
     selMedicoDispo.onchange = cargarDispo;
     selMedicoAus.onchange = cargarAusencias;
+
   }catch(e){
-    // si falla tenant/personal -> lo muestro en el primer bloque visible
     roleBlock.style.display = "block";
     roleBlock.querySelector(".muted").textContent = e?.message || "Error iniciando disponibilidad.";
     [cardAlta, cardDur, cardDispo, cardAus, cardGlob].forEach(x=> x.style.display = "none");
