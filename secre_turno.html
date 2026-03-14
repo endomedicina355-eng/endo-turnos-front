@@ -25,8 +25,26 @@
     .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
     @media(max-width:900px){.row{grid-template-columns:1fr}}
 
-    input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
-    textarea{min-height:44px;resize:vertical}
+    input,select,textarea{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  font-size:14px;
+  background:#fff;
+  box-sizing:border-box
+}
+
+select{
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+}
+
+textarea{
+  min-height:44px;
+  resize:vertical
+}
 
     button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
     button.primary{background:var(--primary);color:#fff;border:0;font-weight:800}
@@ -95,10 +113,18 @@
 }
 .slotDayNav{
   display:flex;
-  gap:10px;
-  margin-top:10px;
-}    
-.sobreturnoCard{
+  justify-content:center;
+  gap:12px;
+  margin-top:12px;
+}
+
+.slotDayNav button{
+  width:auto;
+  height:36px;
+  padding:0 14px;
+  font-size:14px;
+}
+    .sobreturnoCard{
   border:1px solid #f2b7c2;
   background:#fff5f6;
   border-radius:12px;
@@ -375,7 +401,9 @@ let currentDurMin = 15;
 let SLOT_CACHE = {};
 let CURRENT_SLOTS = [];
 let CURRENT_SLOT_INDEX = 0;  
-
+let DIAS_DISPONIBLES = [];
+let DIA_INDEX = 0;
+  
 /* ================= HELPERS ================= */
 function isoDateARNow(){
   const parts = new Intl.DateTimeFormat("en-CA",{ timeZone: AR_TZ, year:"numeric", month:"2-digit", day:"2-digit"}).formatToParts(new Date());
@@ -541,13 +569,13 @@ async function cargarMedicosTenant(){
 
 /* ================= Fecha: primer día con slots ================= */
 async function setFechaPrimerDiaConSlots(){
+
   if (!elMedico.value) return;
-  if (!MEDICOS_TENANT_SET.has(String(elMedico.value))) return;
 
   const desde = isoDateARNow();
-  const hasta = addDaysISO(desde, 60);
+  const hasta = addDaysISO(desde,60);
 
-  const { data, error } = await sb.rpc("get_dias_con_slots", {
+  const { data, error } = await sb.rpc("get_dias_con_slots",{
     p_medico_id: elMedico.value,
     p_desde: desde,
     p_hasta: hasta
@@ -558,17 +586,18 @@ async function setFechaPrimerDiaConSlots(){
     return;
   }
 
-  const dias = (data || [])
-    .map(x => x.dia || x.fecha || x.p_fecha || x);
+  DIAS_DISPONIBLES = (data || []).map(x => x.dia || x);
 
-  if (dias.length && typeof dias[0] === "string"){
-    elFecha.value = dias[0];
-  } else {
+  if(!DIAS_DISPONIBLES.length){
     elFecha.value = desde;
+    return;
   }
-}
 
-/* ================= Slots ================= */
+  DIA_INDEX = 0;
+  elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
+}
+  
+  /* ================= Slots ================= */
 async function cargarSlots(){
   errT.textContent = "";
   elSlot.innerHTML = "";
@@ -690,16 +719,35 @@ function slotPrev(){
   }
 }
 async function dayNext(){
-  if (!elMedico.value) return;
-  elFecha.value = addDaysISO(elFecha.value,1);
+
+  if(!DIAS_DISPONIBLES.length) return;
+
+  DIA_INDEX++;
+
+  if(DIA_INDEX >= DIAS_DISPONIBLES.length){
+    DIA_INDEX = 0;
+  }
+
+  elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
+
   await cargarSlots();
 }
 
 async function dayPrev(){
-  if (!elMedico.value) return;
-  elFecha.value = addDaysISO(elFecha.value,-1);
+
+  if(!DIAS_DISPONIBLES.length) return;
+
+  DIA_INDEX--;
+
+  if(DIA_INDEX < 0){
+    DIA_INDEX = DIAS_DISPONIBLES.length - 1;
+  }
+
+  elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
+
   await cargarSlots();
 }  
+ 
   /* ================= Buscar paciente ================= */
 async function buscarPaciente(){
   errP.textContent = ""; okP.textContent = "";
