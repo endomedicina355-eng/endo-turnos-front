@@ -93,6 +93,11 @@
   font-weight:700;
   font-size:16px;
 }
+.slotDayNav{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}    
 .sobreturnoCard{
   border:1px solid #f2b7c2;
   background:#fff5f6;
@@ -219,11 +224,16 @@
 
       <button id="slotPrev" class="slotBtn">←</button>
 
-      <select id="slot" class="slotSelect"></select>
+      <select id="slot" class="slotSelect" size="4"></select>
 
       <button id="slotNext" class="slotBtn">→</button>
 
     </div>
+
+   <div class="slotDayNav">
+  <button id="dayPrev" class="slotBtn">◀ Día</button>
+  <button id="dayNext" class="slotBtn">Día ▶</button>
+</div> 
 
   </div>
 
@@ -345,6 +355,7 @@ const okT = document.getElementById("okT");
 const btnPrev = document.getElementById("slotPrev");
 const btnNext = document.getElementById("slotNext");  
 
+  
 const btnHistorial = document.getElementById("btnHistorial");
 const warnAusente = document.getElementById("warnAusente");
 const modalBg = document.getElementById("modalBg");
@@ -603,6 +614,7 @@ async function cargarSlots(){
 }
 
 function renderSlotActual(){
+
   elSlot.innerHTML = "";
 
   if (!CURRENT_SLOTS.length){
@@ -614,24 +626,27 @@ function renderSlotActual(){
     return;
   }
 
-  const slot = CURRENT_SLOTS[CURRENT_SLOT_INDEX];
+  CURRENT_SLOTS.forEach(slot => {
 
-  const opt = document.createElement("option");
-  opt.value = slot.inicio_slot;
+    const opt = document.createElement("option");
+    opt.value = slot.inicio_slot;
 
-  const d = new Date(slot.inicio_slot);
-  const fecha = d.toLocaleDateString("es-AR", {
-    weekday:"short",
-    day:"numeric",
-    timeZone: AR_TZ
+    const d = new Date(slot.inicio_slot);
+
+    const fecha = d.toLocaleDateString("es-AR",{
+      weekday:"short",
+      day:"numeric",
+      timeZone: AR_TZ
+    });
+
+    const hora = fmtHour(slot.inicio_slot);
+
+    opt.textContent = `${fecha} · ${hora}`;
+
+    elSlot.appendChild(opt);
   });
 
-  const hora = fmtHour(slot.inicio_slot);
-
-  opt.textContent = `${fecha} · ${hora}`;
-
-  elSlot.appendChild(opt);
-  elSlot.value = slot.inicio_slot;
+  elSlot.selectedIndex = CURRENT_SLOT_INDEX;
 
   btnCrear.disabled = !currentPacienteId;
 
@@ -648,18 +663,25 @@ function renderSlotActual(){
   }
 
   // si no hay más slots del día → buscar próximo día con disponibilidad
-  const desde = addDaysISO(elFecha.value, 1);
-  const hasta = addDaysISO(desde, 60);
+const desde = addDaysISO(elFecha.value, 1);
+const hasta = addDaysISO(desde, 60);
 
-  const { data, error } = await sb.rpc("get_dias_con_slots", {
-    p_medico_id: elMedico.value,
-    p_desde: desde,
-    p_hasta: hasta
-  });
+const { data, error } = await sb.rpc("get_dias_con_slots", {
+  p_medico_id: elMedico.value,
+  p_desde: desde,
+  p_hasta: hasta
+});
 
-  if (error || !data?.length){
-    return; // no hay más turnos
-  }
+if (error || !data?.length){
+  btnNext.disabled = true;
+  return; // no hay más turnos
+}
+
+const siguienteDia = data[0].dia || data[0];
+
+elFecha.value = siguienteDia;
+
+await cargarSlots();
 
   const siguienteDia = data[0].dia || data[0];
 
@@ -674,6 +696,17 @@ function slotPrev(){
     renderSlotActual();
   }
 }
+async function dayNext(){
+  if (!elMedico.value) return;
+  elFecha.value = addDaysISO(elFecha.value,1);
+  await cargarSlots();
+}
+
+async function dayPrev(){
+  if (!elMedico.value) return;
+  elFecha.value = addDaysISO(elFecha.value,-1);
+  await cargarSlots();
+}  
   /* ================= Buscar paciente ================= */
 async function buscarPaciente(){
   errP.textContent = ""; okP.textContent = "";
@@ -833,8 +866,15 @@ document.getElementById("btnGuardarPaciente").onclick = guardarPaciente;
 document.getElementById("btnHistorial").onclick = abrirHistorial;
 document.getElementById("btnCrearTurno").onclick = crearTurno;
 document.getElementById("slotNext").onclick = slotNext;
-document.getElementById("slotPrev").onclick = slotPrev;  
+document.getElementById("slotPrev").onclick = slotPrev;
 
+elSlot.onchange = () => {
+  CURRENT_SLOT_INDEX = elSlot.selectedIndex;
+};  
+
+document.getElementById("dayNext").onclick = dayNext;
+document.getElementById("dayPrev").onclick = dayPrev;
+  
 document.getElementById("btnLimpiar").onclick = ()=>{
   errP.textContent=""; okP.textContent="";
   currentPacienteId = null;
