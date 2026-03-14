@@ -663,25 +663,26 @@ function renderSlotActual(){
   }
 
   // si no hay más slots del día → buscar próximo día con disponibilidad
-const desde = addDaysISO(elFecha.value, 1);
-const hasta = addDaysISO(desde, 60);
+  const desde = addDaysISO(elFecha.value, 1);
+  const hasta = addDaysISO(desde, 60);
 
-const { data, error } = await sb.rpc("get_dias_con_slots", {
-  p_medico_id: elMedico.value,
-  p_desde: desde,
-  p_hasta: hasta
-});
+  const { data, error } = await sb.rpc("get_dias_con_slots", {
+    p_medico_id: elMedico.value,
+    p_desde: desde,
+    p_hasta: hasta
+  });
 
-if (error || !data?.length){
-  btnNext.disabled = true;
-  return; // no hay más turnos
+  if (error || !data?.length){
+    btnNext.disabled = true;
+    return;
+  }
+
+  const siguienteDia = data[0].dia || data[0];
+
+  elFecha.value = siguienteDia;
+
+  await cargarSlots();
 }
-
-const siguienteDia = data[0].dia || data[0];
-
-elFecha.value = siguienteDia;
-
-await cargarSlots();
 
   const siguienteDia = data[0].dia || data[0];
 
