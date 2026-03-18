@@ -238,6 +238,21 @@ textarea{
     </div>
 
     <div class="row" style="margin-top:14px">
+    <div class="slotCard" style="border:2px solid #111;background:#fff">
+
+  <div class="slotCardTitle">
+    Próximo turno recomendado
+  </div>
+
+  <div style="font-size:22px;font-weight:900" id="slotRecomendado">
+    —
+  </div>
+
+  <div class="muted" style="margin-top:4px">
+    Primer turno disponible automático
+  </div>
+
+</div>  
 
   <!-- TURNOS DISPONIBLES -->
   <div class="slotCard">
@@ -352,7 +367,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /* ================= TZ ================= */
 const AR_TZ = "America/Argentina/Buenos_Aires";
 const fmtDate = (ts)=> new Date(ts).toLocaleDateString("es-AR",{ timeZone: AR_TZ });
-const fmtHour = (ts)=> new Date(ts).toLocaleTimeString("es-AR",{ timeZone: AR_TZ, hour:"2-digit", minute:"2-digit" });
+const fmtHour = (ts)=> new Date(ts).toLocaleTimeString("es-AR",{ timeZone: AR_TZ, hour:"2-digit", minute:"2-digit", hour12:false });
 
 /* ================= DOM ================= */
 const brandTitle = document.getElementById("brandTitle");
@@ -623,23 +638,54 @@ async function cargarSlots(){
     SLOT_CACHE[cacheKey] = CURRENT_SLOTS;
   }
 
+  // sin slots
   if (!CURRENT_SLOTS.length){
-  elSlot.innerHTML = `<option value="">Sin turnos disponibles</option>`;
-  btnCrear.disabled = true;
+    elSlot.innerHTML = `<option value="">Sin turnos disponibles</option>`;
+    btnCrear.disabled = true;
+    btnPrev.disabled = true;
+    btnNext.disabled = true;
 
-  btnPrev.disabled = true;
-  btnNext.disabled = true;
+    const elReco = document.getElementById("slotRecomendado");
+    if (elReco) elReco.textContent = "Sin disponibilidad";
 
-  return;
-}
+    return;
+  }
 
+  // duración
   currentDurMin = diffMinutes(
     CURRENT_SLOTS[0].inicio_slot,
     CURRENT_SLOTS[0].fin_slot
   ) || 15;
 
   CURRENT_SLOT_INDEX = 0;
+
   renderSlotActual();
+  renderSlotRecomendado();
+}
+
+function renderSlotRecomendado(){
+  const elReco = document.getElementById("slotRecomendado");
+  if (!elReco) return;
+
+  if (!CURRENT_SLOTS.length){
+    elReco.textContent = "Sin disponibilidad";
+    return;
+  }
+
+  const s = CURRENT_SLOTS[0];
+
+  const d = new Date(s.inicio_slot);
+
+  const fecha = d.toLocaleDateString("es-AR",{
+    weekday:"short",
+    day:"numeric",
+    month:"short",
+    timeZone: AR_TZ
+  });
+
+  const hora = fmtHour(s.inicio_slot);
+
+  elReco.textContent = `${fecha} · ${hora}`;
 }
 
 function renderSlotActual(){
@@ -682,16 +728,15 @@ function renderSlotActual(){
   btnPrev.disabled = CURRENT_SLOT_INDEX <= 0;
   btnNext.disabled = CURRENT_SLOT_INDEX >= CURRENT_SLOTS.length - 1;
 }
-  async function slotNext(){
 
-  // avanzar dentro del mismo día
+async function slotNext(){
+
   if (CURRENT_SLOT_INDEX < CURRENT_SLOTS.length - 1){
     CURRENT_SLOT_INDEX++;
     renderSlotActual();
     return;
   }
 
-  // si no hay más slots del día → buscar próximo día con disponibilidad
   const desde = addDaysISO(elFecha.value, 1);
   const hasta = addDaysISO(desde, 60);
 
@@ -718,6 +763,7 @@ function slotPrev(){
     renderSlotActual();
   }
 }
+
 async function dayNext(){
 
   if(!DIAS_DISPONIBLES.length) return;
@@ -746,7 +792,9 @@ async function dayPrev(){
   elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
 
   await cargarSlots();
-}  
+}
+
+  
  
   /* ================= Buscar paciente ================= */
 async function buscarPaciente(){
@@ -952,6 +1000,11 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
   }
 
   syncSobturnoUI();
+  // set hora actual sistema
+const now = new Date();
+const hh = String(now.getHours()).padStart(2,"0");
+const mm = String(now.getMinutes()).padStart(2,"0");
+elHoraManual.value = `${hh}:${mm}`;
 
   elMedico.onchange = async () => {
   CURRENT_SLOTS = [];
@@ -961,8 +1014,13 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
   await cargarSlots();
 };
   elFecha.onchange = async () => {
+
   CURRENT_SLOTS = [];
   CURRENT_SLOT_INDEX = 0;
+
+  // 🔥 sync con DIAS_DISPONIBLES
+  DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
+
   await cargarSlots();
 };
 
