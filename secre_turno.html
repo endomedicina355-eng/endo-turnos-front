@@ -267,6 +267,10 @@ textarea{
     Primer turno disponible automático
   </div>
 
+   <button id="btnUsarRecomendado" class="primary" style="margin-top:10px;width:100%">
+  Reservar este turno
+</button>   
+
 </div>  
 
   <!-- TURNOS DISPONIBLES -->
@@ -971,6 +975,16 @@ async function crearTurno(){
   const cop = (elCopago.value||"").trim();
   const copagoNum = cop === "" ? null : Number(cop);
   if (cop !== "" && Number.isNaN(copagoNum)){ errT.textContent="Copago inválido."; return; }
+  
+  const medicoNombre = elMedico.options[elMedico.selectedIndex]?.text || "";
+  const fecha = elFecha.value;
+  const hora = sob ? elHoraManual.value : fmtHour(inicioISO);
+
+  const confirmacion = confirm(
+  `Confirmar turno:\n\nPaciente: ${elNombre.value}\nMédico: ${medicoNombre}\nFecha: ${fecha}\nHora: ${hora}`
+);
+
+  if (!confirmacion) return;
 
   const { error } = await sb.rpc("secre_crear_turno", {
     p_medico_id: elMedico.value,
@@ -1009,23 +1023,47 @@ document.getElementById("btnCrearTurno").onclick = crearTurno;
 document.getElementById("slotNext").onclick = slotNext;
 document.getElementById("slotPrev").onclick = slotPrev;
 
+// 🔥 BOTÓN BIG BOX (RECOMENDADO)
+document.getElementById("btnUsarRecomendado").onclick = async () => {
+  if (!SLOT_RECOMENDADO_FIJO) return;
+
+  elFecha.value = FECHA_RECOMENDADA_FIJA;
+
+  DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
+
+  await cargarSlots();
+
+  const idx = CURRENT_SLOTS.findIndex(s =>
+    s.inicio_slot === SLOT_RECOMENDADO_FIJO.inicio_slot
+  );
+
+  if (idx !== -1){
+    CURRENT_SLOT_INDEX = idx;
+    renderSlotActual();
+  }
+};
+
 elSlot.onchange = () => {
   CURRENT_SLOT_INDEX = elSlot.selectedIndex;
-};  
+};
 
 document.getElementById("dayNext").onclick = dayNext;
 document.getElementById("dayPrev").onclick = dayPrev;
-  
-document.getElementById("btnLimpiar").onclick = ()=>{
-  errP.textContent=""; okP.textContent="";
+
+document.getElementById("btnLimpiar").onclick = () => {
+  errP.textContent = "";
+  okP.textContent = "";
   currentPacienteId = null;
   btnHistorial.disabled = true;
   btnCrear.disabled = true;
   warnAusente.style.display = "none";
-  elNombre.value=""; elTel.value=""; elEmail.value=""; elOS.value=""; elAf.value="";
+  elNombre.value = "";
+  elTel.value = "";
+  elEmail.value = "";
+  elOS.value = "";
+  elAf.value = "";
 };
-
-/* ================= Nav ================= */
+  /* ================= Nav ================= */
 document.getElementById("btnBack").onclick = ()=> window.location.href = "./secretaria.html";
 
 /* ================= INIT ================= */
