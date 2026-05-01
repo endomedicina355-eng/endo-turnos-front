@@ -143,6 +143,21 @@ textarea{
   align-items:center;
   gap:10px;
 }
+
+#btnCrearTurno{
+  font-size:17px;
+  font-weight:900;
+  padding:15px 26px;
+  border-radius:14px;
+  min-width:180px;
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
+}
+
+#btnCrearTurno:disabled{
+  opacity:.45;
+  box-shadow:none;
+  cursor:not-allowed;
+}    
   </style>
 </head>
 
@@ -310,7 +325,7 @@ textarea{
     </div>
 
     <div class="actions" style="margin-top:12px">
-      <button id="btnCrearTurno" class="primary" disabled>Crear</button>
+      <button id="btnCrearTurno" class="primary" disabled>Crear turno</button>
       <div class="error" id="errT"></div>
       <div class="ok" id="okT"></div>
     </div>
@@ -418,6 +433,8 @@ let CURRENT_SLOTS = [];
 let CURRENT_SLOT_INDEX = 0;  
 let DIAS_DISPONIBLES = [];
 let DIA_INDEX = 0;
+let SLOT_RECOMENDADO_FIJO = null;
+let FECHA_RECOMENDADA_FIJA = null;  
   
 /* ================= HELPERS ================= */
 function isoDateARNow(){
@@ -644,10 +661,6 @@ async function cargarSlots(){
     btnCrear.disabled = true;
     btnPrev.disabled = true;
     btnNext.disabled = true;
-
-    const elReco = document.getElementById("slotRecomendado");
-    if (elReco) elReco.textContent = "Sin disponibilidad";
-
     return;
   }
 
@@ -660,21 +673,18 @@ async function cargarSlots(){
   CURRENT_SLOT_INDEX = 0;
 
   renderSlotActual();
-  renderSlotRecomendado();
 }
 
 function renderSlotRecomendado(){
   const elReco = document.getElementById("slotRecomendado");
   if (!elReco) return;
 
-  if (!CURRENT_SLOTS.length){
+  if (!SLOT_RECOMENDADO_FIJO){
     elReco.textContent = "Sin disponibilidad";
     return;
   }
 
-  const s = CURRENT_SLOTS[0];
-
-  const d = new Date(s.inicio_slot);
+  const d = new Date(SLOT_RECOMENDADO_FIJO.inicio_slot);
 
   const fecha = d.toLocaleDateString("es-AR",{
     weekday:"short",
@@ -683,10 +693,50 @@ function renderSlotRecomendado(){
     timeZone: AR_TZ
   });
 
-  const hora = fmtHour(s.inicio_slot);
+  const hora = fmtHour(SLOT_RECOMENDADO_FIJO.inicio_slot);
 
   elReco.textContent = `${fecha} · ${hora}`;
 }
+
+async function cargarSlotRecomendadoFijo(){
+  SLOT_RECOMENDADO_FIJO = null;
+  FECHA_RECOMENDADA_FIJA = null;
+
+  if (!elMedico.value) {
+    renderSlotRecomendado();
+    return;
+  }
+
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 60);
+
+  const { data, error } = await sb.rpc("get_dias_con_slots", {
+    p_medico_id: elMedico.value,
+    p_desde: desde,
+    p_hasta: hasta
+  });
+
+  if (error || !data?.length){
+    renderSlotRecomendado();
+    return;
+  }
+
+  const primerDia = data[0].dia || data[0];
+  FECHA_RECOMENDADA_FIJA = primerDia;
+
+  const { data: slots, error: errSlots } = await sb.rpc("get_slots_dia", {
+    p_medico_id: elMedico.value,
+    p_fecha: primerDia
+  });
+
+  if (errSlots || !slots?.length){
+    renderSlotRecomendado();
+    return;
+  }
+
+  SLOT_RECOMENDADO_FIJO = slots[0];
+  renderSlotRecomendado();
+}  
 
 function renderSlotActual(){
 
@@ -936,8 +986,10 @@ async function crearTurno(){
   if (error){ errT.textContent = error.message; return; }
 
   okT.textContent = "✅ Turno creado.";
-  delete SLOT_CACHE[elMedico.value + "_" + elFecha.value];
-  await cargarSlots();
+delete SLOT_CACHE[elMedico.value + "_" + elFecha.value];
+
+await cargarSlotRecomendadoFijo();
+await cargarSlots();
 }
 
 /* ================= Sobreturno UI ================= */
@@ -994,11 +1046,11 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
 
   elFecha.value = isoDateARNow();
 
-  if (elMedico.value){
-    await setFechaPrimerDiaConSlots();
-    await cargarSlots();
-  }
-
+if (elMedico.value){
+  await cargarSlotRecomendadoFijo();
+  await setFechaPrimerDiaConSlots();
+  await cargarSlots();
+}
   syncSobturnoUI();
   // set hora actual sistema
 const now = new Date();
@@ -1009,7 +1061,11 @@ elHoraManual.value = `${hh}:${mm}`;
   elMedico.onchange = async () => {
   CURRENT_SLOTS = [];
   CURRENT_SLOT_INDEX = 0;
+  SLOT_RECOMENDADO_FIJO = null;
+  FECHA_RECOMENDADA_FIJA = null;
   elSlot.innerHTML = "";
+
+  await cargarSlotRecomendadoFijo();
   await setFechaPrimerDiaConSlots();
   await cargarSlots();
 };
