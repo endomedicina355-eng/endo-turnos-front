@@ -247,9 +247,9 @@ textarea{
         <input id="fecha" type="date" />
       </div>
       <div>
-        <div class="muted">Copago (opcional)</div>
-        <input id="copago" inputmode="numeric" placeholder="0" />
-      </div>
+        <div style="display:none">
+  <input id="copago" type="number" />
+</div>
     </div>
 
     <div class="row" style="margin-top:14px">
@@ -991,9 +991,7 @@ async function crearTurno(){
     if (!inicioISO){ errT.textContent="No hay slot disponible."; return; }
   }
 
-  const cop = (elCopago.value||"").trim();
-  const copagoNum = cop === "" ? null : Number(cop);
-  if (cop !== "" && Number.isNaN(copagoNum)){ errT.textContent="Copago inválido."; return; }
+  const copagoNum = null;
   
   const medicoNombre = elMedico.options[elMedico.selectedIndex]?.text || "";
 
