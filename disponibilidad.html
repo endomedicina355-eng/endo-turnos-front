@@ -370,6 +370,25 @@ function clearMsgs(){ [errAlta,okAlta,errDur,okDur,errDispo,okDispo,errAus,okAus
 function setOk(el,msg){ el.textContent = msg; setTimeout(()=>{ if(el.textContent===msg) el.textContent=""; }, 1600); }
 function setErr(el,msg){ el.textContent = msg; }
 function toISOFromLocal(dtLocalStr){ return new Date(dtLocalStr).toISOString(); }
+function isoDateARNow(){
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: AR_TZ,
+    year:"numeric",
+    month:"2-digit",
+    day:"2-digit"
+  }).formatToParts(new Date());
+
+  const y = parts.find(p=>p.type==="year").value;
+  const m = parts.find(p=>p.type==="month").value;
+  const d = parts.find(p=>p.type==="day").value;
+
+  return `${y}-${m}-${d}`;
+}
+
+function setDiaCompleto(inputDesde, inputHasta, isoDate){
+  inputDesde.value = `${isoDate}T00:00`;
+  inputHasta.value = `${isoDate}T23:59`;
+}  
 
 /* ===== AUTH + TENANT desde personal (minúscula) ===== */
 async function guard(){
@@ -950,20 +969,39 @@ function copiarLinkAutogestion(){
 btnCopyLink?.addEventListener("click", copiarLinkAutogestion);
 linkAutogestion?.addEventListener("click", copiarLinkAutogestion);
   
-  
-/* ===== INIT ===== */
+  /* ===== INIT ===== */
 document.addEventListener("DOMContentLoaded", async ()=>{
   const ok = await guard();
   if (!ok) return;
 
   try{
-    await resolveTenantFromPersonal();    // tenant desde personal
+    await resolveTenantFromPersonal();
     await cargarTenantBranding();
     enforceRole();
 
     if (USER_ROL !== "admin" && USER_ROL !== "secre") return;
 
     duracionMin.value = "15";
+
+    const hoy = isoDateARNow();
+
+    const ausDesde = document.getElementById("ausDesde");
+    const ausHasta = document.getElementById("ausHasta");
+    const gDesde = document.getElementById("gDesde");
+    const gHasta = document.getElementById("gHasta");
+
+    setDiaCompleto(ausDesde, ausHasta, hoy);
+    setDiaCompleto(gDesde, gHasta, hoy);
+
+    ausDesde.addEventListener("change", () => {
+      const dia = ausDesde.value.slice(0,10);
+      if (dia) setDiaCompleto(ausDesde, ausHasta, dia);
+    });
+
+    gDesde.addEventListener("change", () => {
+      const dia = gDesde.value.slice(0,10);
+      if (dia) setDiaCompleto(gDesde, gHasta, dia);
+    });
 
     await cargarMedicosSelects();
 
@@ -972,36 +1010,39 @@ document.addEventListener("DOMContentLoaded", async ()=>{
       duracionMin.value = String(m0.duracion_min);
     }
 
-    syncMedicoEstadoUI();   // 👈 esto actualiza estado + link autogestión
+    syncMedicoEstadoUI();
 
     await cargarDispo();
     await cargarAusencias();
     await cargarGlobales();
 
     selMedicoDispo.onchange = ()=>{
-  syncAllMedicoSelects(selMedicoDispo.value);
+      syncAllMedicoSelects(selMedicoDispo.value);
 
-  const m = MEDICOS_MAP.get(String(selMedicoDur.value));
-  if (m?.duracion_min) duracionMin.value = String(m.duracion_min);
+      const m = MEDICOS_MAP.get(String(selMedicoDur.value));
+      if (m?.duracion_min) duracionMin.value = String(m.duracion_min);
 
-  syncMedicoEstadoUI();
-  cargarDispo();
-};
-selMedicoAus.onchange = ()=>{
-  syncAllMedicoSelects(selMedicoAus.value);
+      syncMedicoEstadoUI();
+      cargarDispo();
+    };
 
-  const m = MEDICOS_MAP.get(String(selMedicoDur.value));
-  if (m?.duracion_min) duracionMin.value = String(m.duracion_min);
+    selMedicoAus.onchange = ()=>{
+      syncAllMedicoSelects(selMedicoAus.value);
 
-  syncMedicoEstadoUI();
-  cargarAusencias();
-};
+      const m = MEDICOS_MAP.get(String(selMedicoDur.value));
+      if (m?.duracion_min) duracionMin.value = String(m.duracion_min);
+
+      syncMedicoEstadoUI();
+      cargarAusencias();
+    };
+
   }catch(e){
     roleBlock.style.display = "block";
     roleBlock.querySelector(".muted").textContent = e?.message || "Error iniciando disponibilidad.";
     [cardAlta, cardDur, cardDispo, cardAus, cardGlob].forEach(x=> x.style.display = "none");
   }
 });
-</script>
+
+  </script>
 </body>
 </html>
