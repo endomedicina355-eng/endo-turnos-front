@@ -952,6 +952,25 @@ async function abrirHistorial(){
 btnCerrarModal.onclick = ()=> modalBg.style.display = "none";
 modalBg.onclick = (e)=>{ if (e.target === modalBg) modalBg.style.display = "none"; };
 
+/* ================= limpiar datos ================= */
+
+function limpiarPacientePostTurno(){
+  currentPacienteId = null;
+  btnHistorial.disabled = true;
+  btnCrear.disabled = true;
+  warnAusente.style.display = "none";
+
+  elDni.value = "";
+  elNombre.value = "";
+  elTel.value = "";
+  elEmail.value = "";
+  elOS.value = "";
+  elAf.value = "";
+
+  errP.textContent = "";
+  okP.textContent = "";
+}
+  
 /* ================= Crear turno ================= */
 async function crearTurno(){
   errT.textContent=""; okT.textContent="";
@@ -977,15 +996,25 @@ async function crearTurno(){
   if (cop !== "" && Number.isNaN(copagoNum)){ errT.textContent="Copago inválido."; return; }
   
   const medicoNombre = elMedico.options[elMedico.selectedIndex]?.text || "";
-  const fecha = elFecha.value;
-  const hora = sob ? elHoraManual.value : fmtHour(inicioISO);
 
-  const confirmacion = confirm(
-  `Confirmar turno:\n\nPaciente: ${elNombre.value}\nMédico: ${medicoNombre}\nFecha: ${fecha}\nHora: ${hora}`
+const fechaTexto = new Date(inicioISO).toLocaleDateString("es-AR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: AR_TZ
+});
+
+const horaTexto = sob ? elHoraManual.value : fmtHour(inicioISO);
+
+const confirmacion = confirm(
+  `CONFIRMAR TURNO\n\n` +
+  `Paciente: ${elNombre.value}\n` +
+  `Médico: ${medicoNombre}\n` +
+  `Fecha: ${fechaTexto} a las ${horaTexto} hs`
 );
 
-  if (!confirmacion) return;
-
+if (!confirmacion) return;
+  
   const { error } = await sb.rpc("secre_crear_turno", {
     p_medico_id: elMedico.value,
     p_paciente_id: currentPacienteId,
@@ -1001,6 +1030,8 @@ async function crearTurno(){
 
   okT.textContent = "✅ Turno creado.";
 delete SLOT_CACHE[elMedico.value + "_" + elFecha.value];
+
+limpiarPacientePostTurno();
 
 await cargarSlotRecomendadoFijo();
 await cargarSlots();
