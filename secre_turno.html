@@ -1084,15 +1084,23 @@ document.getElementById("dayPrev").onclick = dayPrev;
 document.getElementById("btnLimpiar").onclick = () => {
   errP.textContent = "";
   okP.textContent = "";
+  okT.textContent = "";
+  errT.textContent = "";
+
   currentPacienteId = null;
+
   btnHistorial.disabled = true;
   btnCrear.disabled = true;
   warnAusente.style.display = "none";
+
+  elDni.value = "";
   elNombre.value = "";
   elTel.value = "";
   elEmail.value = "";
   elOS.value = "";
   elAf.value = "";
+
+  elDni.focus();
 };
   /* ================= Nav ================= */
 document.getElementById("btnBack").onclick = ()=> window.location.href = "./secretaria.html";
