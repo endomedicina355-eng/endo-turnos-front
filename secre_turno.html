@@ -392,7 +392,7 @@ textarea{
       <button id="btnCerrarModal" class="small">Cerrar</button>
     </div>
     <div class="modalBody">
-      <div class="muted" id="histTitle" ="margin-bottom:10px"></div>
+      <div class="muted" id="histTitle" style="margin-bottom:10px"></div>
       <table>
         <thead>
           <tr>
@@ -582,8 +582,8 @@ async function cargarTenantBranding(){
 
     const c1 = data.color_primario || "#111";
     const c2 = data.color_secundario || "#f6f7f8";
-    document.documentElement..setProperty("--primary", c1);
-    document.documentElement..setProperty("--bg", c2);
+    document.documentElement.style.setProperty("--primary", c1);
+    document.documentElement.style.setProperty("--bg", c2);
     document.title = `${title} · Turnos Secretaría`;
   }catch(e){
     // marca blanca si falla
@@ -893,7 +893,7 @@ async function dayPrev(){
 async function buscarPaciente(){
   errP.textContent = ""; okP.textContent = "";
   btnHistorial.disabled = true;
-  warnAusente..display = "none";
+  warnAusente.style.display = "none";
   currentPacienteId = null;
   btnCrear.disabled = true;
 
