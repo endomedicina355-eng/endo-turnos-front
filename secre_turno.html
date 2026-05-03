@@ -158,6 +158,71 @@ textarea{
   box-shadow:none;
   cursor:not-allowed;
 }    
+.turnoTop{
+  display:grid;
+  grid-template-columns: 1fr 280px;
+  gap:14px;
+  align-items:end;
+}
+
+.turnoGrid{
+  display:grid;
+  grid-template-columns: 180px 1fr 320px;
+  gap:14px;
+  align-items:stretch;
+  margin-top:14px;
+}
+
+.recomendadoCard{
+  border:2px solid #111;
+  background:#fff;
+}
+
+.slotRecomendadoBig{
+  font-size:22px;
+  font-weight:900;
+  line-height:1.15;
+}
+
+.btnFull{
+  margin-top:10px;
+  width:100%;
+}
+
+.turnoFooter{
+  display:grid;
+  grid-template-columns: 1fr 220px;
+  gap:16px;
+  align-items:end;
+  margin-top:14px;
+}
+
+.crearBox{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+#btnCrearTurno{
+  width:100%;
+  min-width:0;
+}
+
+.tipBox{
+  margin-top:14px;
+  padding:12px 14px;
+  border:1px solid #d8eadc;
+  background:#f3faf5;
+  border-radius:14px;
+}
+
+@media(max-width:900px){
+  .turnoTop,
+  .turnoGrid,
+  .turnoFooter{
+    grid-template-columns:1fr;
+  }
+}
   </style>
 </head>
 
@@ -230,115 +295,89 @@ textarea{
     </div>
   </div>
 
-  <!-- 2) Crear turno -->
-  <div class="card">
-    <div class="brand" style="font-weight:900">Crear turno</div>
-    <div class="muted">Elegí médico + fecha. Si NO es sobreturno, usás slots disponibles. Si es sobreturno, ponés la hora manual.</div>
+<!-- 2) Crear turno -->
+<div class="card">
+  <div class="brand" style="font-weight:900">Crear turno</div>
+  <div class="muted">Elegí médico + fecha. Si NO es sobreturno, usás slots disponibles. Si es sobreturno, ponés la hora manual.</div>
 
-    <div class="hr"></div>
+  <div class="hr"></div>
 
-    <div class="row">
-      <div>
-        <div class="muted">Médico</div>
-        <select id="medico"></select>
+  <div class="turnoTop">
+    <div>
+      <div class="muted">Médico</div>
+      <select id="medico"></select>
+    </div>
+
+    <div>
+      <div class="muted">Fecha</div>
+      <input id="fecha" type="date" />
+    </div>
+
+    <input id="copago" type="number" style="display:none" />
+  </div>
+
+  <div class="turnoGrid">
+    <div class="slotCard recomendadoCard">
+      <div class="slotCardTitle">Próximo turno recomendado</div>
+      <div class="slotRecomendadoBig" id="slotRecomendado">—</div>
+      <div class="muted" style="margin-top:4px">Primer turno disponible automático</div>
+
+      <button id="btnUsarRecomendado" class="primary btnFull">
+        Reservar este turno
+      </button>
+    </div>
+
+    <div class="slotCard">
+      <div class="slotCardTitle">Próximo turno disponible</div>
+
+      <div class="slotNav">
+        <button id="slotPrev" class="slotBtn">←</button>
+        <select id="slot" class="slotSelect" size="4"></select>
+        <button id="slotNext" class="slotBtn">→</button>
       </div>
-      <div>
-        <div class="muted">Fecha</div>
-        <input id="fecha" type="date" />
+
+      <div class="slotDayNav">
+        <button id="dayPrev" class="slotBtn">◀ Día</button>
+        <button id="dayNext" class="slotBtn">Día ▶</button>
       </div>
-      <div>
-        <div style="display:none">
-  <input id="copago" type="number" />
-</div>
     </div>
 
-    <div class="row" style="margin-top:14px">
-    <div class="slotCard" style="border:2px solid #111;background:#fff">
+    <div class="sobreturnoCard">
+      <div class="sobreturnoTitle">Sobreturno manual</div>
 
-  <div class="slotCardTitle">
-    Próximo turno recomendado
-  </div>
+      <div class="sobreturnoRow">
+        <input id="horaManual" type="time" disabled />
 
-  <div style="font-size:22px;font-weight:900" id="slotRecomendado">
-    —
-  </div>
+        <label class="inline" style="gap:6px">
+          <input id="chkSobreturno" type="checkbox" />
+          <b>Sobreturno</b>
+        </label>
 
-  <div class="muted" style="margin-top:4px">
-    Primer turno disponible automático
-  </div>
-
-   <button id="btnUsarRecomendado" class="primary" style="margin-top:10px;width:100%">
-  Reservar este turno
-</button>   
-
-</div>  
-
-  <!-- TURNOS DISPONIBLES -->
-  <div class="slotCard">
-
-    <div class="slotCardTitle">
-      Próximo turno disponible
+        <span id="lblSobreturno" class="tag" style="display:none">
+          SOBRETURNO
+        </span>
+      </div>
     </div>
-
-    <div class="slotNav">
-
-      <button id="slotPrev" class="slotBtn">←</button>
-
-      <select id="slot" class="slotSelect" size="4"></select>
-
-      <button id="slotNext" class="slotBtn">→</button>
-
-    </div>
-
-   <div class="slotDayNav">
-  <button id="dayPrev" class="slotBtn">◀ Día</button>
-  <button id="dayNext" class="slotBtn">Día ▶</button>
-</div> 
-
   </div>
 
-
-  <!-- SOBRETURNO -->
-  <div class="sobreturnoCard">
-
-    <div class="sobreturnoTitle">
-      Sobreturno manual
-    </div>
-
-    <div class="sobreturnoRow">
-
-      <input id="horaManual" type="time" disabled />
-
-      <label class="inline" style="gap:6px">
-        <input id="chkSobreturno" type="checkbox" />
-        <b>Sobreturno</b>
-      </label>
-
-      <span id="lblSobreturno" class="tag" style="display:none">
-        SOBRETURNO
-      </span>
-
-    </div>
-
-  </div>
-
-</div>
-    <div style="margin-top:10px">
+  <div class="turnoFooter">
+    <div>
       <div class="muted">Nota (opcional)</div>
       <textarea id="nota" placeholder="Opcional"></textarea>
     </div>
 
-    <div class="actions" style="margin-top:12px">
+    <div class="crearBox">
       <button id="btnCrearTurno" class="primary" disabled>Crear turno</button>
       <div class="error" id="errT"></div>
       <div class="ok" id="okT"></div>
     </div>
+  </div>
 
-    <div class="hr"></div>
+  <div class="tipBox">
     <div class="pill green">Tip</div>
     <div class="muted" style="margin-top:10px">
-      1) Buscá paciente por DNI (o crealo).<br/>
-      2) Elegí médico y fecha (por defecto el primer día con turnos).<br/>
+      1) Buscá paciente por DNI o crealo.<br/>
+      2) Elegí médico y fecha.<br/>
       3) Si sobreturno: tildá “Sobreturno” y poné hora manual.<br/>
       4) Crear.
     </div>
@@ -353,7 +392,7 @@ textarea{
       <button id="btnCerrarModal" class="small">Cerrar</button>
     </div>
     <div class="modalBody">
-      <div class="muted" id="histTitle" style="margin-bottom:10px"></div>
+      <div class="muted" id="histTitle" ="margin-bottom:10px"></div>
       <table>
         <thead>
           <tr>
@@ -543,8 +582,8 @@ async function cargarTenantBranding(){
 
     const c1 = data.color_primario || "#111";
     const c2 = data.color_secundario || "#f6f7f8";
-    document.documentElement.style.setProperty("--primary", c1);
-    document.documentElement.style.setProperty("--bg", c2);
+    document.documentElement..setProperty("--primary", c1);
+    document.documentElement..setProperty("--bg", c2);
     document.title = `${title} · Turnos Secretaría`;
   }catch(e){
     // marca blanca si falla
@@ -854,7 +893,7 @@ async function dayPrev(){
 async function buscarPaciente(){
   errP.textContent = ""; okP.textContent = "";
   btnHistorial.disabled = true;
-  warnAusente.style.display = "none";
+  warnAusente..display = "none";
   currentPacienteId = null;
   btnCrear.disabled = true;
 
