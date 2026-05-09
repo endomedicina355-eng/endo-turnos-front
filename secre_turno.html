@@ -1203,7 +1203,7 @@ document.getElementById("btnUsarRecomendado").onclick = async () => {
   DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
 
   await cargarSlots();
-syncSobturnoUI();
+  syncSobturnoUI();
 
 const idx = CURRENT_SLOTS.findIndex(s =>
   s.inicio_slot === SLOT_RECOMENDADO_FIJO.inicio_slot
