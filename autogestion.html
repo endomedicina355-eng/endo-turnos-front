@@ -573,6 +573,8 @@ let medicoDuracion = 15;
 
 let availableDaysSet = new Set();
 let selectedDateISO = null;
+let SLOTS_RANGO = [];
+let SLOTS_POR_DIA = {};  
 window.SLOT_SELECCIONADO = null;
 
 /* ================= CHECKBOX LOGIC ================= */
@@ -705,24 +707,46 @@ async function cargarMedico() {
 async function cargarDias() {
   daysErr.textContent = "";
   calBox.innerHTML = "";
+  slotsBox.innerHTML = "";
+  errSlots.textContent = "";
+  chosenSlot.textContent = "—";
+  btnBook.disabled = true;
+  window.SLOT_SELECCIONADO = null;
 
   const hoy = new Date();
   const desde = isoDateAR(hoy);
   const hasta = addDaysISO(desde, medicoHorizonte);
 
-  const { data, error } = await sb.rpc("get_dias_con_slots", {
+  const { data, error } = await sb.rpc("get_slots_disponibles_rango", {
     p_medico_id: MEDICO_ID,
     p_desde: desde,
     p_hasta: hasta
   });
 
-  if (error) { daysErr.textContent = error.message; return; }
-  if (!data || data.length === 0) { daysErr.textContent = "No hay días con disponibilidad en el rango."; return; }
+  if (error) {
+    daysErr.textContent = error.message;
+    return;
+  }
 
-  availableDaysSet = new Set(data.map(r => r.dia));
+  SLOTS_RANGO = data || [];
+  SLOTS_POR_DIA = {};
+
+  SLOTS_RANGO.forEach(s => {
+    const dia = s.dia;
+    if (!SLOTS_POR_DIA[dia]) SLOTS_POR_DIA[dia] = [];
+    SLOTS_POR_DIA[dia].push(s);
+  });
+
+  availableDaysSet = new Set(Object.keys(SLOTS_POR_DIA));
+
+  if (!availableDaysSet.size) {
+    daysErr.textContent = "No hay turnos disponibles en el rango.";
+    return;
+  }
 
   let mk = monthKey(desde);
   const endMk = monthKey(hasta);
+
   while (true) {
     renderMonth(mk, desde, hasta);
     if (mk === endMk) break;
@@ -730,9 +754,8 @@ async function cargarDias() {
     if (!mk) break;
   }
 
-  selectDay(data[0].dia);
+  selectDay(Object.keys(SLOTS_POR_DIA)[0]);
 }
-
 /* ================= CALENDAR RENDER ================= */
 function renderMonth(yyyy_mm, desdeISO, hastaISO) {
   const monthDiv = document.createElement("div");
@@ -814,13 +837,12 @@ async function cargarSlots(fechaISO) {
   btnBook.disabled = true;
   window.SLOT_SELECCIONADO = null;
 
-  const { data, error } = await sb.rpc("get_slots_dia", {
-    p_medico_id: MEDICO_ID,
-    p_fecha: fechaISO
-  });
+  const data = SLOTS_POR_DIA[fechaISO] || [];
 
-  if (error) { errSlots.textContent = error.message; return; }
-  if (!data || data.length === 0) { errSlots.textContent = "Ese día no tiene horarios."; return; }
+  if (!data.length) {
+    errSlots.textContent = "Ese día no tiene horarios disponibles.";
+    return;
+  }
 
   data.forEach(s => {
     const hora = fmtHora(s.inicio_slot);
@@ -841,8 +863,7 @@ async function cargarSlots(fechaISO) {
     slotsBox.appendChild(btn);
   });
 }
-
-/* ================= BOOKING ================= */
+  /* ================= BOOKING ================= */
 btnBook.onclick = async () => {
   errBook.textContent = "";
   okBook.textContent = "";
@@ -962,7 +983,11 @@ ${chkParticular.checked ? "" : ("Afiliado: " + numero_afiliado + "\n")}`;
     btnClose.onclick = () => window.location.reload();
     openModal();
 
-    await cargarSlots(selectedDateISO);
+    await cargarDias();
+
+if (availableDaysSet.has(selectedDateISO)) {
+  selectDay(selectedDateISO);
+}
 
     ["nombre","dni","telefono","email","obra_social","numero_afiliado"].forEach(id => {
       const el = document.getElementById(id);
