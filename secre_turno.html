@@ -1167,8 +1167,10 @@ delete SLOT_CACHE[elMedico.value + "_" + elFecha.value];
 
 limpiarPacientePostTurno();
 
-await cargarSlotRecomendadoFijo();
+await cargarSlotsRango();
+await setFechaPrimerDiaConSlots();
 await cargarSlots();
+syncSobturnoUI();
 }
 /* ================= Sobreturno UI ================= */
 function actualizarSobFechaActual(){
