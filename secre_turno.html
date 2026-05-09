@@ -551,6 +551,8 @@ let SLOT_RECOMENDADO_FIJO = null;
 let FECHA_RECOMENDADA_FIJA = null;  
 let SLOTS_RANGO = [];
 let SLOTS_POR_DIA = {};
+let DIAS_SOBRETURNOS = [];
+let DIA_SOB_INDEX = 0;  
   
 /* ================= HELPERS ================= */
 function isoDateARNow(){
@@ -853,6 +855,8 @@ async function cargarSlotRecomendadoFijo(){
 
   SLOTS_RANGO = data || [];
 
+   
+
   // agrupar por día
   SLOTS_RANGO.forEach(s => {
 
@@ -875,6 +879,35 @@ async function cargarSlotRecomendadoFijo(){
     SLOT_RECOMENDADO_FIJO?.dia || null;
 
   renderSlotRecomendado();
+}
+
+  async function cargarDiasSobreturnos(){
+  DIAS_SOBRETURNOS = [];
+  DIA_SOB_INDEX = 0;
+
+  if (!elMedico.value) return;
+
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 90);
+
+  const { data, error } = await sb.rpc("get_dias_con_slots", {
+    p_medico_id: elMedico.value,
+    p_desde: desde,
+    p_hasta: hasta
+  });
+
+  if (error){
+    errT.textContent = error.message;
+    return;
+  }
+
+  DIAS_SOBRETURNOS = (data || []).map(x => x.dia || x);
+
+  DIA_SOB_INDEX = DIAS_SOBRETURNOS.findIndex(d => d === elFecha.value);
+
+  if (DIA_SOB_INDEX < 0){
+    DIA_SOB_INDEX = 0;
+  }
 }
   
 function renderSlotActual(){
@@ -927,33 +960,28 @@ async function slotNext(){
     return;
   }
 
-  const desde = addDaysISO(elFecha.value, 1);
-  const hasta = addDaysISO(desde, 60);
+  if (!DIAS_DISPONIBLES.length) return;
 
-  const { data, error } = await sb.rpc("get_dias_con_slots", {
-    p_medico_id: elMedico.value,
-    p_desde: desde,
-    p_hasta: hasta
-  });
+  DIA_INDEX++;
 
-  if (error || !data?.length){
-    btnNext.disabled = true;
-    return;
+  if (DIA_INDEX >= DIAS_DISPONIBLES.length){
+    DIA_INDEX = 0;
   }
 
-  const siguienteDia = data[0].dia || data[0];
-  elFecha.value = siguienteDia;
+  elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
 
   await cargarSlots();
+  syncSobturnoUI();
 }
-
+  
 function slotPrev(){
   if (CURRENT_SLOT_INDEX > 0){
     CURRENT_SLOT_INDEX--;
     renderSlotActual();
+    syncSobturnoUI();
   }
 }
-
+  
 async function dayNext(){
 
   if(!DIAS_DISPONIBLES.length) return;
@@ -967,13 +995,14 @@ async function dayNext(){
   elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
 
   await cargarSlots();
+  syncSobturnoUI();
 }
 
 async function dayPrev(){
 
   if(!DIAS_DISPONIBLES.length) return;
 
-  DIA_INDEX--;
+  DIA_INDEX--;    
 
   if(DIA_INDEX < 0){
     DIA_INDEX = DIAS_DISPONIBLES.length - 1;
@@ -982,8 +1011,8 @@ async function dayPrev(){
   elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
 
   await cargarSlots();
+  syncSobturnoUI();
 }
-
   
  
   /* ================= Buscar paciente ================= */
@@ -1168,9 +1197,10 @@ delete SLOT_CACHE[elMedico.value + "_" + elFecha.value];
 limpiarPacientePostTurno();
 
 await cargarSlotsRango();
+await cargarDiasSobreturnos();
 await setFechaPrimerDiaConSlots();
 await cargarSlots();
-syncSobturnoUI();
+  syncSobturnoUI();
 }
 /* ================= Sobreturno UI ================= */
 function actualizarSobFechaActual(){
@@ -1200,9 +1230,9 @@ function syncSobturnoUI(){
     sobturnoNavBox.classList.toggle("active", sob);
   }
 
-  if (sobDayPrev) sobDayPrev.disabled = !sob || !DIAS_DISPONIBLES.length;
-  if (sobDayNext) sobDayNext.disabled = !sob || !DIAS_DISPONIBLES.length;
-
+  if (sobDayPrev) sobDayPrev.disabled = !sob || !DIAS_SOBRETURNOS.length;
+  if (sobDayNext) sobDayNext.disabled = !sob || !DIAS_SOBRETURNOS.length;
+  
   if (sob){
     btnCrear.disabled = !currentPacienteId || !elMedico.value || !elFecha.value || !elHoraManual.value;
   } else {
@@ -1251,14 +1281,32 @@ document.getElementById("dayNext").onclick = dayNext;
 document.getElementById("dayPrev").onclick = dayPrev;
 
 sobDayNext.onclick = async () => {
-  await dayNext();
+  if (!DIAS_SOBRETURNOS.length) return;
+
+  DIA_SOB_INDEX++;
+  if (DIA_SOB_INDEX >= DIAS_SOBRETURNOS.length){
+    DIA_SOB_INDEX = 0;
+  }
+
+  elFecha.value = DIAS_SOBRETURNOS[DIA_SOB_INDEX];
+
+  await cargarSlots();
   syncSobturnoUI();
 };
 
 sobDayPrev.onclick = async () => {
-  await dayPrev();
+  if (!DIAS_SOBRETURNOS.length) return;
+
+  DIA_SOB_INDEX--;
+  if (DIA_SOB_INDEX < 0){
+    DIA_SOB_INDEX = DIAS_SOBRETURNOS.length - 1;
+  }
+
+  elFecha.value = DIAS_SOBRETURNOS[DIA_SOB_INDEX];
+
+  await cargarSlots();
   syncSobturnoUI();
-};  
+};
 
 document.getElementById("btnLimpiar").onclick = () => {
   errP.textContent = "";
@@ -1303,9 +1351,10 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
   elFecha.value = isoDateARNow();
 
   if (elMedico.value){
-  await cargarSlotsRango();
-  await setFechaPrimerDiaConSlots();
-  await cargarSlots();
+await cargarSlotsRango();
+await cargarDiasSobreturnos();
+await setFechaPrimerDiaConSlots();
+await cargarSlots();
 }
 
   // set hora actual sistema
@@ -1324,20 +1373,25 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
   elSlot.innerHTML = "";
 
   await cargarSlotsRango();
+  await cargarDiasSobreturnos();
   await setFechaPrimerDiaConSlots();
   await cargarSlots();
   syncSobturnoUI();
 };
   
   elFecha.onchange = async () => {
-    CURRENT_SLOTS = [];
-    CURRENT_SLOT_INDEX = 0;
+  CURRENT_SLOTS = [];
+  CURRENT_SLOT_INDEX = 0;
 
-    DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
+  DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
+  DIA_SOB_INDEX = DIAS_SOBRETURNOS.findIndex(d => d === elFecha.value);
 
-    await cargarSlots();
-    syncSobturnoUI();
-  };
+  if (DIA_INDEX < 0) DIA_INDEX = 0;
+  if (DIA_SOB_INDEX < 0) DIA_SOB_INDEX = 0;
+
+  await cargarSlots();
+  syncSobturnoUI();
+};
 
   elDni.addEventListener("keydown",(e)=>{
     if(e.key==="Enter"){
