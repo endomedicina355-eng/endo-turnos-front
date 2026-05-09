@@ -7,102 +7,358 @@
   <title>Turnos online</title>
 
   <style>
-    :root{
-      --primary:#111111;
-      --bg:#f6f7f8;
-      --card:#ffffff;
-      --border:#e7e7e7;
-      --muted:#666;
-      --danger:#b00020;
-      --ok:#0a7a27;
-      --selBg: rgba(17,17,17,.10);
-      --selBorder:#111;
+  :root{
+    --primary:#111111;
+    --bg:#f6f7f8;
+    --card:#ffffff;
+    --border:#e7e7e7;
+    --muted:#666;
+    --danger:#b00020;
+    --ok:#0a7a27;
+    --selBg: rgba(17,17,17,.10);
+    --selBorder:#111;
+  }
+
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    margin:0;
+    background:var(--bg);
+    color:#111;
+  }
+
+  .wrap{
+    max-width:980px;
+    margin:0 auto;
+    padding:18px;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px;
+    margin:12px 0;
+  }
+
+  .header{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:flex-start;
+  }
+
+  .brand{
+    font-weight:900;
+    font-size:20px;
+    line-height:1.1;
+  }
+
+  .muted{
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .pill{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid #ddd;
+    font-size:12px;
+    background:#fff;
+  }
+
+  #medicoLine{
+    font-size:16px;
+    font-weight:800;
+    color:#111;
+    margin-top:6px;
+  }
+
+  #espLine{
+    font-size:14px;
+    font-weight:700;
+    color:#333;
+    margin-top:2px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+
+  @media(min-width:900px){
+    .grid{
+      grid-template-columns:1.1fr .9fr;
     }
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; background:var(--bg); color:#111;}
-    .wrap{max-width:980px; margin:0 auto; padding:18px;}
-    .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin:12px 0;}
-    .header{display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
-    .brand{font-weight:900; font-size:20px; line-height:1.1}
-    .muted{color:var(--muted); font-size:13px}
-    .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #ddd; font-size:12px; background:#fff}
+  }
 
-    #medicoLine{font-size:16px; font-weight:800; color:#111; margin-top:6px}
-    #espLine{font-size:14px; font-weight:700; color:#333; margin-top:2px}
+  .calWrap{
+    display:grid;
+    gap:12px;
+  }
 
-    .grid{display:grid; grid-template-columns:1fr; gap:12px;}
-    @media(min-width:900px){ .grid{grid-template-columns:1.1fr .9fr;} }
-
-    .calWrap{display:grid; gap:12px;}
-    @media(min-width:740px){ .calWrap{grid-template-columns:1fr 1fr;} }
-    .month{border:1px solid #eee; border-radius:14px; padding:12px;}
-    .monthTitle{font-weight:900; margin:0 0 8px 0;}
-    .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px;}
-    .dow div{font-size:12px; color:#777; text-align:center;}
-    .daysGrid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
-
-    .dayCell{
-      height:38px;
-      border-radius:12px;
-      border:1px solid #eee;
-      background:#fff;
-      cursor:pointer;
-      font-size:13px;
-      transition: transform .05s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+  @media(min-width:740px){
+    .calWrap{
+      grid-template-columns:1fr 1fr;
     }
-    .dayCell:hover:not(:disabled){ box-shadow:0 2px 10px rgba(0,0,0,.06); transform:translateY(-1px); }
-    .dayCell:disabled{opacity:.35; cursor:not-allowed; background:#fafafa;}
-    .dayCell.inRange{border-color:#ddd;}
-    .dayCell.empty{border:0; background:transparent; cursor:default; box-shadow:none;}
-    .dayCell.active{
-      background: var(--selBg);
-      border-color: var(--selBorder);
-      box-shadow: 0 0 0 2px rgba(17,17,17,.12);
-      font-weight:900;
-    }
+  }
 
-    .slots{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
-    @media(max-width:520px){ .slots{grid-template-columns:repeat(2, minmax(0,1fr));} }
-    .slotbtn{border:1px solid #ddd; background:#fff; border-radius:12px; padding:10px; cursor:pointer; text-align:center}
-    .slotbtn.active{border-color:var(--primary); box-shadow:0 0 0 2px rgba(17,17,17,.10); font-weight:900}
+  .month{
+    border:1px solid #eee;
+    border-radius:14px;
+    padding:12px;
+  }
 
-    .row{display:grid; gap:10px; grid-template-columns:1fr 1fr}
-    @media(max-width:700px){ .row{grid-template-columns:1fr} }
+  .monthTitle{
+    font-weight:900;
+    margin:0 0 8px 0;
+  }
 
-    input{width:100%; padding:10px 12px; border-radius:12px; border:1px solid #ddd; font-size:14px}
-    button.primary{background:var(--primary); color:#fff; border:0; border-radius:12px; padding:12px 14px; font-weight:900; cursor:pointer; width:100%}
-    button.primary:disabled{opacity:.45}
-    .error{color:var(--danger); font-size:13px}
-    .ok{color:var(--ok); font-size:13px}
+  .dow{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+    margin-bottom:6px;
+  }
 
-    .checks{display:flex; gap:14px; flex-wrap:wrap; margin-top:10px;}
-    .checkItem{display:flex; align-items:center; gap:8px; font-size:13px; color:#333;}
-    .checkItem input{width:auto}
+  .dow div{
+    font-size:12px;
+    color:#777;
+    text-align:center;
+  }
 
-    .modalBack{
-      position:fixed; inset:0; background:rgba(0,0,0,.45);
-      display:none; align-items:center; justify-content:center;
-      padding:18px; z-index:9999;
+  .daysGrid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+  }
+
+  .dayCell{
+    height:38px;
+    border-radius:12px;
+    border:1px solid #eee;
+    background:#fff;
+    cursor:pointer;
+    font-size:13px;
+    transition:
+      transform .05s ease,
+      box-shadow .15s ease,
+      background .15s ease,
+      border-color .15s ease;
+  }
+
+  .dayCell:hover:not(:disabled){
+    box-shadow:0 2px 10px rgba(0,0,0,.06);
+    transform:translateY(-1px);
+  }
+
+  .dayCell:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+    background:#fafafa;
+  }
+
+  .dayCell.inRange{
+    border-color:#ddd;
+  }
+
+  .dayCell.empty{
+    border:0;
+    background:transparent;
+    cursor:default;
+    box-shadow:none;
+  }
+
+  .dayCell.active{
+    background: var(--selBg);
+    border-color: var(--selBorder);
+    box-shadow: 0 0 0 2px rgba(17,17,17,.12);
+    font-weight:900;
+  }
+
+  .slots{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:8px;
+  }
+
+  @media(max-width:520px){
+    .slots{
+      grid-template-columns:repeat(2, minmax(0,1fr));
     }
-    .modal{
-      width:min(560px, 100%);
-      background:#fff; border-radius:16px; border:1px solid var(--border);
-      padding:16px;
-      box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+
+  .slotbtn{
+    border:1px solid #ddd;
+    background:#fff;
+    border-radius:12px;
+    padding:10px;
+    cursor:pointer;
+    text-align:center;
+    font-weight:700;
+  }
+
+  .slotbtn.active{
+    border-color:var(--primary);
+    box-shadow:0 0 0 2px rgba(17,17,17,.10);
+    font-weight:900;
+  }
+
+  /* ===== FORM NUEVO ===== */
+
+  .formGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+  }
+
+  @media(max-width:700px){
+    .formGrid{
+      grid-template-columns:1fr;
     }
-    .modal h3{margin:0 0 6px 0}
-    .kv{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:12px;}
-    .kv div{border:1px solid #eee; border-radius:12px; padding:10px}
-    .kv b{display:block; font-size:12px; color:#666; margin-bottom:4px}
-    .modalBtns{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
-    .btnGhost{
-      background:#fff; border:1px solid #ddd; border-radius:12px; padding:12px 14px;
-      font-weight:900; cursor:pointer; width:100%;
-    }
-    .btnDanger{
-      background:#fff; border:1px solid #ddd; border-radius:12px; padding:12px 14px;
-      font-weight:900; cursor:pointer; width:100%;
-    }
-  </style>
+  }
+
+  .field label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:5px;
+    font-weight:700;
+  }
+
+  input{
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid #ddd;
+    font-size:14px;
+    background:#fff;
+    box-sizing:border-box;
+  }
+
+  input:disabled{
+    background:#f5f5f5;
+    color:#888;
+  }
+
+  button.primary{
+    background:var(--primary);
+    color:#fff;
+    border:0;
+    border-radius:12px;
+    padding:12px 14px;
+    font-weight:900;
+    cursor:pointer;
+    width:100%;
+    margin-top:12px;
+  }
+
+  button.primary:disabled{
+    opacity:.45;
+  }
+
+  .error{
+    color:var(--danger);
+    font-size:13px;
+  }
+
+  .ok{
+    color:var(--ok);
+    font-size:13px;
+  }
+
+  .checks{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-top:14px;
+  }
+
+  .checkItem{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    color:#333;
+    font-weight:600;
+  }
+
+  .checkItem input{
+    width:auto;
+  }
+
+  /* ===== MODAL ===== */
+
+  .modalBack{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    z-index:9999;
+  }
+
+  .modal{
+    width:min(560px, 100%);
+    background:#fff;
+    border-radius:16px;
+    border:1px solid var(--border);
+    padding:16px;
+    box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+
+  .modal h3{
+    margin:0 0 6px 0;
+  }
+
+  .kv{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+  }
+
+  .kv div{
+    border:1px solid #eee;
+    border-radius:12px;
+    padding:10px;
+  }
+
+  .kv b{
+    display:block;
+    font-size:12px;
+    color:#666;
+    margin-bottom:4px;
+  }
+
+  .modalBtns{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+@media(max-width:520px){
+  .modalBtns{
+    grid-template-columns:1fr;
+  }
+}
+
+  .btnGhost,
+  .btnDanger{
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:12px;
+    padding:12px 14px;
+    font-weight:900;
+    cursor:pointer;
+    width:100%;
+  }
+</style>
 </head>
 
 <body>
@@ -135,19 +391,36 @@
       <div style="font-weight:900">Confirmar turno</div>
       <div class="muted">Seleccionado: <b id="chosenSlot">—</b></div>
 
-      <div class="row" style="margin-top:10px">
-        <input id="nombre" placeholder="Nombre y apellido"/>
-        <input id="dni" placeholder="DNI"/>
-      </div>
+      <div class="formGrid">
+        <div class="field">
+          <label>Nombre y apellido</label>
+          <input id="nombre" placeholder="Ej: Juan Pérez"/>
+        </div>
 
-      <div class="row">
-        <input id="telefono" placeholder="Teléfono"/>
-        <input id="email" placeholder="Email"/>
-      </div>
+        <div class="field">
+          <label>DNI</label>
+          <input id="dni" placeholder="Ej: 33123456" inputmode="numeric"/>
+        </div>
 
-      <div class="row">
-        <input id="obra_social" placeholder="Obra social"/>
-        <input id="numero_afiliado" placeholder="N° afiliado"/>
+        <div class="field">
+          <label>Teléfono</label>
+          <input id="telefono" placeholder="Ej: 3624..." inputmode="tel"/>
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input id="email" placeholder="Ej: mail@..." inputmode="email"/>
+        </div>
+
+        <div class="field">
+          <label>Obra social</label>
+          <input id="obra_social" placeholder="Ej: INSSSEP / OSDE / PARTICULAR"/>
+        </div>
+
+        <div class="field">
+          <label>N° afiliado</label>
+          <input id="numero_afiliado" placeholder="Ej: 12345"/>
+        </div>
       </div>
 
       <div class="checks">
@@ -165,7 +438,7 @@
       <div class="error" id="errBook" style="margin-top:10px"></div>
       <div class="ok" id="okBook"></div>
 
-      <button class="primary" id="btnBook" disabled style="margin-top:10px">Confirmar</button>
+      <button class="primary" id="btnBook" disabled>Confirmar</button>
     </div>
   </div>
 </div>
@@ -280,10 +553,12 @@ function cleanDni(v) { return (v || "").trim().replace(/[.\s-]/g, ""); }
 
 function fmtHora(inicio_slot) {
   return new Date(inicio_slot).toLocaleTimeString("es-AR", {
-    timeZone: AR_TZ, hour:"2-digit", minute:"2-digit"
+    timeZone: AR_TZ,
+    hour:"2-digit",
+    minute:"2-digit",
+    hour12:false
   });
 }
-
 function openModal() { modalBack.style.display = "flex"; }
 function closeModal() { modalBack.style.display = "none"; }
 
