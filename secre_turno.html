@@ -549,6 +549,8 @@ let DIAS_DISPONIBLES = [];
 let DIA_INDEX = 0;
 let SLOT_RECOMENDADO_FIJO = null;
 let FECHA_RECOMENDADA_FIJA = null;  
+let SLOTS_RANGO = [];
+let SLOTS_POR_DIA = {};
   
 /* ================= HELPERS ================= */
 function isoDateARNow(){
@@ -715,58 +717,14 @@ async function cargarMedicosTenant(){
 
 /* ================= Fecha: primer día con slots ================= */
 async function setFechaPrimerDiaConSlots(){
-
-  if (!elMedico.value) return;
-
-  const desde = isoDateARNow();
-  const hasta = addDaysISO(desde,120);
-
-  const { data, error } = await sb.rpc("get_dias_con_slots",{
-    p_medico_id: elMedico.value,
-    p_desde: desde,
-    p_hasta: hasta
-  });
-
-  if (error){
-    elFecha.value = desde;
+  if (!DIAS_DISPONIBLES.length){
+    elFecha.value = isoDateARNow();
     return;
-  }
-
-  DIAS_DISPONIBLES = (data || []).map(x => x.dia || x);
-
-  if(!DIAS_DISPONIBLES.length){
-    elFecha.value = desde;
-    return;
-  }
-
-  for (let i = 0; i < DIAS_DISPONIBLES.length; i++){
-    const dia = DIAS_DISPONIBLES[i];
-    const cacheKey = elMedico.value + "_" + dia;
-
-    let slots = SLOT_CACHE[cacheKey];
-
-    if (!slots){
-      const { data: slotsData, error: errSlots } = await sb.rpc("get_slots_dia", {
-        p_medico_id: elMedico.value,
-        p_fecha: dia
-      });
-
-      if (errSlots) continue;
-
-      slots = slotsData || [];
-      SLOT_CACHE[cacheKey] = slots;
-    }
-
-    if (slots.length){
-      DIA_INDEX = i;
-      elFecha.value = dia;
-      return;
-    }
   }
 
   DIA_INDEX = 0;
-  elFecha.value = DIAS_DISPONIBLES[0];
-}  
+  elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
+}
   /* ================= Slots ================= */
 async function cargarSlots(){
   errT.textContent = "";
@@ -774,26 +732,8 @@ async function cargarSlots(){
 
   if (!elMedico.value || !elFecha.value) return;
 
-  const cacheKey = elMedico.value + "_" + elFecha.value;
+  CURRENT_SLOTS = SLOTS_POR_DIA[elFecha.value] || [];
 
-  if (SLOT_CACHE[cacheKey]) {
-    CURRENT_SLOTS = SLOT_CACHE[cacheKey];
-  } else {
-    const { data, error } = await sb.rpc("get_slots_dia", {
-      p_medico_id: elMedico.value,
-      p_fecha: elFecha.value
-    });
-
-    if (error){
-      errT.textContent = error.message;
-      return;
-    }
-
-    CURRENT_SLOTS = data || [];
-    SLOT_CACHE[cacheKey] = CURRENT_SLOTS;
-  }
-
-  // sin slots
   if (!CURRENT_SLOTS.length){
     elSlot.innerHTML = `<option value="">Sin turnos disponibles</option>`;
     btnCrear.disabled = true;
@@ -802,17 +742,15 @@ async function cargarSlots(){
     return;
   }
 
-  // duración
   currentDurMin = diffMinutes(
     CURRENT_SLOTS[0].inicio_slot,
     CURRENT_SLOTS[0].fin_slot
   ) || 15;
 
   CURRENT_SLOT_INDEX = 0;
-
   renderSlotActual();
 }
-
+  
 function renderSlotRecomendado(){
   const elReco = document.getElementById("slotRecomendado");
   if (!elReco) return;
@@ -889,6 +827,56 @@ async function cargarSlotRecomendadoFijo(){
   renderSlotRecomendado();
 }
 
+  async function cargarSlotsRango(){
+
+  SLOTS_RANGO = [];
+  SLOTS_POR_DIA = {};
+
+  if (!elMedico.value) return;
+
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 90);
+
+  const { data, error } = await sb.rpc(
+    "get_slots_disponibles_rango",
+    {
+      p_medico_id: elMedico.value,
+      p_desde: desde,
+      p_hasta: hasta
+    }
+  );
+
+  if (error){
+    errT.textContent = error.message;
+    return;
+  }
+
+  SLOTS_RANGO = data || [];
+
+  // agrupar por día
+  SLOTS_RANGO.forEach(s => {
+
+    const dia = s.dia;
+
+    if (!SLOTS_POR_DIA[dia]){
+      SLOTS_POR_DIA[dia] = [];
+    }
+
+    SLOTS_POR_DIA[dia].push(s);
+  });
+
+  // días reales con slots libres
+  DIAS_DISPONIBLES = Object.keys(SLOTS_POR_DIA);
+
+  // recomendado
+  SLOT_RECOMENDADO_FIJO = SLOTS_RANGO[0] || null;
+
+  FECHA_RECOMENDADA_FIJA =
+    SLOT_RECOMENDADO_FIJO?.dia || null;
+
+  renderSlotRecomendado();
+}
+  
 function renderSlotActual(){
 
   elSlot.innerHTML = "";
@@ -1313,10 +1301,10 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
   elFecha.value = isoDateARNow();
 
   if (elMedico.value){
-    await cargarSlotRecomendadoFijo();
-    await setFechaPrimerDiaConSlots();
-    await cargarSlots();
-  }
+  await cargarSlotsRango();
+  await setFechaPrimerDiaConSlots();
+  await cargarSlots();
+}
 
   // set hora actual sistema
   const now = new Date();
@@ -1327,18 +1315,18 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
   syncSobturnoUI();
 
   elMedico.onchange = async () => {
-    CURRENT_SLOTS = [];
-    CURRENT_SLOT_INDEX = 0;
-    SLOT_RECOMENDADO_FIJO = null;
-    FECHA_RECOMENDADA_FIJA = null;
-    elSlot.innerHTML = "";
+  CURRENT_SLOTS = [];
+  CURRENT_SLOT_INDEX = 0;
+  SLOT_RECOMENDADO_FIJO = null;
+  FECHA_RECOMENDADA_FIJA = null;
+  elSlot.innerHTML = "";
 
-    await cargarSlotRecomendadoFijo();
-    await setFechaPrimerDiaConSlots();
-    await cargarSlots();
-    syncSobturnoUI();
-  };
-
+  await cargarSlotsRango();
+  await setFechaPrimerDiaConSlots();
+  await cargarSlots();
+  syncSobturnoUI();
+};
+  
   elFecha.onchange = async () => {
     CURRENT_SLOTS = [];
     CURRENT_SLOT_INDEX = 0;
