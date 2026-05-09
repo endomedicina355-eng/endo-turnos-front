@@ -176,6 +176,14 @@ textarea{
   margin-top:14px;
 }
 
+.slotCard,
+.sobreturnoCard{
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
 .recomendadoCard{
   border:2px solid #111;
   background:#fff;
@@ -192,23 +200,67 @@ textarea{
   width:100%;
 }
 
+.slotNav{
+  justify-content:center;
+}
+
+.sobturnoNavBox{
+  display:none;
+  margin-top:14px;
+  padding:12px;
+  border:1px solid #f2b7c2;
+  border-radius:12px;
+  background:#fff;
+}
+
+.sobturnoNavBox.active{
+  display:block;
+}
+
+.sobFechaActual{
+  font-size:18px;
+  font-weight:900;
+  margin:8px 0 12px;
+  line-height:1.15;
+}
+
+.sobDayNav{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:12px;
+}
+
 .turnoFooter{
   display:grid;
-  grid-template-columns: 1fr 220px;
+  grid-template-columns: 1fr 260px;
   gap:16px;
-  align-items:end;
+  align-items:start;
   margin-top:14px;
+  clear:both;
 }
 
 .crearBox{
   display:flex;
   flex-direction:column;
   gap:8px;
+  align-self:start;
 }
 
 #btnCrearTurno{
   width:100%;
   min-width:0;
+  font-size:17px;
+  font-weight:900;
+  padding:15px 26px;
+  border-radius:14px;
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
+}
+
+#btnCrearTurno:disabled{
+  opacity:.45;
+  box-shadow:none;
+  cursor:not-allowed;
 }
 
 .tipBox{
@@ -225,13 +277,6 @@ textarea{
   .turnoFooter{
     grid-template-columns:1fr;
   }
-}
-    .slotCard,
-.sobreturnoCard{
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
 }
     
   </style>
@@ -354,21 +399,32 @@ textarea{
     </div>
 
     <div class="sobreturnoCard">
-      <div class="sobreturnoTitle">Sobreturno manual</div>
+  <div>
+    <div class="sobreturnoTitle">Sobreturno manual</div>
 
-      <div class="sobreturnoRow">
-        <input id="horaManual" type="time" disabled />
+    <label class="inline" style="gap:8px">
+      <input id="chkSobreturno" type="checkbox" />
+      <b>Activar sobreturno</b>
+    </label>
 
-        <label class="inline" style="gap:6px">
-          <input id="chkSobreturno" type="checkbox" />
-          <b>Sobreturno</b>
-        </label>
+    <span id="lblSobreturno" class="tag" style="display:none;margin-top:8px">
+      SOBRETURNO
+    </span>
 
-        <span id="lblSobreturno" class="tag" style="display:none">
-          SOBRETURNO
-        </span>
+    <div id="sobturnoNavBox" class="sobturnoNavBox">
+      <div class="muted">Día para sobreturno</div>
+      <div class="sobFechaActual" id="sobFechaActual">—</div>
+
+      <div class="sobDayNav">
+        <button id="sobDayPrev" class="slotBtn" type="button">◀</button>
+        <button id="sobDayNext" class="slotBtn" type="button">▶</button>
       </div>
+
+      <div class="muted">Hora manual</div>
+      <input id="horaManual" type="time" disabled />
     </div>
+  </div>
+</div>
   </div>
 
   <div class="turnoFooter">
@@ -463,7 +519,11 @@ const btnCrear = document.getElementById("btnCrearTurno");
 const errT = document.getElementById("errT");
 const okT = document.getElementById("okT");
 const btnPrev = document.getElementById("slotPrev");
-const btnNext = document.getElementById("slotNext");  
+const btnNext = document.getElementById("slotNext");
+const sobturnoNavBox = document.getElementById("sobturnoNavBox");
+const sobFechaActual = document.getElementById("sobFechaActual");
+const sobDayPrev = document.getElementById("sobDayPrev");
+const sobDayNext = document.getElementById("sobDayNext");  
 
   
 const btnHistorial = document.getElementById("btnHistorial");
@@ -1084,14 +1144,46 @@ limpiarPacientePostTurno();
 await cargarSlotRecomendadoFijo();
 await cargarSlots();
 }
-
 /* ================= Sobreturno UI ================= */
+function actualizarSobFechaActual(){
+  if (!sobFechaActual || !elFecha.value){
+    if (sobFechaActual) sobFechaActual.textContent = "—";
+    return;
+  }
+
+  const d = new Date(`${elFecha.value}T12:00:00-03:00`);
+
+  sobFechaActual.textContent = d.toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: AR_TZ
+  });
+}
+
 function syncSobturnoUI(){
   const sob = chkSob.checked;
+
   lblSob.style.display = sob ? "inline-block" : "none";
   elHoraManual.disabled = !sob;
   elSlot.disabled = sob;
+
+  if (sobturnoNavBox){
+    sobturnoNavBox.classList.toggle("active", sob);
+  }
+
+  if (sobDayPrev) sobDayPrev.disabled = !sob || !DIAS_DISPONIBLES.length;
+  if (sobDayNext) sobDayNext.disabled = !sob || !DIAS_DISPONIBLES.length;
+
+  if (sob){
+    btnCrear.disabled = !currentPacienteId || !elMedico.value || !elFecha.value || !elHoraManual.value;
+  } else {
+    btnCrear.disabled = !currentPacienteId || !elSlot.value;
+  }
+
+  actualizarSobFechaActual();
 }
+
 chkSob.onchange = syncSobturnoUI;
 
 /* ================= Botones ================= */
@@ -1111,15 +1203,16 @@ document.getElementById("btnUsarRecomendado").onclick = async () => {
   DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
 
   await cargarSlots();
+syncSobturnoUI();
 
-  const idx = CURRENT_SLOTS.findIndex(s =>
-    s.inicio_slot === SLOT_RECOMENDADO_FIJO.inicio_slot
-  );
+const idx = CURRENT_SLOTS.findIndex(s =>
+  s.inicio_slot === SLOT_RECOMENDADO_FIJO.inicio_slot
+);
 
-  if (idx !== -1){
-    CURRENT_SLOT_INDEX = idx;
-    renderSlotActual();
-  }
+if (idx !== -1){
+  CURRENT_SLOT_INDEX = idx;
+  renderSlotActual();
+}
 };
 
 elSlot.onchange = () => {
@@ -1128,6 +1221,16 @@ elSlot.onchange = () => {
 
 document.getElementById("dayNext").onclick = dayNext;
 document.getElementById("dayPrev").onclick = dayPrev;
+
+sobDayNext.onclick = async () => {
+  await dayNext();
+  syncSobturnoUI();
+};
+
+sobDayPrev.onclick = async () => {
+  await dayPrev();
+  syncSobturnoUI();
+};  
 
 document.getElementById("btnLimpiar").onclick = () => {
   errP.textContent = "";
@@ -1171,42 +1274,47 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
 
   elFecha.value = isoDateARNow();
 
-if (elMedico.value){
-  await cargarSlotRecomendadoFijo();
-  await setFechaPrimerDiaConSlots();
-  await cargarSlots();
-}
-  syncSobturnoUI();
+  if (elMedico.value){
+    await cargarSlotRecomendadoFijo();
+    await setFechaPrimerDiaConSlots();
+    await cargarSlots();
+  }
+
   // set hora actual sistema
-const now = new Date();
-const hh = String(now.getHours()).padStart(2,"0");
-const mm = String(now.getMinutes()).padStart(2,"0");
-elHoraManual.value = `${hh}:${mm}`;
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mm = String(now.getMinutes()).padStart(2,"0");
+  elHoraManual.value = `${hh}:${mm}`;
+
+  syncSobturnoUI();
 
   elMedico.onchange = async () => {
-  CURRENT_SLOTS = [];
-  CURRENT_SLOT_INDEX = 0;
-  SLOT_RECOMENDADO_FIJO = null;
-  FECHA_RECOMENDADA_FIJA = null;
-  elSlot.innerHTML = "";
+    CURRENT_SLOTS = [];
+    CURRENT_SLOT_INDEX = 0;
+    SLOT_RECOMENDADO_FIJO = null;
+    FECHA_RECOMENDADA_FIJA = null;
+    elSlot.innerHTML = "";
 
-  await cargarSlotRecomendadoFijo();
-  await setFechaPrimerDiaConSlots();
-  await cargarSlots();
-};
+    await cargarSlotRecomendadoFijo();
+    await setFechaPrimerDiaConSlots();
+    await cargarSlots();
+    syncSobturnoUI();
+  };
+
   elFecha.onchange = async () => {
+    CURRENT_SLOTS = [];
+    CURRENT_SLOT_INDEX = 0;
 
-  CURRENT_SLOTS = [];
-  CURRENT_SLOT_INDEX = 0;
+    DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
 
-  // 🔥 sync con DIAS_DISPONIBLES
-  DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
+    await cargarSlots();
+    syncSobturnoUI();
+  };
 
-  await cargarSlots();
-};
-
-  elDni.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); buscarPaciente(); } });
+  elDni.addEventListener("keydown",(e)=>{
+    if(e.key==="Enter"){
+      e.preventDefault();
+      buscarPaciente();
+    }
+  });
 })();
-</script>
-</body>
-</html>
