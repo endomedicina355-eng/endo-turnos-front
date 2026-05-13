@@ -459,7 +459,23 @@ textarea{
       <button id="btnCerrarModal" class="small">Cerrar</button>
     </div>
     <div class="modalBody">
-      <div class="muted" id="histTitle" style="margin-bottom:10px"></div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+
+    <div class="muted" id="histTitle"></div>
+
+    <button
+      id="btnRegularizarPaciente"
+      class="small"
+      type="button"
+      style="font-weight:900"
+    >
+      Regularizar deuda / historial
+    </button>
+
+  </div>
+
+  <table>
       <table>
         <thead>
           <tr>
@@ -532,6 +548,7 @@ const modalBg = document.getElementById("modalBg");
 const btnCerrarModal = document.getElementById("btnCerrarModal");
 const histBody = document.getElementById("histBody");
 const histTitle = document.getElementById("histTitle");
+const btnRegularizarPaciente = document.getElementById("btnRegularizarPaciente");  
 
 /* ================= STATE ================= */
 let TENANT_ID = null;
@@ -1116,7 +1133,46 @@ async function abrirHistorial(){
 }
 btnCerrarModal.onclick = ()=> modalBg.style.display = "none";
 modalBg.onclick = (e)=>{ if (e.target === modalBg) modalBg.style.display = "none"; };
+btnRegularizarPaciente.onclick = async ()=>{
 
+  if (!currentPacienteId){
+    alert("Paciente inválido");
+    return;
+  }
+
+  const nota = prompt(
+    "Nota de regularización:",
+    "Pagó deuda en secretaría"
+  );
+
+  if (nota === null) return;
+
+  const confirma = confirm(
+    "¿Regularizar historial de ausencias de este paciente?"
+  );
+
+  if (!confirma) return;
+
+  const { error } = await sb.rpc(
+    "admin_regularizar_ausencias_paciente",
+    {
+      p_paciente_id: currentPacienteId,
+      p_nota: nota
+    }
+  );
+
+  if (error){
+    alert(error.message);
+    return;
+  }
+
+  alert("✅ Historial regularizado");
+
+  modalBg.style.display = "none";
+
+  await buscarPaciente();
+};
+  
 /* ================= limpiar datos ================= */
 
 function limpiarPacientePostTurno(){
