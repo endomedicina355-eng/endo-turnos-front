@@ -1063,17 +1063,35 @@ async function buscarPaciente(){
   btnHistorial.disabled = false;
   btnCrear.disabled = false;
 
-  const w = await sb.rpc("secre_warning_paciente", { p_paciente_id: currentPacienteId, p_anios: 2 });
-  const aus = (w.data||[])[0]?.ausentes ?? 0;
-  if (aus > 0){
-    warnAusente.className = "pill red";
-    warnAusente.textContent = `⚠ ${aus} ausente(s) en últimos 2 años`;
-  } else {
-    warnAusente.className = "pill green";
-    warnAusente.textContent = "✅ Sin ausentes (2 años)";
-  }
-  warnAusente.style.display = "inline-flex";
+  const w = await sb.rpc("secre_warning_paciente_v2", {
+  p_paciente_id: currentPacienteId,
+  p_anios: 2
+});
+
+const info = (w.data || [])[0];
+
+const estado = info?.estado || "sin_historial";
+const aus = info?.ausentes || 0;
+const reg = info?.regularizados || 0;
+
+if (estado === "con_ausencias"){
+  warnAusente.className = "pill red";
+  warnAusente.textContent = `⚠ ${aus} ausencia(s) sin regularizar`;
 }
+else if (estado === "regularizado"){
+  warnAusente.className = "pill green";
+  warnAusente.textContent = `✅ ${reg} ausencia(s) regularizada(s)`;
+}
+else if (estado === "sin_ausencias"){
+  warnAusente.className = "pill green";
+  warnAusente.textContent = "✅ Sin ausencias";
+}
+else{
+  warnAusente.className = "pill";
+  warnAusente.textContent = "Sin historial";
+}
+
+warnAusente.style.display = "inline-flex";
 
 /* ================= Guardar paciente ================= */
 async function guardarPaciente(){
