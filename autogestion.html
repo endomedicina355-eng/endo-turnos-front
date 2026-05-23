@@ -443,6 +443,30 @@
   </div>
 </div>
 
+  <div class="card">
+  <div style="font-weight:900">Consultar próximo turno</div>
+  <div class="muted">Ingresá DNI y apellido para verificar tu próximo turno.</div>
+
+  <div class="formGrid">
+    <div class="field">
+      <label>DNI</label>
+      <input id="consultaDni" placeholder="Ej: 33123456" inputmode="numeric" />
+    </div>
+
+    <div class="field">
+      <label>Apellido</label>
+      <input id="consultaApellido" placeholder="Ej: Pérez" />
+    </div>
+  </div>
+
+  <div class="error" id="consultaErr" style="margin-top:10px"></div>
+  <div id="consultaResultado" style="margin-top:12px"></div>
+
+  <button class="primary" id="btnConsultarTurno" type="button">
+    Consultar turno
+  </button>
+</div>
+  
 <div class="modalBack" id="modalBack">
   <div class="modal">
     <h3>✅ Turno confirmado</h3>
@@ -506,6 +530,11 @@ const kvBox     = document.getElementById("kvBox");
 const btnShare  = document.getElementById("btnShare");
 const btnPrint  = document.getElementById("btnPrint");
 const btnClose  = document.getElementById("btnClose");
+const consultaDni = document.getElementById("consultaDni");
+const consultaApellido = document.getElementById("consultaApellido");
+const btnConsultarTurno = document.getElementById("btnConsultarTurno");
+const consultaErr = document.getElementById("consultaErr");
+const consultaResultado = document.getElementById("consultaResultado");  
 
 /* ================= HELPERS (AR TZ) ================= */
 const AR_TZ = "America/Argentina/Buenos_Aires";
@@ -1002,6 +1031,67 @@ if (availableDaysSet.has(selectedDateISO)) {
     btnBook.disabled = false;
   }
 };
+
+function fmtTurnoConsulta(ts){
+  return new Date(ts).toLocaleString("es-AR", {
+    timeZone: AR_TZ,
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+btnConsultarTurno.onclick = async () => {
+  consultaErr.textContent = "";
+  consultaResultado.innerHTML = "";
+
+  const dni = cleanDni(consultaDni.value);
+  const apellido = consultaApellido.value.trim();
+
+  if (!dni){
+    consultaErr.textContent = "Ingresá DNI.";
+    return;
+  }
+
+  if (!apellido){
+    consultaErr.textContent = "Ingresá apellido.";
+    return;
+  }
+
+  const { data, error } = await sb.rpc("public_consultar_proximo_turno", {
+    p_tenant_id: TENANT_ID,
+    p_dni: dni,
+    p_apellido: apellido
+  });
+
+  if (error){
+    consultaErr.textContent = error.message;
+    return;
+  }
+
+  if (!data || !data.length){
+    consultaResultado.innerHTML = `
+      <div class="muted">No encontramos turnos futuros con esos datos.</div>
+    `;
+    return;
+  }
+
+  const t = data[0];
+
+  consultaResultado.innerHTML = `
+    <div class="card" style="margin:0">
+      <div style="font-weight:900">Próximo turno</div>
+      <div style="margin-top:10px"><b>${fmtTurnoConsulta(t.inicio)}</b></div>
+      <div class="muted">Profesional: <b>${t.medico_nombre || "-"}</b></div>
+      <div class="muted">Paciente: <b>${t.paciente_nombre || "-"}</b></div>
+      <div class="muted">Obra social: <b>${t.obra_social || "-"}</b></div>
+      <div class="muted">Estado: <b>${t.estado || "-"}</b></div>
+    </div>
+  `;
+};  
 
 document.getElementById("tzPill").textContent = "TZ: AR (Buenos Aires)";
 document.getElementById("btnClose")?.addEventListener("click", closeModal);
