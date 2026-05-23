@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin</title>
+  <style>
+    :root{--primary:#111;--bg:#f6f7f8;--card:#fff;--border:#e7e7e7;--muted:#666;--danger:#b00020;--ok:#0a7a27}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:#111}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .header{display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .brand{font-weight:900}
+    .muted{color:var(--muted);font-size:13px}
+    .right,.actions,.inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
+    .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
+    @media(max-width:900px){.row{grid-template-columns:1fr}}
+    input,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
+    button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
+    button.primary{background:var(--primary);color:#fff;border:0;font-weight:800}
+    button.small{padding:8px 10px;border-radius:10px;font-size:13px}
+    button.danger{background:#fde2e6;border-color:#f2b7c2;color:#842029;font-weight:900}
+    .error{color:var(--danger);font-size:13px;margin-top:8px}
+    .ok{color:var(--ok);font-size:13px;margin-top:8px}
+    .hr{height:1px;background:#eee;margin:14px 0}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
+    th{color:#666;font-weight:700;text-align:left;font-size:12px}
+    .statePill{display:inline-flex;align-items:center;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+    .statePill.on{background:#dff5e5;border-color:#a7e1b7;color:#0f5132;font-weight:900}
+    .statePill.off{background:#fde2e6;border-color:#f2b7c2;color:#842029;font-weight:900}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="brand" id="brandTitle">Admin / Usuarios</div>
+      <div class="muted" id="brandSubtitle">Gestión de personal interno</div>
+      <div class="muted" id="userLine"></div>
+    </div>
+    <div class="right">
+      <button id="btnBack" class="small" type="button">Volver a agenda</button>
+      <button id="btnLogout" class="small" type="button">Salir</button>
+    </div>
+  </div>
+
+  <div class="card" id="roleBlock" style="display:none">
+    <div class="brand">Acceso restringido</div>
+    <div class="muted">Tu rol no permite administrar usuarios.</div>
+  </div>
+
+  <div class="card" id="cardAlta">
+    <div class="brand">Nuevo usuario interno</div>
+    <div class="muted">Alta manual de secretaria/admin/ceo dentro del mismo tenant.</div>
+    <div class="hr"></div>
+
+    <div class="row">
+      <div>
+        <div class="muted">Nombre</div>
+        <input id="p_nombre" placeholder="Nombre y apellido" />
+      </div>
+      <div>
+        <div class="muted">Email</div>
+        <input id="p_email" placeholder="usuario@email.com" />
+      </div>
+      <div>
+        <div class="muted">Rol</div>
+        <select id="p_rol">
+          <option value="secre">Secretaría</option>
+          <option value="admin">Admin</option>
+          <option value="ceo">CEO</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:12px">
+      <label class="inline">
+        <input id="p_activo" type="checkbox" checked />
+        <b>Activo</b>
+      </label>
+      <button id="btnCrear" class="primary" type="button">Crear usuario</button>
+      <div class="error" id="errAlta"></div>
+      <div class="ok" id="okAlta"></div>
+    </div>
+  </div>
+
+  <div class="card" id="cardLista">
+    <div class="brand">Personal del tenant</div>
+    <div class="muted">Activar/inactivar y cambiar roles.</div>
+    <div class="hr"></div>
+
+    <div class="actions">
+      <button id="btnReload" type="button">Actualizar</button>
+      <div class="error" id="errLista"></div>
+      <div class="ok" id="okLista"></div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="personalBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  alert("Falta config.js");
+  throw new Error("Missing Supabase config");
+}
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const IDLE_MIN = 20;
+let idleTimer = null;
+async function hardLogout(){
+  try{ await sb.auth.signOut(); }catch(e){}
+  window.location.href = "./login.html";
+}
+function resetIdle(){
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(hardLogout, IDLE_MIN * 60 * 1000);
+}
+["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>window.addEventListener(ev,resetIdle,{passive:true}));
+resetIdle();
+
+document.getElementById("btnBack").onclick = ()=> window.location.href = "./secretaria.html";
+document.getElementById("btnLogout").onclick = hardLogout;
+
+const brandTitle = document.getElementById("brandTitle");
+const brandSubtitle = document.getElementById("brandSubtitle");
+const userLine = document.getElementById("userLine");
+const roleBlock = document.getElementById("roleBlock");
+const cardAlta = document.getElementById("cardAlta");
+const cardLista = document.getElementById("cardLista");
+const personalBody = document.getElementById("personalBody");
+const errAlta = document.getElementById("errAlta");
+const okAlta = document.getElementById("okAlta");
+const errLista = document.getElementById("errLista");
+const okLista = document.getElementById("okLista");
+
+let ME = null;
+
+function clearMsgs(){
+  [errAlta,okAlta,errLista,okLista].forEach(x=>x.textContent="");
+}
+function setOk(el,msg){
+  el.textContent = msg;
+  setTimeout(()=>{ if(el.textContent===msg) el.textContent=""; },1600);
+}
+function setErr(el,msg){ el.textContent = msg; }
+
+async function guard(){
+  const { data } = await sb.auth.getUser();
+  if (!data?.user) {
+    window.location.href = "./login.html";
+    return false;
+  }
+  return true;
+}
+
+async function cargarMe(){
+  const { data, error } = await sb.rpc("cfg_get_me");
+  if (error) throw error;
+  if (!data || !data.length) throw new Error("Usuario sin perfil activo.");
+  ME = data[0];
+
+  userLine.textContent = `Usuario: ${ME.email} · Rol: ${ME.rol}`;
+
+  if (!["admin","ceo"].includes((ME.rol||"").toLowerCase())) {
+    roleBlock.style.display = "block";
+    cardAlta.style.display = "none";
+    cardLista.style.display = "none";
+    return false;
+  }
+
+  return true;
+}
+
+async function cargarTenantBranding(){
+  const { data } = await sb
+    .from("Tenants")
+    .select("id,nombre,theme,color_primario,color_secundario")
+    .eq("id", ME.tenant_id)
+    .eq("activo", true)
+    .maybeSingle();
+
+  if (!data?.id) return;
+
+  const title = data?.theme?.header?.title || data?.nombre || "Admin";
+  brandTitle.textContent = `${title} · Admin`;
+  brandSubtitle.textContent = "Gestión de personal interno";
+  document.title = `${title} · Admin`;
+
+  document.documentElement.style.setProperty("--primary", data.color_primario || "#111");
+  document.documentElement.style.setProperty("--bg", data.color_secundario || "#f6f7f8");
+}
+
+async function cargarPersonal(){
+  clearMsgs();
+  personalBody.innerHTML = `<tr><td colspan="5" class="muted">Cargando...</td></tr>`;
+
+  try{
+    const { data, error } = await sb.rpc("cfg_list_personal");
+    if (error) throw error;
+
+    const rows = data || [];
+    if (!rows.length) {
+      personalBody.innerHTML = `<tr><td colspan="5" class="muted">Sin usuarios.</td></tr>`;
+      return;
+    }
+
+    personalBody.innerHTML = "";
+
+    rows.forEach(p=>{
+      const tr = document.createElement("tr");
+      const activo = !!p.activo;
+
+      tr.innerHTML = `
+        <td>${p.nombre || "-"}</td>
+        <td>${p.email || "-"}</td>
+        <td>
+          <select data-rol="${p.id}">
+            <option value="secre" ${p.rol==="secre" ? "selected" : ""}>Secretaría</option>
+            <option value="admin" ${p.rol==="admin" ? "selected" : ""}>Admin</option>
+            <option value="ceo" ${p.rol==="ceo" ? "selected" : ""}>CEO</option>
+          </select>
+        </td>
+        <td>
+          <span class="statePill ${activo ? "on" : "off"}">${activo ? "Activo" : "Inactivo"}</span>
+        </td>
+        <td>
+          <button class="${activo ? "danger small" : "small"}" data-activo="${p.id}" data-want="${activo ? "false" : "true"}">
+            ${activo ? "Inactivar" : "Activar"}
+          </button>
+        </td>
+      `;
+
+      personalBody.appendChild(tr);
+    });
+
+    personalBody.querySelectorAll("[data-rol]").forEach(sel=>{
+      sel.onchange = async ()=>{
+        clearMsgs();
+        try{
+          const id = sel.getAttribute("data-rol");
+          const rol = sel.value;
+
+          const { error } = await sb.rpc("cfg_set_personal_rol", {
+            p_personal_id: id,
+            p_rol: rol
+          });
+          if (error) throw error;
+
+          setOk(okLista, "✅ Rol actualizado.");
+          await cargarPersonal();
+        }catch(e){
+          setErr(errLista, e.message || String(e));
+        }
+      };
+    });
+
+    personalBody.querySelectorAll("[data-activo]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        clearMsgs();
+        try{
+          const id = btn.getAttribute("data-activo");
+          const want = btn.getAttribute("data-want") === "true";
+
+          if (!confirm(want ? "¿Activar usuario?" : "¿Inactivar usuario?")) return;
+
+          const { error } = await sb.rpc("cfg_set_personal_activo", {
+            p_personal_id: id,
+            p_activo: want
+          });
+          if (error) throw error;
+
+          setOk(okLista, want ? "✅ Usuario activado." : "✅ Usuario inactivado.");
+          await cargarPersonal();
+        }catch(e){
+          setErr(errLista, e.message || String(e));
+        }
+      };
+    });
+
+  }catch(e){
+    personalBody.innerHTML = `<tr><td colspan="5" class="muted">Error cargando usuarios.</td></tr>`;
+    setErr(errLista, e.message || String(e));
+  }
+}
+
+document.getElementById("btnCrear").onclick = async ()=>{
+  clearMsgs();
+
+  try{
+    const nombre = document.getElementById("p_nombre").value.trim();
+    const email = document.getElementById("p_email").value.trim().toLowerCase();
+    const rol = document.getElementById("p_rol").value;
+    const activo = document.getElementById("p_activo").checked;
+
+    if (!nombre) return setErr(errAlta, "Ingresá nombre.");
+    if (!email) return setErr(errAlta, "Ingresá email.");
+
+    const { error } = await sb.rpc("cfg_create_personal", {
+      p_nombre: nombre,
+      p_email: email,
+      p_rol: rol,
+      p_activo: activo
+    });
+    if (error) throw error;
+
+    document.getElementById("p_nombre").value = "";
+    document.getElementById("p_email").value = "";
+    document.getElementById("p_rol").value = "secre";
+    document.getElementById("p_activo").checked = true;
+
+    setOk(okAlta, "✅ Usuario creado.");
+    await cargarPersonal();
+
+  }catch(e){
+    setErr(errAlta, e.message || String(e));
+  }
+};
+
+document.getElementById("btnReload").onclick = cargarPersonal;
+
+document.addEventListener("DOMContentLoaded", async ()=>{
+  const ok = await guard();
+  if (!ok) return;
+
+  try{
+    const allowed = await cargarMe();
+    if (!allowed) return;
+
+    await cargarTenantBranding();
+    await cargarPersonal();
+
+  }catch(e){
+    roleBlock.style.display = "block";
+    roleBlock.querySelector(".muted").textContent = e.message || "Error iniciando Admin.";
+    cardAlta.style.display = "none";
+    cardLista.style.display = "none";
+  }
+});
+</script>
+</body>
+</html>
