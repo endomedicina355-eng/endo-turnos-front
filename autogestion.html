@@ -424,10 +424,7 @@
       </div>
 
       <div class="checks">
-        <label class="checkItem">
-          <input type="checkbox" id="chkNoEmail" />
-          No tengo mail
-        </label>
+        <!-- Email obligatorio -->
 
         <label class="checkItem">
           <input type="checkbox" id="chkParticular" />
@@ -516,7 +513,7 @@ const btnBook      = document.getElementById("btnBook");
 const errBook      = document.getElementById("errBook");
 const okBook       = document.getElementById("okBook");
 
-const chkNoEmail   = document.getElementById("chkNoEmail");
+const chkNoEmail = { checked:false, addEventListener:()=>{} };
 const chkParticular= document.getElementById("chkParticular");
 const inEmail      = document.getElementById("email");
 const inOS         = document.getElementById("obra_social");
@@ -918,10 +915,10 @@ btnBook.onclick = async () => {
     errBook.textContent = "Completá nombre, DNI y teléfono.";
     return;
   }
-  if (!chkNoEmail.checked && !email) {
-    errBook.textContent = "Completá el email (o marcá 'No tengo mail').";
-    return;
-  }
+  if (!email) {
+  errBook.textContent = "Completá el email. Es necesario para recibir la confirmación y gestionar el turno.";
+  return;
+}
   if (!obra_social) {
     errBook.textContent = "Completá la obra social (o marcá 'Sin obra social').";
     return;
@@ -936,7 +933,7 @@ btnBook.onclick = async () => {
   try {
     const token = crypto.randomUUID().replaceAll("-", "");
 
-    const { error } = await sb.rpc("reservar_turno", {
+    const { data: nuevoTurnoId, error } = await sb.rpc("reservar_turno", {
       p_medico_id: MEDICO_ID,
       p_dni: dni,
       p_nombre: nombre,
@@ -955,6 +952,21 @@ btnBook.onclick = async () => {
       btnBook.disabled = false;
       return;
     }
+    try {
+  if (nuevoTurnoId) {
+    await fetch(`${SUPABASE_URL}/functions/v1/send-turno-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        turno_id: nuevoTurnoId
+      })
+    });
+  }
+} catch (e) {
+  console.warn("No se pudo enviar mail de confirmación", e);
+}
 
     const fecha = fmtDMY(selectedDateISO);
     const hora = fmtHora(slot.inicio_slot);
