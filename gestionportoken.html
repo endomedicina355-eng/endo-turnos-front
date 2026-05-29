@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gestión de turno</title>
+
+  <style>
+    :root{
+      --primary:#111;
+      --bg:#f6f7f8;
+      --card:#fff;
+      --border:#e7e7e7;
+      --muted:#666;
+      --danger:#b00020;
+      --dangerBg:#fde2e6;
+      --ok:#0a7a27;
+      --okBg:#dff5e5;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg);
+      color:#111;
+    }
+
+    .wrap{
+      max-width:760px;
+      margin:0 auto;
+      padding:18px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:18px;
+      margin:12px 0;
+    }
+
+    .brand{
+      font-size:26px;
+      font-weight:950;
+      line-height:1.05;
+    }
+
+    .muted{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .headerCard{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+    }
+
+    .pill{
+      display:inline-block;
+      border:1px solid #ddd;
+      border-radius:999px;
+      padding:6px 10px;
+      background:#fff;
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .hero{
+      text-align:center;
+      padding:22px 18px;
+    }
+
+    .heroLabel{
+      font-weight:900;
+      color:#555;
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .fecha{
+      font-size:34px;
+      font-weight:950;
+      margin-top:10px;
+    }
+
+    .hora{
+      font-size:24px;
+      font-weight:900;
+      margin-top:4px;
+    }
+
+    .medico{
+      margin-top:18px;
+      font-size:19px;
+      font-weight:900;
+    }
+
+    .esp{
+      color:#555;
+      font-weight:700;
+      margin-top:3px;
+    }
+
+    .gridInfo{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    @media(max-width:620px){
+      .gridInfo{grid-template-columns:1fr}
+      .fecha{font-size:30px}
+    }
+
+    .infoBox{
+      border:1px solid #eee;
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .infoBox .label{
+      color:#666;
+      font-size:12px;
+      font-weight:800;
+      margin-bottom:5px;
+    }
+
+    .infoBox .value{
+      font-weight:900;
+      word-break:break-word;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    @media(max-width:620px){
+      .actions{grid-template-columns:1fr}
+    }
+
+    button{
+      border:1px solid #ddd;
+      background:#fff;
+      border-radius:14px;
+      padding:14px 14px;
+      cursor:pointer;
+      font-weight:950;
+      font-size:15px;
+      width:100%;
+    }
+
+    button.primary{
+      background:var(--primary);
+      color:#fff;
+      border:0;
+    }
+
+    button.danger{
+      border-color:#f2b7c2;
+      background:var(--dangerBg);
+      color:#842029;
+    }
+
+    button:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+    }
+
+    .error{
+      color:var(--danger);
+      font-size:13px;
+      font-weight:800;
+      margin-top:10px;
+    }
+
+    .ok{
+      color:var(--ok);
+      font-size:13px;
+      font-weight:800;
+      margin-top:10px;
+    }
+
+    .warnBox{
+      background:#fff8e1;
+      border:1px solid #ffe08a;
+      color:#5f4300;
+      border-radius:14px;
+      padding:12px;
+      font-size:13px;
+      font-weight:800;
+      line-height:1.45;
+    }
+
+    .policy{
+      font-size:13px;
+      color:#444;
+      line-height:1.5;
+    }
+
+    .reproBox{
+      display:none;
+      margin-top:12px;
+    }
+
+    .reproBox.active{
+      display:block;
+    }
+
+    .slotNav{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .slotSelect{
+      height:128px;
+      font-weight:900;
+      width:100%;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid #ddd;
+      font-size:15px;
+    }
+
+    .slotBtn{
+      width:auto;
+      min-width:44px;
+      height:42px;
+      padding:8px;
+    }
+
+    .slotDayNav{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .hidden{display:none}
+
+    a{
+      color:#111;
+      text-decoration:none;
+      font-weight:900;
+    }
+
+    .footerLine{
+      margin-top:6px;
+      color:#444;
+      font-size:14px;
+      line-height:1.45;
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div id="loading" class="card">
+    <div class="brand">Cargando turno…</div>
+    <div class="muted">Verificando el enlace de gestión.</div>
+  </div>
+
+  <div id="app" class="hidden">
+
+    <div class="card headerCard">
+      <div>
+        <div class="brand" id="tenantNombre">Clínica</div>
+        <div class="muted" id="tenantDireccion">—</div>
+      </div>
+      <div class="pill">Gestión de turno</div>
+    </div>
+
+    <div class="card hero">
+      <div class="heroLabel">Tu turno</div>
+      <div class="fecha" id="fechaTurno">—</div>
+      <div class="hora" id="horaTurno">—</div>
+      <div class="medico" id="medicoNombre">—</div>
+      <div class="esp" id="medicoEspecialidad">—</div>
+    </div>
+
+    <div class="card">
+      <div class="gridInfo">
+        <div class="infoBox">
+          <div class="label">Paciente</div>
+          <div class="value" id="pacienteNombre">—</div>
+        </div>
+        <div class="infoBox">
+          <div class="label">Obra social</div>
+          <div class="value" id="obraSocial">—</div>
+        </div>
+        <div class="infoBox">
+          <div class="label">Estado</div>
+          <div class="value" id="estadoTurno">—</div>
+        </div>
+        <div class="infoBox">
+          <div class="label">Dirección</div>
+          <div class="value" id="direccionBox">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="actions">
+        <button id="btnMostrarRepro" class="primary" type="button">
+          ✏️ Reprogramar turno
+        </button>
+        <button id="btnCancelar" class="danger" type="button">
+          ❌ Cancelar turno
+        </button>
+      </div>
+
+      <div id="reproBox" class="reproBox">
+        <div style="height:12px"></div>
+
+        <div class="warnBox" id="reproWarn">
+          Elegí un nuevo horario disponible. El cambio queda sujeto a disponibilidad.
+        </div>
+
+        <div class="slotNav">
+          <button id="reproSlotPrev" class="slotBtn" type="button">←</button>
+          <select id="reproSlot" class="slotSelect" size="4"></select>
+          <button id="reproSlotNext" class="slotBtn" type="button">→</button>
+        </div>
+
+        <div class="slotDayNav">
+          <button id="reproDayPrev" class="slotBtn" type="button">◀ Día</button>
+          <button id="reproDayNext" class="slotBtn" type="button">Día ▶</button>
+        </div>
+
+        <button id="btnConfirmarRepro" class="primary" type="button" style="margin-top:12px">
+          Confirmar reprogramación
+        </button>
+      </div>
+
+      <div class="error" id="err"></div>
+      <div class="ok" id="ok"></div>
+    </div>
+
+    <div class="card">
+      <div class="policy">
+        <b>Política de cancelación</b><br><br>
+        Las cancelaciones o reprogramaciones deben realizarse con al menos 24 h de anticipación.
+        <br><br>
+        Las cancelaciones fuera de plazo pueden limitar la reserva online.
+        <br><br>
+        La ausencia sin aviso puede generar cargos administrativos y bloqueo de autogestión hasta regularizar.
+      </div>
+    </div>
+
+    <div class="card">
+      <b id="footerTenant">Clínica</b>
+      <div class="footerLine" id="footerDireccion">—</div>
+      <div class="footerLine" id="footerTel">—</div>
+    </div>
+
+  </div>
+</div>
+
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  alert("Falta config.js");
+  throw new Error("Missing Supabase config");
+}
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const AR_TZ = "America/Argentina/Buenos_Aires";
+
+const params = new URLSearchParams(window.location.search);
+const TOKEN = (params.get("token") || "").trim();
+
+const loading = document.getElementById("loading");
+const app = document.getElementById("app");
+
+const tenantNombre = document.getElementById("tenantNombre");
+const tenantDireccion = document.getElementById("tenantDireccion");
+const fechaTurno = document.getElementById("fechaTurno");
+const horaTurno = document.getElementById("horaTurno");
+const medicoNombre = document.getElementById("medicoNombre");
+const medicoEspecialidad = document.getElementById("medicoEspecialidad");
+const pacienteNombre = document.getElementById("pacienteNombre");
+const obraSocial = document.getElementById("obraSocial");
+const estadoTurno = document.getElementById("estadoTurno");
+const direccionBox = document.getElementById("direccionBox");
+
+const footerTenant = document.getElementById("footerTenant");
+const footerDireccion = document.getElementById("footerDireccion");
+const footerTel = document.getElementById("footerTel");
+
+const btnCancelar = document.getElementById("btnCancelar");
+const btnMostrarRepro = document.getElementById("btnMostrarRepro");
+const btnConfirmarRepro = document.getElementById("btnConfirmarRepro");
+
+const reproBox = document.getElementById("reproBox");
+const reproWarn = document.getElementById("reproWarn");
+const reproSlot = document.getElementById("reproSlot");
+const reproSlotPrev = document.getElementById("reproSlotPrev");
+const reproSlotNext = document.getElementById("reproSlotNext");
+const reproDayPrev = document.getElementById("reproDayPrev");
+const reproDayNext = document.getElementById("reproDayNext");
+
+const err = document.getElementById("err");
+const ok = document.getElementById("ok");
+
+let TURNO = null;
+let TENANT = null;
+
+let REPRO_SLOTS_RANGO = [];
+let REPRO_SLOTS_POR_DIA = {};
+let REPRO_DIAS_DISPONIBLES = [];
+let REPRO_DIA_INDEX = 0;
+let REPRO_CURRENT_SLOTS = [];
+let REPRO_SLOT_INDEX = 0;
+
+function setErr(msg){
+  err.textContent = msg || "";
+  ok.textContent = "";
+}
+
+function setOk(msg){
+  ok.textContent = msg || "";
+  err.textContent = "";
+}
+
+function isoDateARNow(){
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: AR_TZ,
+    year:"numeric",
+    month:"2-digit",
+    day:"2-digit"
+  }).formatToParts(new Date());
+
+  const y = parts.find(p=>p.type==="year").value;
+  const m = parts.find(p=>p.type==="month").value;
+  const d = parts.find(p=>p.type==="day").value;
+
+  return `${y}-${m}-${d}`;
+}
+
+function addDaysISO(iso, n){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  dt.setUTCDate(dt.getUTCDate()+n);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,"0")}-${String(dt.getUTCDate()).padStart(2,"0")}`;
+}
+
+function fmtHora(ts){
+  return new Date(ts).toLocaleTimeString("es-AR", {
+    timeZone: AR_TZ,
+    hour:"2-digit",
+    minute:"2-digit",
+    hour12:false
+  });
+}
+
+function fmtFechaLarga(ts){
+  return new Date(ts).toLocaleDateString("es-AR", {
+    timeZone: AR_TZ,
+    weekday:"long",
+    day:"2-digit",
+    month:"long",
+    year:"numeric"
+  });
+}
+
+function estadoTexto(e){
+  const x = String(e || "").toLowerCase();
+  if (x === "pendiente") return "Pendiente";
+  if (x === "presente") return "Presente";
+  if (x === "ausente") return "Ausente";
+  if (x === "cancelado") return "Cancelado";
+  if (x === "reprogramado") return "Reprogramado";
+  return e || "—";
+}
+
+function mapsLink(direccion){
+  if (!direccion) return "#";
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`;
+}
+
+function aplicarTenantVisual(){
+  const primary = TENANT?.color_primario || "#111111";
+  const bg = TENANT?.color_secundario || "#f6f7f8";
+
+  document.documentElement.style.setProperty("--primary", primary);
+  document.documentElement.style.setProperty("--bg", bg);
+}
+
+async function cargarTenant(){
+  if (!TURNO?.tenant_id) return;
+
+  const { data, error } = await sb
+    .from("Tenants")
+    .select("id,nombre,direccion,telefono,whatsapp,color_primario,color_secundario,theme,logo_url")
+    .eq("id", TURNO.tenant_id)
+    .maybeSingle();
+
+  if (!error && data){
+    TENANT = data;
+    aplicarTenantVisual();
+  }
+}
+
+function renderTurno(){
+  const nombreClinica = TENANT?.nombre || TURNO.tenant_nombre || "Clínica";
+  const direccion = TENANT?.direccion || "";
+  const telefono = TENANT?.telefono || "";
+  const whatsapp = TENANT?.whatsapp || "";
+
+  tenantNombre.textContent = nombreClinica;
+  tenantDireccion.innerHTML = direccion
+    ? `<a href="${mapsLink(direccion)}" target="_blank">${direccion}</a>`
+    : "Dirección no disponible";
+
+  fechaTurno.textContent = fmtFechaLarga(TURNO.inicio);
+  horaTurno.textContent = fmtHora(TURNO.inicio) + " hs";
+  medicoNombre.textContent = TURNO.medico_nombre || "—";
+  medicoEspecialidad.textContent = TURNO.medico_especialidad || "—";
+
+  pacienteNombre.textContent = TURNO.paciente_nombre || "—";
+  obraSocial.textContent = TURNO.obra_social || "—";
+  estadoTurno.textContent = estadoTexto(TURNO.estado);
+
+  direccionBox.innerHTML = direccion
+    ? `<a href="${mapsLink(direccion)}" target="_blank">${direccion}</a>`
+    : "—";
+
+  footerTenant.textContent = nombreClinica;
+  footerDireccion.innerHTML = direccion
+    ? `📍 <a href="${mapsLink(direccion)}" target="_blank">${direccion}</a>`
+    : "📍 —";
+
+  footerTel.textContent = telefono ? `☎️ ${telefono}` : (whatsapp ? `💬 ${whatsapp}` : "☎️ —");
+
+  document.title = `${nombreClinica} · Gestión de turno`;
+
+  if (TURNO.estado !== "pendiente"){
+    btnCancelar.disabled = true;
+    btnMostrarRepro.disabled = true;
+    setErr("Este turno ya no está pendiente y no puede gestionarse online.");
+  }
+}
+
+async function cargarTurno(){
+  if (!TOKEN){
+    loading.innerHTML = `
+      <div class="brand">Enlace inválido</div>
+      <div class="muted">Falta token de gestión.</div>
+    `;
+    return;
+  }
+
+  const { data, error } = await sb.rpc("public_get_turno_por_token", {
+    p_manage_token: TOKEN
+  });
+
+  if (error){
+    loading.innerHTML = `
+      <div class="brand">No pudimos cargar el turno</div>
+      <div class="muted">${error.message}</div>
+    `;
+    return;
+  }
+
+  if (!data || !data.length){
+    loading.innerHTML = `
+      <div class="brand">Turno no encontrado</div>
+      <div class="muted">El enlace puede haber vencido o el turno ya fue modificado.</div>
+    `;
+    return;
+  }
+
+  TURNO = data[0];
+
+  await cargarTenant();
+
+  loading.classList.add("hidden");
+  app.classList.remove("hidden");
+
+  renderTurno();
+}
+
+async function cancelarTurno(){
+  if (!TURNO) return;
+
+  const confirma1 = confirm("¿Estás seguro de cancelar este turno?");
+  if (!confirma1) return;
+
+  const confirma2 = confirm("Esta acción no se puede deshacer.\n\n¿Confirmás la cancelación?");
+  if (!confirma2) return;
+
+  setErr("");
+  setOk("");
+
+  btnCancelar.disabled = true;
+
+  const { error } = await sb.rpc("cancelar_turno", {
+    p_manage_token: TOKEN
+  });
+
+  if (error){
+    btnCancelar.disabled = false;
+    setErr(error.message);
+    return;
+  }
+
+  setOk("✅ Turno cancelado correctamente.");
+  TURNO.estado = "cancelado";
+  renderTurno();
+}
+
+async function cargarReproSlotsRango(){
+  REPRO_SLOTS_RANGO = [];
+  REPRO_SLOTS_POR_DIA = {};
+  REPRO_DIAS_DISPONIBLES = [];
+  REPRO_CURRENT_SLOTS = [];
+  REPRO_SLOT_INDEX = 0;
+  REPRO_DIA_INDEX = 0;
+
+  reproSlot.innerHTML = `<option value="">Cargando horarios…</option>`;
+
+  if (!TURNO?.medico_id){
+    reproSlot.innerHTML = `<option value="">No se pudo identificar el médico.</option>`;
+    return;
+  }
+
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 90);
+
+  const { data, error } = await sb.rpc("get_slots_disponibles_rango", {
+    p_medico_id: TURNO.medico_id,
+    p_desde: desde,
+    p_hasta: hasta
+  });
+
+  if (error){
+    reproSlot.innerHTML = `<option value="">Error cargando disponibilidad</option>`;
+    setErr(error.message);
+    return;
+  }
+
+  REPRO_SLOTS_RANGO = data || [];
+
+  REPRO_SLOTS_RANGO.forEach(s=>{
+    const dia = s.dia;
+    if (!REPRO_SLOTS_POR_DIA[dia]) REPRO_SLOTS_POR_DIA[dia] = [];
+    REPRO_SLOTS_POR_DIA[dia].push(s);
+  });
+
+  REPRO_DIAS_DISPONIBLES = Object.keys(REPRO_SLOTS_POR_DIA);
+
+  if (REPRO_DIAS_DISPONIBLES.length){
+    REPRO_DIA_INDEX = 0;
+    cargarReproSlotsDia();
+  } else {
+    reproSlot.innerHTML = `<option value="">Sin turnos disponibles</option>`;
+    reproWarn.textContent = "⚠️ No existen fechas disponibles para reprogramar online. Podés mantener tu turno o comunicarte con Secretaría.";
+    btnConfirmarRepro.disabled = true;
+  }
+}
+
+function cargarReproSlotsDia(){
+  const dia = REPRO_DIAS_DISPONIBLES[REPRO_DIA_INDEX];
+  REPRO_CURRENT_SLOTS = REPRO_SLOTS_POR_DIA[dia] || [];
+  REPRO_SLOT_INDEX = 0;
+  renderReproSlotActual();
+}
+
+function renderReproSlotActual(){
+  reproSlot.innerHTML = "";
+
+  if (!REPRO_CURRENT_SLOTS.length){
+    reproSlot.innerHTML = `<option value="">Sin disponibilidad</option>`;
+    btnConfirmarRepro.disabled = true;
+    return;
+  }
+
+  REPRO_CURRENT_SLOTS.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s.inicio_slot;
+
+    const d = new Date(s.inicio_slot);
+    const fecha = d.toLocaleDateString("es-AR", {
+      weekday:"short",
+      day:"numeric",
+      month:"short",
+      timeZone: AR_TZ
+    });
+
+    opt.textContent = `${fecha} · ${fmtHora(s.inicio_slot)} hs`;
+    reproSlot.appendChild(opt);
+  });
+
+  reproSlot.selectedIndex = REPRO_SLOT_INDEX;
+
+  reproSlotPrev.disabled = REPRO_SLOT_INDEX <= 0;
+  reproSlotNext.disabled = REPRO_SLOT_INDEX >= REPRO_CURRENT_SLOTS.length - 1;
+  btnConfirmarRepro.disabled = false;
+}
+
+function reproSlotSiguiente(){
+  if (REPRO_SLOT_INDEX < REPRO_CURRENT_SLOTS.length - 1){
+    REPRO_SLOT_INDEX++;
+    renderReproSlotActual();
+    return;
+  }
+
+  if (!REPRO_DIAS_DISPONIBLES.length) return;
+
+  REPRO_DIA_INDEX++;
+  if (REPRO_DIA_INDEX >= REPRO_DIAS_DISPONIBLES.length) REPRO_DIA_INDEX = 0;
+
+  cargarReproSlotsDia();
+}
+
+function reproSlotAnterior(){
+  if (REPRO_SLOT_INDEX > 0){
+    REPRO_SLOT_INDEX--;
+    renderReproSlotActual();
+  }
+}
+
+function reproDiaSiguiente(){
+  if (!REPRO_DIAS_DISPONIBLES.length) return;
+
+  REPRO_DIA_INDEX++;
+  if (REPRO_DIA_INDEX >= REPRO_DIAS_DISPONIBLES.length) REPRO_DIA_INDEX = 0;
+
+  cargarReproSlotsDia();
+}
+
+function reproDiaAnterior(){
+  if (!REPRO_DIAS_DISPONIBLES.length) return;
+
+  REPRO_DIA_INDEX--;
+  if (REPRO_DIA_INDEX < 0) REPRO_DIA_INDEX = REPRO_DIAS_DISPONIBLES.length - 1;
+
+  cargarReproSlotsDia();
+}
+
+async function confirmarReprogramacion(){
+  if (!TURNO) return;
+
+  const slot = REPRO_CURRENT_SLOTS[REPRO_SLOT_INDEX];
+
+  if (!slot?.inicio_slot){
+    setErr("Elegí un nuevo horario disponible.");
+    return;
+  }
+
+  const fecha = fmtFechaLarga(slot.inicio_slot);
+  const hora = fmtHora(slot.inicio_slot);
+
+  const confirma = confirm(`¿Confirmás reprogramar el turno para ${fecha} a las ${hora} hs?`);
+  if (!confirma) return;
+
+  setErr("");
+  setOk("");
+
+  btnConfirmarRepro.disabled = true;
+
+  const { error } = await sb.rpc("reprogramar_turno", {
+    p_manage_token: TOKEN,
+    p_nuevo_inicio: slot.inicio_slot,
+    p_duracion_min: TURNO.duracion_min || 20
+  });
+
+  if (error){
+    btnConfirmarRepro.disabled = false;
+    setErr(error.message);
+    return;
+  }
+
+  setOk("✅ Turno reprogramado correctamente.");
+
+  await cargarTurno();
+}
+
+btnCancelar.onclick = cancelarTurno;
+
+btnMostrarRepro.onclick = async ()=>{
+  reproBox.classList.toggle("active");
+
+  if (reproBox.classList.contains("active") && !REPRO_DIAS_DISPONIBLES.length){
+    await cargarReproSlotsRango();
+  }
+};
+
+btnConfirmarRepro.onclick = confirmarReprogramacion;
+
+reproSlotPrev.onclick = reproSlotAnterior;
+reproSlotNext.onclick = reproSlotSiguiente;
+reproDayPrev.onclick = reproDiaAnterior;
+reproDayNext.onclick = reproDiaSiguiente;
+
+reproSlot.onchange = ()=>{
+  REPRO_SLOT_INDEX = reproSlot.selectedIndex;
+};
+
+cargarTurno();
+</script>
+</body>
+</html>
