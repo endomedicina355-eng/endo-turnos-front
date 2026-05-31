@@ -260,6 +260,26 @@
       font-size:14px;
       line-height:1.45;
     }
+
+    .successBox{
+  background:var(--okBg);
+  border:1px solid #a7e1b7;
+  color:#0f5132;
+  border-radius:18px;
+  padding:20px;
+  text-align:center;
+  font-size:20px;
+  font-weight:950;
+  line-height:1.35;
+  margin-bottom:14px;
+}
+
+.successBox .smallText{
+  display:block;
+  font-size:14px;
+  font-weight:700;
+  margin-top:8px;
+}
   </style>
 </head>
 
@@ -311,6 +331,7 @@
     </div>
 
     <div class="card">
+      <div id="successBox" class="hidden successBox"></div>
       <div class="actions">
         <button id="btnMostrarRepro" class="primary" type="button">
           ✏️ Reprogramar turno
@@ -418,6 +439,19 @@ const reproDayNext = document.getElementById("reproDayNext");
 
 const err = document.getElementById("err");
 const ok = document.getElementById("ok");
+const successBox = document.getElementById("successBox");
+const actionsBox = document.querySelector(".actions");
+
+function mostrarExito(titulo, subtitulo){
+  successBox.innerHTML = `${titulo}<span class="smallText">${subtitulo || ""}</span>`;
+  successBox.classList.remove("hidden");
+
+  actionsBox.classList.add("hidden");
+  reproBox.classList.remove("active");
+
+  setErr("");
+  setOk("");
+}  
 
 let TURNO = null;
 let TENANT = null;
@@ -551,11 +585,27 @@ function renderTurno(){
 
   document.title = `${nombreClinica} · Gestión de turno`;
 
-  if (TURNO.estado !== "pendiente"){
-    btnCancelar.disabled = true;
-    btnMostrarRepro.disabled = true;
-    setErr("Este turno ya no está pendiente y no puede gestionarse online.");
-  }
+  if (TURNO.estado === "cancelado"){
+  mostrarExito(
+    "✅ Este turno fue cancelado.",
+    "Lo esperamos en otra oportunidad."
+  );
+  return;
+}
+
+if (TURNO.estado === "reprogramado"){
+  mostrarExito(
+    "✅ Este turno fue reprogramado.",
+    "El enlace corresponde a un turno anterior."
+  );
+  return;
+}
+
+if (TURNO.estado !== "pendiente"){
+  btnCancelar.disabled = true;
+  btnMostrarRepro.disabled = true;
+  setErr("Este turno ya no está pendiente y no puede gestionarse online.");
+}
 }
 
 async function cargarTurno(){
@@ -621,9 +671,13 @@ async function cancelarTurno(){
     return;
   }
 
-  setOk("✅ Turno cancelado correctamente.");
   TURNO.estado = "cancelado";
-  renderTurno();
+renderTurno();
+
+mostrarExito(
+  "✅ Su turno ha sido cancelado con éxito.",
+  "Lo esperamos en otra oportunidad."
+);
 }
 
 async function cargarReproSlotsRango(){
@@ -788,9 +842,12 @@ async function confirmarReprogramacion(){
     return;
   }
 
-  setOk("✅ Turno reprogramado correctamente.");
+  mostrarExito(
+  "✅ Su turno ha sido reprogramado con éxito.",
+  `Nuevo turno: ${fecha} a las ${hora} hs.`
+);
 
-  await cargarTurno();
+await cargarTurno();
 }
 
 btnCancelar.onclick = cancelarTurno;
