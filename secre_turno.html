@@ -1287,6 +1287,14 @@ try {
   console.warn("No se pudo enviar mail de confirmación", e);
 }
 
+  alert(
+  `✅ Turno creado con éxito\n\n` +
+  `Paciente: ${elNombre.value}\n` +
+  `Médico: ${medicoNombre}\n` +
+  `Fecha: ${fechaTexto}\n` +
+  `Hora: ${horaTexto} hs\n` +
+  `${elEmail.value ? "Mail de confirmación enviado." : "Paciente sin email cargado."}`
+);
   okT.textContent = "✅ Turno creado.";
 delete SLOT_CACHE[elMedico.value + "_" + elFecha.value];
 
