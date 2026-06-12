@@ -1254,18 +1254,38 @@ const confirmacion = confirm(
 
 if (!confirmacion) return;
   
-  const { error } = await sb.rpc("secre_crear_turno", {
-    p_medico_id: elMedico.value,
-    p_paciente_id: currentPacienteId,
-    p_inicio: inicioISO,
-    p_duracion_min: currentDurMin,
-    p_copago: copagoNum,
-    p_nota: (elNota.value||"").trim() || null,
-    p_sobreturno: sob,
-    p_canal: "secre"
-  });
+  const { data: nuevoTurnoId, error } = await sb.rpc("secre_crear_turno", {
+  p_medico_id: elMedico.value,
+  p_paciente_id: currentPacienteId,
+  p_inicio: inicioISO,
+  p_duracion_min: currentDurMin,
+  p_copago: copagoNum,
+  p_nota: (elNota.value||"").trim() || null,
+  p_sobreturno: sob,
+  p_canal: "secre"
+});
 
-  if (error){ errT.textContent = error.message; return; }
+if (error){
+  errT.textContent = error.message;
+  return;
+}
+
+try {
+  if (nuevoTurnoId) {
+    await fetch(`${SUPABASE_URL}/functions/v1/send-turno-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        turno_id: nuevoTurnoId
+      })
+    });
+  }
+} catch (e) {
+  console.warn("No se pudo enviar mail de confirmación", e);
+}
 
   okT.textContent = "✅ Turno creado.";
 delete SLOT_CACHE[elMedico.value + "_" + elFecha.value];
