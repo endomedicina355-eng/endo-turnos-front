@@ -410,51 +410,52 @@ function renderTurnos(rows){
   Para cancelar o reprogramar un turno utilizá el enlace recibido por email.
 </div>
 
-<button class="secondary" type="button" style="margin-top:12px" data-reenviar="${t.turno_id}">
+<button
+  class="secondary"
+  type="button"
+  style="margin-top:12px"
+  onclick="reenviarLinkGestion('${t.turno_id}', this)">
   Reenviar link de gestión
 </button>
 `;
 
 listaTurnos.appendChild(card);
   });
-  }
-
-document.querySelectorAll("[data-reenviar]").forEach(btn => {
-  btn.onclick = async () => {
-    const turnoId = btn.getAttribute("data-reenviar");
-
-    btn.disabled = true;
-    btn.textContent = "Enviando…";
-
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-turno-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
-          turno_id: turnoId
-        })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        btn.textContent = data?.error || "No se pudo enviar";
-        btn.disabled = false;
-        return;
-      }
-
-      btn.textContent = "Link enviado ✅";
-      setOk("Te reenviamos el link de gestión al email registrado.");
-    } catch (e) {
-      btn.textContent = "Error al enviar";
-      btn.disabled = false;
-    }
-  };
-});  
+  }  
     
+async function reenviarLinkGestion(turnoId, btn){
+  btn.disabled = true;
+  btn.textContent = "Enviando…";
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-turno-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        turno_id: turnoId
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      btn.textContent = data?.error || "No se pudo enviar";
+      btn.disabled = false;
+      return;
+    }
+
+    btn.textContent = "Link enviado ✅";
+    setOk("Te reenviamos el link de gestión al email registrado.");
+  } catch (e) {
+    console.error(e);
+    btn.textContent = "Error al enviar";
+    btn.disabled = false;
+  }
+}
+  
 async function buscarTurnos(){
   setErr("");
   setOk("");
