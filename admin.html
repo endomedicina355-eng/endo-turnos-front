@@ -317,13 +317,30 @@ document.getElementById("btnCrear").onclick = async ()=>{
     if (!nombre) return setErr(errAlta, "Ingresá nombre.");
     if (!email) return setErr(errAlta, "Ingresá email.");
 
-    const { error } = await sb.rpc("cfg_create_personal", {
-      p_nombre: nombre,
-      p_email: email,
-      p_rol: rol,
-      p_activo: activo
-    });
-    if (error) throw error;
+    const { data: sessionData } = await sb.auth.getSession();
+const token = sessionData?.session?.access_token;
+
+if (!token) throw new Error("Sesión vencida. Volvé a iniciar sesión.");
+
+const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-create-user`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    nombre,
+    email,
+    rol,
+    activo
+  })
+});
+
+const out = await res.json();
+
+if (!res.ok) {
+  throw new Error(out?.error || "Error creando usuario");
+}
 
     document.getElementById("p_nombre").value = "";
     document.getElementById("p_email").value = "";
