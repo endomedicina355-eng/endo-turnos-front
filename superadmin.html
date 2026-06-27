@@ -195,15 +195,21 @@ async function guard(){
   return { ...data.user, email };
 }
 
-async function checkPlatformAdmin(user){
-  const { data, error } = await sb
-    .from("platform_admins")
-    .select("id,email,nombre,activo")
-    .eq("email", user.email)
-    .eq("activo", true)
-    .maybeSingle();
+async function checkPlatformAdmin(){
 
-  if (error || !data?.id) {
+  const { data: sessionData } = await sb.auth.getSession();
+  const token = sessionData?.session?.access_token;
+
+  if (!token) return false;
+
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/platform-get-me`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!res.ok){
     roleBlock.style.display = "block";
     cardCrear.style.display = "none";
     return false;
@@ -303,7 +309,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const user = await guard();
   if (!user) return;
 
-  const allowed = await checkPlatformAdmin(user);
+  const allowed = await checkPlatformAdmin();
   if (!allowed) return;
 });
 </script>
