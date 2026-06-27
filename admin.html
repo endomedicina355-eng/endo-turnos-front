@@ -87,7 +87,7 @@
   </div>
 
   <div class="card" id="cardLista">
-    <div class="brand">Personal del tenant</div>
+    <div class="brand" id="personalTitle">Personal de la clínica</div>
     <div class="muted">Activar/inactivar y cambiar roles.</div>
     <div class="hr"></div>
 
@@ -154,6 +154,7 @@ const errAlta = document.getElementById("errAlta");
 const okAlta = document.getElementById("okAlta");
 const errLista = document.getElementById("errLista");
 const okLista = document.getElementById("okLista");
+const personalTitle = document.getElementById("personalTitle");  
 
 let ME = null;
 
@@ -204,14 +205,17 @@ async function cargarTenantBranding(){
   if (!data?.id) return;
 
   const title = data?.theme?.header?.title || data?.nombre || "Admin";
+
   brandTitle.textContent = `${title} · Admin`;
   brandSubtitle.textContent = "Gestión de personal interno";
+  personalTitle.textContent = `Personal de ${title}`;
+
   document.title = `${title} · Admin`;
 
   document.documentElement.style.setProperty("--primary", data.color_primario || "#111");
   document.documentElement.style.setProperty("--bg", data.color_secundario || "#f6f7f8");
 }
-
+  
 async function cargarPersonal(){
   clearMsgs();
   personalBody.innerHTML = `<tr><td colspan="5" class="muted">Cargando...</td></tr>`;
