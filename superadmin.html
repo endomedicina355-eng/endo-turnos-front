@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Super Admin</title>
+  <style>
+    :root{--primary:#111;--bg:#f6f7f8;--card:#fff;--border:#e7e7e7;--muted:#666;--danger:#b00020;--ok:#0a7a27}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:#111}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .header{display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .brand{font-weight:900}
+    .muted{color:var(--muted);font-size:13px}
+    .right,.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
+    .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
+    @media(max-width:900px){.row{grid-template-columns:1fr}}
+    input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;font-size:14px;background:#fff;box-sizing:border-box}
+    button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
+    button.primary{background:var(--primary);color:#fff;border:0;font-weight:800}
+    button.small{padding:8px 10px;border-radius:10px;font-size:13px}
+    .error{color:var(--danger);font-size:13px;margin-top:8px}
+    .ok{color:var(--ok);font-size:13px;margin-top:8px}
+    .hr{height:1px;background:#eee;margin:14px 0}
+    .result{background:#f3faf5;border:1px solid #d8eadc;border-radius:14px;padding:12px;margin-top:12px;display:none}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="brand" id="brandTitle">Super Admin · Plataforma</div>
+      <div class="muted">Crear nuevas clínicas y administrador inicial</div>
+      <div class="muted" id="userLine"></div>
+    </div>
+    <div class="right">
+      <button id="btnBack" class="small" type="button">Ir a Admin ENDO</button>
+      <button id="btnLogout" class="small" type="button">Salir</button>
+    </div>
+  </div>
+
+  <div class="card" id="roleBlock" style="display:none">
+    <div class="brand">Acceso restringido</div>
+    <div class="muted">Tu usuario no está habilitado como Super Admin de plataforma.</div>
+  </div>
+
+  <div class="card" id="cardCrear">
+    <div class="brand">Nueva clínica / institución</div>
+    <div class="muted">Crea un nuevo tenant y su administrador inicial.</div>
+
+    <div class="hr"></div>
+
+    <div class="row">
+      <div>
+        <div class="muted">Nombre de clínica</div>
+        <input id="tenant_nombre" placeholder="Ej: Clínica San José" />
+      </div>
+      <div>
+        <div class="muted">Slug</div>
+        <input id="tenant_slug" placeholder="ej: clinica-san-jose" />
+      </div>
+      <div>
+        <div class="muted">Email contacto</div>
+        <input id="tenant_email_contacto" placeholder="info@clinica.com" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <div class="muted">Dirección</div>
+        <input id="tenant_direccion" placeholder="Dirección" />
+      </div>
+      <div>
+        <div class="muted">Teléfono</div>
+        <input id="tenant_telefono" placeholder="Teléfono" />
+      </div>
+      <div>
+        <div class="muted">WhatsApp</div>
+        <input id="tenant_whatsapp" placeholder="WhatsApp" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <div class="muted">Color primario</div>
+        <input id="color_primario" value="#111111" />
+      </div>
+      <div>
+        <div class="muted">Color secundario / fondo</div>
+        <input id="color_secundario" value="#f6f7f8" />
+      </div>
+      <div></div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="brand">Administrador inicial</div>
+    <div class="muted">Este usuario será admin de la nueva clínica.</div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <div class="muted">Nombre admin</div>
+        <input id="admin_nombre" placeholder="Nombre y apellido" />
+      </div>
+      <div>
+        <div class="muted">Email admin</div>
+        <input id="admin_email" placeholder="admin@clinica.com" />
+      </div>
+      <div></div>
+    </div>
+
+    <div class="actions" style="margin-top:14px">
+      <button id="btnCrearTenant" class="primary" type="button">Crear clínica + admin</button>
+      <div class="error" id="err"></div>
+      <div class="ok" id="ok"></div>
+    </div>
+
+    <div class="result" id="resultBox"></div>
+  </div>
+</div>
+
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  alert("Falta config.js");
+  throw new Error("Missing Supabase config");
+}
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const IDLE_MIN = 20;
+let idleTimer = null;
+
+async function hardLogout(){
+  try{ await sb.auth.signOut(); }catch(e){}
+  window.location.href = "./login.html";
+}
+
+function resetIdle(){
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(hardLogout, IDLE_MIN * 60 * 1000);
+}
+
+["click","keydown","mousemove","touchstart","scroll"].forEach(ev =>
+  window.addEventListener(ev, resetIdle, {passive:true})
+);
+resetIdle();
+
+const userLine = document.getElementById("userLine");
+const roleBlock = document.getElementById("roleBlock");
+const cardCrear = document.getElementById("cardCrear");
+const err = document.getElementById("err");
+const ok = document.getElementById("ok");
+const resultBox = document.getElementById("resultBox");
+
+document.getElementById("btnBack").onclick = () => window.location.href = "./admin.html";
+document.getElementById("btnLogout").onclick = hardLogout;
+
+function setErr(msg){
+  err.textContent = msg || "";
+  ok.textContent = "";
+}
+
+function setOk(msg){
+  ok.textContent = msg || "";
+  err.textContent = "";
+}
+
+function slugify(v){
+  return String(v || "")
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function guard(){
+  const { data } = await sb.auth.getUser();
+
+  if (!data?.user) {
+    window.location.href = "./login.html";
+    return null;
+  }
+
+  const email = (data.user.email || "").toLowerCase().trim();
+  userLine.textContent = `Usuario: ${email}`;
+
+  return { ...data.user, email };
+}
+
+async function checkPlatformAdmin(user){
+  const { data, error } = await sb
+    .from("platform_admins")
+    .select("id,email,nombre,activo")
+    .eq("email", user.email)
+    .eq("activo", true)
+    .maybeSingle();
+
+  if (error || !data?.id) {
+    roleBlock.style.display = "block";
+    cardCrear.style.display = "none";
+    return false;
+  }
+
+  return true;
+}
+
+document.getElementById("tenant_nombre").addEventListener("blur", () => {
+  const slugInput = document.getElementById("tenant_slug");
+  if (!slugInput.value.trim()) {
+    slugInput.value = slugify(document.getElementById("tenant_nombre").value);
+  }
+});
+
+document.getElementById("btnCrearTenant").onclick = async () => {
+  setErr("");
+  setOk("");
+  resultBox.style.display = "none";
+  resultBox.innerHTML = "";
+
+  try{
+    const payload = {
+      tenant_nombre: document.getElementById("tenant_nombre").value.trim(),
+      tenant_slug: slugify(document.getElementById("tenant_slug").value),
+      tenant_direccion: document.getElementById("tenant_direccion").value.trim(),
+      tenant_telefono: document.getElementById("tenant_telefono").value.trim(),
+      tenant_whatsapp: document.getElementById("tenant_whatsapp").value.trim(),
+      tenant_email_contacto: document.getElementById("tenant_email_contacto").value.trim(),
+      color_primario: document.getElementById("color_primario").value.trim() || "#111111",
+      color_secundario: document.getElementById("color_secundario").value.trim() || "#f6f7f8",
+      admin_nombre: document.getElementById("admin_nombre").value.trim(),
+      admin_email: document.getElementById("admin_email").value.trim().toLowerCase()
+    };
+
+    if (!payload.tenant_nombre) throw new Error("Ingresá nombre de clínica.");
+    if (!payload.tenant_slug) throw new Error("Ingresá slug.");
+    if (!payload.admin_nombre) throw new Error("Ingresá nombre del admin.");
+    if (!payload.admin_email) throw new Error("Ingresá email del admin.");
+
+    const { data: sessionData } = await sb.auth.getSession();
+    const token = sessionData?.session?.access_token;
+
+    if (!token) throw new Error("Sesión vencida. Volvé a iniciar sesión.");
+
+    const btn = document.getElementById("btnCrearTenant");
+    btn.disabled = true;
+    btn.textContent = "Creando...";
+
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/platform-create-tenant`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const out = await res.json();
+
+    btn.disabled = false;
+    btn.textContent = "Crear clínica + admin";
+
+    if (!res.ok) {
+      throw new Error(out?.error || "Error creando clínica.");
+    }
+
+    setOk("✅ Clínica y administrador creados.");
+
+    resultBox.style.display = "block";
+    resultBox.innerHTML = `
+      <div><b>Clínica:</b> ${out.tenant?.nombre || payload.tenant_nombre}</div>
+      <div><b>Slug:</b> ${out.tenant?.slug || payload.tenant_slug}</div>
+      <div><b>Admin:</b> ${out.admin_email || payload.admin_email}</div>
+      <div style="margin-top:8px" class="muted">
+        Se envió el mail de acceso al administrador inicial.
+      </div>
+    `;
+
+    document.getElementById("tenant_nombre").value = "";
+    document.getElementById("tenant_slug").value = "";
+    document.getElementById("tenant_direccion").value = "";
+    document.getElementById("tenant_telefono").value = "";
+    document.getElementById("tenant_whatsapp").value = "";
+    document.getElementById("tenant_email_contacto").value = "";
+    document.getElementById("admin_nombre").value = "";
+    document.getElementById("admin_email").value = "";
+
+  }catch(e){
+    document.getElementById("btnCrearTenant").disabled = false;
+    document.getElementById("btnCrearTenant").textContent = "Crear clínica + admin";
+    setErr(e.message || String(e));
+  }
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const user = await guard();
+  if (!user) return;
+
+  const allowed = await checkPlatformAdmin(user);
+  if (!allowed) return;
+});
+</script>
+</body>
+</html>
