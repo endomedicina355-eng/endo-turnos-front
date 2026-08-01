@@ -85,6 +85,10 @@
         <div class="muted">Especialidad (opcional)</div>
         <input id="m_especialidad" placeholder="Otorrino, Endocrino..." />
       </div>
+        <div>
+         <div class="muted">Email real (opcional)</div>
+         <input id="m_email_real" type="email" placeholder="medico@email.com" />
+      </div> 
       <div>
         <div class="muted">Duración (min)</div>
         <select id="m_duracion">
@@ -548,14 +552,42 @@ document.getElementById("btnCrearMedico").onclick = async ()=>{
 
     if(!nombre) return setErr(errAlta,"Ingresá nombre.");
 
-    const { data: nuevoMedicoId, error } = await sb.rpc("cfg_crear_medico", {
-  p_tenant_id: TENANT_ID,
-  p_nombre: nombre,
-  p_especialidad: especialidad,
-  p_activo: activo,
-  p_duracion_min: duracion
-});
-if(error) throw error;
+    const emailReal = (
+  document.getElementById("m_email_real").value || ""
+).trim().toLowerCase() || null;
+
+const { data: sessionData } = await sb.auth.getSession();
+const token = sessionData?.session?.access_token;
+
+if (!token) {
+  throw new Error("Sesión vencida. Volvé a iniciar sesión.");
+}
+
+const res = await fetch(
+  `${SUPABASE_URL}/functions/v1/admin-create-medico`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      nombre,
+      especialidad,
+      email_real: emailReal,
+      duracion_min: duracion,
+      activo
+    })
+  }
+);
+
+const out = await res.json();
+
+if (!res.ok) {
+  throw new Error(out?.error || "No se pudo crear el médico");
+}
+
+const nuevoMedicoId = out.medico_id;
 
 await cargarMedicosSelects();
 
@@ -565,7 +597,10 @@ if(nuevoMedicoId){
   syncMedicoEstadoUI();
 }
 
-setOk(okAlta,"✅ Médico creado.");
+setOk(
+  okAlta,
+  `✅ Médico creado. Usuario: ${out.usuario} · Clave: ${out.password_temporal}`
+);
   }catch(e){
     setErr(errAlta, e.message || String(e));
   }
@@ -729,7 +764,7 @@ function renderDispo(dispMap){
 
 let dispoDraft = {};
 
-async function cargarDispo(){
+async function cargarDispo(mostrarMensaje = true){
   clearMsgs();
   try{
     const medicoId = selMedicoDispo.value;
@@ -758,7 +793,9 @@ async function cargarDispo(){
 
     dispoDraft = map;
     renderDispo(dispoDraft);
-    setOk(okDispo,"✅ Disponibilidad cargada.");
+    if (mostrarMensaje) {
+  setOk(okDispo,"✅ Disponibilidad cargada.");
+}
   }catch(e){
     setErr(errDispo, e.message || String(e));
   }
@@ -787,8 +824,8 @@ document.getElementById("btnGuardarDispo").onclick = async ()=>{
     });
     if(error) throw error;
 
-    setOk(okDispo,"✅ Disponibilidad guardada.");
-    await cargarDispo();
+    await cargarDispo(false);
+setOk(okDispo,"✅ Disponibilidad guardada.");
   }catch(e){
     setErr(errDispo, e.message || String(e));
   }
