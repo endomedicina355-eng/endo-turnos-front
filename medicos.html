@@ -1,0 +1,2010 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SECRETARIA</title>
+
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#f6f7f8;color:#111}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .card{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:14px 16px;margin:12px 0}
+    .header{display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .brand{font-weight:900}
+    .muted{color:#666;font-size:13px}
+
+    .row{
+  display:grid;
+  gap:12px;
+  grid-template-columns:1.2fr 1fr 1fr;
+  align-items:end;
+}
+
+@media(max-width:900px){
+  .row{
+    grid-template-columns:1fr;
+  }
+}
+
+    input,select{
+  width:100%;
+  height:46px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  font-size:15px;
+  font-weight:700;
+  background:#fff;
+  box-sizing:border-box;
+}
+
+.fechaWrap{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.fechaWrap > .muted{
+  height:16px;
+  display:flex;
+  align-items:center;
+}
+
+.fechaActions{
+  display:flex;
+  gap:8px;
+  height:38px;
+}
+
+.fechaActions.hiddenActions{
+  visibility:hidden;
+}
+
+.fechaBtn{
+  flex:1;
+  font-size:13px;
+  font-weight:800;
+  height:38px;
+}
+
+#fecha{
+  height:46px;
+}
+    .fechaWrap{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.fechaActions{
+  display:flex;
+  gap:8px;
+}
+
+.fechaBtn{
+  flex:1;
+  font-size:13px;
+  font-weight:800;
+  height:38px;
+}
+
+
+/* mejora visual calendario nativo */
+#fecha::-webkit-calendar-picker-indicator{
+  cursor:pointer;
+  transform:scale(1.25);
+}
+    button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
+    button.primary{background:#111;color:#fff;border:0;font-weight:800}
+    button.small{padding:8px 10px;border-radius:10px;font-size:13px}
+    .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .kpi .pill{border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+    .error{color:#b00020;font-size:13px}
+    .ok{color:#0a7a27;font-size:13px}
+    .saving{opacity:.55}
+
+    .tableWrap{overflow:auto}
+    table{width:100%;border-collapse:collapse;min-width:0}
+    th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
+    th{color:#666;font-weight:700;text-align:left;font-size:12px}
+
+    select.estadoSelect{font-weight:800}
+    select.estadoSelect.pendiente{background:#e7f0ff;border-color:#b6d0ff;color:#0b3d91}
+    select.estadoSelect.presente{background:#dff5e5;border-color:#a7e1b7;color:#0f5132}
+    select.estadoSelect.ausente{background:#fde2e6;border-color:#f2b7c2;color:#842029}
+
+    .cards{display:none}
+    .turnoCard{border:1px solid #eee;border-radius:14px;padding:12px;margin:10px 0}
+    .turnoTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .turnoHora{font-weight:900;font-size:18px}
+    .turnoLinea{margin-top:6px;font-size:14px}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .actions .full{grid-column:1/-1}
+
+    @media(max-width:900px){
+      .tableWrap{display:none}
+      .cards{display:block}
+    }
+
+    details.acc{border:1px solid #eee;border-radius:14px;margin:10px 0;overflow:hidden;background:#fff}
+    details.acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;font-weight:900}
+    details.acc summary::-webkit-details-marker{display:none}
+    .pillMini{border:1px solid #ddd;border-radius:999px;padding:4px 8px;font-size:12px;background:#fff}
+    .accBody{padding:0 10px 10px 10px}
+    .innerTable{width:100%;border-collapse:collapse}
+    .innerTable td{border-bottom:1px solid #eee}
+
+    .pLink{font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+    .pSig{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:18px;height:18px;border-radius:999px;border:1px solid #ddd;
+      font-size:12px;margin-left:8px;line-height:1;
+      user-select:none;
+    }
+    .pSig.ok{background:#dff5e5;border-color:#a7e1b7;color:#0f5132}
+    .pSig.bad{background:#fde2e6;border-color:#f2b7c2;color:#842029}
+    .pSig.unk{background:#fff;border-color:#ddd;color:#666}
+
+    .modalBackdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+  z-index:9999;
+}
+
+.modal{
+  background:#fff;
+  border-radius:16px;
+  max-width:760px;
+  width:100%;
+  max-height:85vh;
+  border:1px solid #eee;
+  box-shadow:0 20px 70px rgba(0,0,0,.2);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.modalHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  padding:14px 14px 10px 14px;
+  border-bottom:1px solid #eee;
+  background:#fff;
+  flex-shrink:0;
+}
+
+.modalTitle{font-weight:900}
+
+.modalBody{
+  padding:14px;
+  overflow-y:auto;
+  flex:1;
+}
+    .modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:700px){.modalGrid{grid-template-columns:1fr}}
+    .box{border:1px solid #eee;border-radius:14px;padding:12px}
+    .warn{border-radius:14px;padding:12px;font-weight:900}
+    .warn.ok{background:#dff5e5;border:1px solid #a7e1b7;color:#0f5132}
+    .warn.bad{background:#fde2e6;border:1px solid #f2b7c2;color:#842029}
+    .histItem{border-bottom:1px solid #eee;padding:10px 0}
+    .histItem:last-child{border-bottom:0}
+
+button.turnoMain{
+  background:#0a7a27;
+  color:#fff;
+  border:0;
+  font-weight:900;
+  box-shadow:0 6px 14px rgba(10,122,39,.18);
+}    
+
+.copagoBox{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  align-items:flex-start;
+}
+
+.copagoInput{
+  width:130px;
+  max-width:130px;
+  font-weight:800;
+}
+
+.transferLabel{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  font-weight:700;
+  color:#444;
+  line-height:1;
+  white-space:nowrap;
+}
+
+.transferLabel input{
+  width:auto;
+  margin:0;
+}    
+    .gestionBtn{
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.gestionActions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+@media(max-width:700px){
+  .gestionActions{grid-template-columns:1fr}
+}
+
+.dangerBtn{
+  border-color:#f2b7c2;
+  background:#fde2e6;
+  color:#842029;
+  font-weight:900;
+}
+
+.reproBox{
+  margin-top:12px;
+  display:none;
+}
+
+.reproBox.active{
+  display:block;
+}
+
+.reproGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+@media(max-width:700px){
+  .reproGrid{grid-template-columns:1fr}
+}
+
+.slotNav{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.slotSelect{
+  height:120px;
+  font-weight:800;
+}
+
+.slotBtn{
+  width:auto;
+  min-width:40px;
+  height:38px;
+  font-weight:900;
+}
+
+.slotDayNav{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin-top:10px;
+}
+
+.sobBox{
+  border:1px solid #f2b7c2;
+  background:#fff5f6;
+  border-radius:14px;
+  padding:12px;
+}
+
+.sobTitle{
+  font-weight:900;
+  color:#842029;
+  margin-bottom:10px;
+}
+
+.miniCheck{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  font-size:13px;
+  font-weight:800;
+}
+
+.miniCheck input{
+  width:auto;
+}
+
+.sobNavBox{
+  display:none;
+  margin-top:12px;
+}
+
+.sobNavBox.active{
+  display:block;
+}
+
+.sobFechaActual{
+  font-size:17px;
+  font-weight:900;
+  margin:8px 0 10px;
+}    
+
+  /* ================= AJUSTE AGENDA DESKTOP ================= */
+
+/* Calendario nativo un poco más visible */
+#fecha{
+  font-size:18px;
+  font-weight:900;
+}
+
+#fecha::-webkit-calendar-picker-indicator{
+  transform:scale(1.55);
+  cursor:pointer;
+}
+
+/* ===== ALINEACIÓN EXACTA HEADER + FILAS ===== */
+
+.tableWrap > table{
+  table-layout:fixed;
+  width:100%;
+  min-width:0;
+}
+
+/* Header principal */
+.tableWrap > table > thead th:nth-child(1){width:68px;}
+.tableWrap > table > thead th:nth-child(2){width:145px;}
+.tableWrap > table > thead th:nth-child(3){width:105px;}
+.tableWrap > table > thead th:nth-child(4){width:92px;}
+.tableWrap > table > thead th:nth-child(5){width:58px;text-align:center;}
+.tableWrap > table > thead th:nth-child(6){width:145px;}
+.tableWrap > table > thead th:nth-child(7){width:165px;}
+.tableWrap > table > thead th:nth-child(8){width:82px;}
+
+/* Filas internas */
+.innerTable{
+  table-layout:fixed;
+  width:100%;
+}
+
+.innerTable td:nth-child(1){width:68px;}
+.innerTable td:nth-child(2){width:145px;}
+.innerTable td:nth-child(3){width:105px;}
+.innerTable td:nth-child(4){width:92px;}
+.innerTable td:nth-child(5){width:58px;text-align:center;}
+.innerTable td:nth-child(6){width:145px;}
+.innerTable td:nth-child(7){width:165px;}
+.innerTable td:nth-child(8){width:82px;}
+
+.innerTable tr{
+  height:86px;
+}
+
+.innerTable td{
+  padding:10px 8px;
+}
+
+.accBody{
+  padding:0 0 10px 0;
+}
+
+.copagoInput{
+  width:86px;
+  max-width:86px;
+  text-align:center;
+  font-weight:900;
+}
+
+.transfCell input{
+  width:18px;
+  height:18px;
+  margin:0 auto;
+  display:block;
+}
+
+.estadoSelect,
+[data-practica]{
+  min-width:0;
+  width:100%;
+}
+
+.gestionBtn{
+  width:100%;
+  height:44px;
+  padding:8px 10px;
+}
+
+.pLink{
+  display:inline-block;
+  max-width:105px;
+  line-height:1.2;
+  vertical-align:middle;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.pSig{
+  margin-left:6px;
+  vertical-align:middle;
+}    
+    
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="brand" id="brandTitle">Admin Secretaría</div>
+      <div class="muted" id="brandSubtitle">Agenda diaria</div>
+      <div class="muted" id="userLine"></div>
+    </div>
+    <div class="right">
+      <button id="btnRefresh" class="primary" type="button">Actualizar</button>
+      <button id="btnIrTurnos" class="turnoMain" type="button">Turnos / Sobreturnos</button>
+      <button id="btnDispo" class="small" type="button">Disponibilidad</button>
+      <button id="btnAdmin" class="small" type="button">Admin</button>
+      <button id="btnLogout" class="small" type="button">Salir</button>
+          
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="fechaWrap">
+  <div class="muted">Fecha</div>
+
+  <input id="fecha" type="date" />
+
+  <div class="fechaActions">
+    <button
+      id="btnHoy"
+      class="fechaBtn"
+      type="button"
+    >
+      Hoy
+    </button>
+
+    <button
+      id="btnManana"
+      class="fechaBtn"
+      type="button"
+    >
+      Mañana
+    </button>
+  </div>
+</div>
+      <div class="fechaWrap">
+  <div class="muted">Médico</div>
+
+  <select id="medico">
+    <option value="">Todos</option>
+  </select>
+
+  <div class="fechaActions">
+    <button
+      class="fechaBtn"
+      type="button"
+      disabled
+    >
+      —
+    </button>
+
+    <button
+      class="fechaBtn"
+      type="button"
+      disabled
+    >
+      —
+    </button>
+  </div>
+</div>
+
+<div class="fechaWrap">
+  <div class="muted">Estado</div>
+
+  <select id="estado">
+    <option value="todos" selected>Todos</option>
+    <option value="pendiente">Pendiente</option>
+    <option value="presente">Presente</option>
+    <option value="ausente">Ausente</option>
+    <option value="cancelado">Cancelado</option>
+    <option value="reprogramado">Reprogramado</option>
+  </select>
+
+  <div class="fechaActions">
+    <button
+      class="fechaBtn"
+      type="button"
+      disabled
+    >
+      —
+    </button>
+
+    <button
+      class="fechaBtn"
+      type="button"
+      disabled
+    >
+      —
+    </button>
+  </div>
+</div>
+
+      </div>
+    
+    <div class="kpi" id="kpis"></div>
+    <div class="error" id="err"></div>
+    <div class="ok" id="ok"></div>
+  </div>
+
+  <div class="card tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Paciente</th>
+          <th>Obra social</th>
+          <th>Copago</th>
+          <th>Transf</th>
+          <th>Estado</th>
+          <th>Práctica</th>
+          <th>Gestión</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="card cards" id="cards"></div>
+</div>
+
+<div class="modalBackdrop" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modalHead">
+      <div>
+        <div class="modalTitle" id="mTitle">Paciente</div>
+        <div class="muted" id="mSub">—</div>
+      </div>
+      <button class="small" id="btnCloseModal" type="button" style="font-weight:900">Cerrar ✕</button>
+    </div>
+    <div class="modalBody">
+      <div class="modalGrid">
+        <div class="box">
+          <div class="muted">DNI</div>
+          <div id="mDni">—</div>
+        </div>
+        <div class="box">
+          <div class="muted">Afiliado</div>
+          <div id="mAf">—</div>
+        </div>
+        <div class="box">
+          <div class="muted">Obra social</div>
+          <div id="mOS">—</div>
+        </div>
+        <div class="box">
+          <div class="muted">Teléfono</div>
+          <div id="mTel">—</div>
+        </div>
+        <div class="box">
+          <div class="muted">Email</div>
+          <div id="mEmail">—</div>
+        </div>
+      </div>
+
+      <div style="height:10px"></div>
+      <div class="warn ok" id="mWarn">Cargando warning…</div>
+
+      <div style="height:12px"></div>
+      <div class="box">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+  <div class="brand" style="font-weight:900">
+    Historial (últimos 2 años)
+  </div>
+
+  <button
+    id="btnRegularizarPaciente"
+    class="small"
+    type="button"
+    style="font-weight:900"
+  >
+    Regularizar deuda / historial
+  </button>
+</div>
+        <div class="muted">Se carga al abrir la ficha.</div>
+        <div id="mHist" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modalBackdrop" id="modalCopago">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modalHead">
+      <div>
+        <div class="modalTitle">Copago por profesional</div>
+        <div class="muted">Resumen según filtros actuales</div>
+      </div>
+      <button class="small" id="btnCloseCopago" type="button" style="font-weight:900">Cerrar ✕</button>
+    </div>
+
+    <div class="modalBody">
+      <div id="copagoDetalle"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modalBackdrop" id="modalGestion">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modalHead">
+      <div>
+        <div class="modalTitle" id="gTitle">Gestión de turno</div>
+        <div class="muted" id="gSub">—</div>
+      </div>
+      <button class="small" id="btnCloseGestion" type="button" style="font-weight:900">Cerrar ✕</button>
+    </div>
+
+    <div class="modalBody">
+      <div class="gestionActions">
+        <button class="dangerBtn" id="btnGestionCancelar" type="button">❌ Cancelar turno</button>
+        <button class="primary" id="btnMostrarRepro" type="button">✏️ Reprogramar</button>
+      </div>
+
+      <div class="reproBox" id="reproBox">
+  <div style="height:12px"></div>
+
+  <div class="box">
+    <div class="brand" style="font-weight:900">Reprogramar turno</div>
+    <div class="muted">Elegí un nuevo horario disponible o autorizá sobreturno.</div>
+
+    <div style="height:12px"></div>
+
+    <div class="reproGrid">
+      <div class="box">
+        <div class="brand" style="font-weight:900">Slots disponibles</div>
+
+        <div class="slotNav">
+          <button id="reproSlotPrev" class="slotBtn" type="button">←</button>
+          <select id="reproSlot" class="slotSelect" size="3"></select>
+          <button id="reproSlotNext" class="slotBtn" type="button">→</button>
+        </div>
+
+        <div class="slotDayNav">
+          <button id="reproDayPrev" class="slotBtn" type="button">◀ Día</button>
+          <button id="reproDayNext" class="slotBtn" type="button">Día ▶</button>
+        </div>
+      </div>
+
+      <div class="sobBox">
+        <div class="sobTitle">Sobreturno autorizado</div>
+
+        <label class="miniCheck">
+          <input id="reproChkSobreturno" type="checkbox" />
+          Autorizar sobreturno
+        </label>
+
+        <div id="reproSobNavBox" class="sobNavBox">
+          <div class="muted">Día para sobreturno</div>
+          <div class="sobFechaActual" id="reproSobFechaActual">—</div>
+
+          <div class="slotDayNav">
+            <button id="reproSobDayPrev" class="slotBtn" type="button">◀</button>
+            <button id="reproSobDayNext" class="slotBtn" type="button">▶</button>
+          </div>
+
+          <div class="muted">Hora manual</div>
+          <input id="reproHoraManual" type="time" disabled />
+        </div>
+      </div>
+    </div>
+
+    <div style="height:10px"></div>
+    <input id="motivoRepro" placeholder="Motivo / nota opcional" />
+
+    <button class="primary" id="btnConfirmarRepro" type="button">
+      Confirmar reprogramación
+    </button>
+  </div>
+</div>
+
+      <div class="error" id="gErr" style="margin-top:10px"></div>
+      <div class="ok" id="gOk"></div>
+    </div>
+  </div>
+</div>
+  
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  
+/* ================== CONFIG ================== */
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  alert("Falta config.js (Supabase URL / anonKey).");
+  throw new Error("Missing Supabase config");
+}
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  }
+});
+
+const AR_TZ = "America/Argentina/Buenos_Aires";
+
+/* ================== AUTO LOGOUT (20 min) ================== */
+const IDLE_MIN = 20;
+let idleTimer = null;
+
+async function hardLogout(){
+  try{ await sb.auth.signOut(); }catch(e){}
+  window.location.href = "./login.html";
+}
+
+function resetIdle(){
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(hardLogout, IDLE_MIN * 60 * 1000);
+}
+["click","keydown","mousemove","touchstart","scroll"].forEach(ev=> window.addEventListener(ev, resetIdle, {passive:true}));
+resetIdle();
+
+/* ================== DOM ================== */
+const brandTitle = document.getElementById("brandTitle");
+const brandSubtitle = document.getElementById("brandSubtitle");
+const userLine = document.getElementById("userLine");
+
+const elFecha  = document.getElementById("fecha");
+const elMedico = document.getElementById("medico");
+const elEstado = document.getElementById("estado");
+const elErr    = document.getElementById("err");
+const elOk     = document.getElementById("ok");
+const elBody   = document.getElementById("tbody");
+const elCards  = document.getElementById("cards");
+const elKpis   = document.getElementById("kpis");
+
+const btnRefresh = document.getElementById("btnRefresh");
+const btnIrTurnos = document.getElementById("btnIrTurnos");
+const btnDispo = document.getElementById("btnDispo");
+const btnAdmin = document.getElementById("btnAdmin");
+const btnLogout = document.getElementById("btnLogout");
+const btnHoy = document.getElementById("btnHoy");
+const btnManana = document.getElementById("btnManana");  
+const modalCopago = document.getElementById("modalCopago");
+const btnCloseCopago = document.getElementById("btnCloseCopago");
+const copagoDetalle = document.getElementById("copagoDetalle");
+
+const modalGestion = document.getElementById("modalGestion");
+const btnCloseGestion = document.getElementById("btnCloseGestion");
+const gTitle = document.getElementById("gTitle");
+const gSub = document.getElementById("gSub");
+const btnGestionCancelar = document.getElementById("btnGestionCancelar");
+const btnMostrarRepro = document.getElementById("btnMostrarRepro");
+const reproBox = document.getElementById("reproBox");
+const reproSlot = document.getElementById("reproSlot");
+const reproSlotPrev = document.getElementById("reproSlotPrev");
+const reproSlotNext = document.getElementById("reproSlotNext");
+const reproDayPrev = document.getElementById("reproDayPrev");
+const reproDayNext = document.getElementById("reproDayNext");
+
+const reproChkSobreturno = document.getElementById("reproChkSobreturno");
+const reproSobNavBox = document.getElementById("reproSobNavBox");
+const reproSobFechaActual = document.getElementById("reproSobFechaActual");
+const reproSobDayPrev = document.getElementById("reproSobDayPrev");
+const reproSobDayNext = document.getElementById("reproSobDayNext");
+const reproHoraManual = document.getElementById("reproHoraManual");
+const motivoRepro = document.getElementById("motivoRepro");
+const btnConfirmarRepro = document.getElementById("btnConfirmarRepro");
+const gErr = document.getElementById("gErr");
+const gOk = document.getElementById("gOk");
+
+let TURNO_GESTION = null;  
+let REPRO_SLOTS_RANGO = [];
+let REPRO_SLOTS_POR_DIA = {};
+let REPRO_DIAS_DISPONIBLES = [];
+let REPRO_DIA_INDEX = 0;
+let REPRO_CURRENT_SLOTS = [];
+let REPRO_SLOT_INDEX = 0;
+
+let REPRO_DIAS_SOBRETURNOS = [];
+let REPRO_DIA_SOB_INDEX = 0;
+  
+/* Modal */
+const modalBackdrop = document.getElementById("modalBackdrop");
+const btnCloseModal = document.getElementById("btnCloseModal");
+const mTitle = document.getElementById("mTitle");
+const mSub = document.getElementById("mSub");
+const mDni = document.getElementById("mDni");
+const mTel = document.getElementById("mTel");
+const mEmail = document.getElementById("mEmail");
+const mOS = document.getElementById("mOS");
+const mAf = document.getElementById("mAf");
+const mWarn = document.getElementById("mWarn");
+const mHist = document.getElementById("mHist");
+const btnRegularizarPaciente = document.getElementById("btnRegularizarPaciente");  
+
+/* ================== STATE ================== */
+let TENANT_ID = null;
+let TENANT = null;
+let USER_ROLE = null;
+
+let MEDICOS_TENANT = [];       // [{id,nombre}]
+let MEDICOS_SET = new Set();   // ids string
+let AGENDA_ROWS = [];  
+let PACIENTE_FICHA_ACTUAL = null;
+  
+/* Practicas */
+let PRACTICAS = [
+  { id:"consulta", nombre:"Consulta" },
+  { id:"rino", nombre:"Rinofibrolaringoscopia" },
+  { id:"eco", nombre:"Ecografía" },
+];
+
+let AUSENTES_FLAG = new Map();
+
+/* ================== HELPERS ================== */
+function isoDateARNow(){
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: AR_TZ, year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(new Date());
+  const y = parts.find(p=>p.type==="year").value;
+  const m = parts.find(p=>p.type==="month").value;
+  const d = parts.find(p=>p.type==="day").value;
+  return `${y}-${m}-${d}`;
+}
+function fmtHora(ts){
+  return new Date(ts).toLocaleTimeString("es-AR", {
+    timeZone: AR_TZ,
+    hour:"2-digit",
+    minute:"2-digit",
+    hour12:false
+  });
+}
+function toastOk(msg){
+  elOk.textContent = msg;
+  setTimeout(()=> elOk.textContent="", 1200);
+}
+function applyEstadoColor(sel){
+  sel.classList.remove("pendiente","presente","ausente");
+  if (["pendiente","presente","ausente"].includes(sel.value)) sel.classList.add(sel.value);
+}
+function groupByMedico(rows){
+  const map = new Map();
+  (rows||[]).forEach(r=>{
+    const key = r.medico_id || r.medico_nombre || "sin_medico";
+    if (!map.has(key)) map.set(key, { medico_id: r.medico_id, medico_nombre: r.medico_nombre || "—", items: [] });
+    map.get(key).items.push(r);
+  });
+  return Array.from(map.values()).sort((a,b)=> (a.medico_nombre||"").localeCompare(b.medico_nombre||""));
+}
+function safeId(str){ return String(str||"x").replace(/[^a-zA-Z0-9_]/g,"_"); }
+function practicaOptionsHTML(selected){
+  const sel = String(selected || "");
+  return PRACTICAS.map(p=>{
+    const v = String(p.id);
+    return `<option value="${v}" ${v===sel?"selected":""}>${p.nombre}</option>`;
+  }).join("");
+}
+function sigHTMLForPaciente(pacienteId){
+  const pid = String(pacienteId || "");
+  if (!pid) return `<span class="pSig unk" title="Sin paciente_id">?</span>`;
+  const tiene = AUSENTES_FLAG.get(pid);
+  if (tiene === true) return `<span class="pSig bad" title="Tiene ausencias pendientes">✕</span>`;
+  if (tiene === false) return `<span class="pSig ok" title="Sin ausencias pendientes">✓</span>`;
+  return `<span class="pSig unk" title="Sin datos">?</span>`;
+}
+function abrirModalCopago(rows){
+  const map = new Map();
+
+  (rows || []).forEach(r=>{
+    const medico = r.medico_nombre || "Sin médico";
+    const copago = Number(r.copago) || 0;
+    const esTransfer = r.copago_transferencia === true;
+
+    if (!map.has(medico)){
+      map.set(medico, {
+        cantidad:0,
+        efectivo:0,
+        transferencia:0,
+        total:0
+      });
+    }
+
+    const item = map.get(medico);
+    item.cantidad += 1;
+    item.total += copago;
+
+    if (esTransfer) item.transferencia += copago;
+    else item.efectivo += copago;
+  });
+
+  const totalGeneral = Array.from(map.values()).reduce((acc,x)=> acc + x.total, 0);
+  const totalEfectivo = Array.from(map.values()).reduce((acc,x)=> acc + x.efectivo, 0);
+  const totalTransfer = Array.from(map.values()).reduce((acc,x)=> acc + x.transferencia, 0);
+
+  copagoDetalle.innerHTML = `
+    <div class="box" style="margin-bottom:10px">
+      <div class="muted">Total general</div>
+      <div style="font-size:24px;font-weight:900">$${totalGeneral.toFixed(0)}</div>
+      <div class="muted">Efectivo: <b>$${totalEfectivo.toFixed(0)}</b></div>
+      <div class="muted">Transferencia: <b>$${totalTransfer.toFixed(0)}</b></div>
+    </div>
+
+    ${Array.from(map.entries()).map(([medico, x])=>`
+      <div class="histItem">
+        <div><b>${medico}</b></div>
+        <div class="muted">Turnos: <b>${x.cantidad}</b></div>
+        <div class="muted">Efectivo: <b>$${x.efectivo.toFixed(0)}</b></div>
+        <div class="muted">Transferencia: <b>$${x.transferencia.toFixed(0)}</b></div>
+        <div class="muted">Total: <b>$${x.total.toFixed(0)}</b></div>
+      </div>
+    `).join("")}
+  `;
+
+  modalCopago.style.display = "flex";
+}
+
+/* Modal */
+function openModal(){ modalBackdrop.style.display = "flex"; }
+function closeModal(){ modalBackdrop.style.display = "none"; }
+btnCloseModal.onclick = closeModal;
+modalBackdrop.addEventListener("click", (e)=>{ if (e.target === modalBackdrop) closeModal(); });
+btnCloseCopago.onclick = () => modalCopago.style.display = "none";
+modalCopago.addEventListener("click", (e)=>{
+  if (e.target === modalCopago) modalCopago.style.display = "none";
+});  
+btnRegularizarPaciente.onclick = async ()=>{
+
+  if (!PACIENTE_FICHA_ACTUAL) return;
+
+  const nota = prompt(
+    "Nota de regularización:",
+    "Pagó deuda en secretaría"
+  );
+
+  if (nota === null) return;
+
+  const okConfirma = confirm(
+    "¿Regularizar historial de ausencias de este paciente?"
+  );
+
+  if (!okConfirma) return;
+
+  const { error } = await sb.rpc(
+    "admin_regularizar_ausencias_paciente",
+    {
+      p_paciente_id: PACIENTE_FICHA_ACTUAL,
+      p_nota: nota
+    }
+  );
+
+  if (error){
+    alert(error.message);
+    return;
+  }
+
+  alert("✅ Historial regularizado.");
+
+  closeModal();
+
+  await cargarAgenda();
+};  
+function setWarn(ok, text){
+  mWarn.classList.remove("ok","bad");
+  mWarn.classList.add(ok ? "ok" : "bad");
+  mWarn.textContent = text;
+}
+
+  async function openGestion(r){
+  TURNO_GESTION = r;
+
+  gErr.textContent = "";
+  gOk.textContent = "";
+
+  reproBox.classList.remove("active");
+  reproChkSobreturno.checked = false;
+  reproHoraManual.value = "";
+  motivoRepro.value = "";
+
+  gTitle.textContent = `Gestión · ${r.paciente_nombre || "Paciente"}`;
+  gSub.textContent = `${fmtHora(r.inicio)} · ${r.medico_nombre || "-"} · Estado: ${r.estado || "-"}`;
+
+  modalGestion.style.display = "flex";
+
+  await cargarReproSlotsRango();
+  await cargarReproDiasSobreturnos();
+  syncReproSobUI();
+}
+
+function closeGestion(){
+  modalGestion.style.display = "none";
+  TURNO_GESTION = null;
+}
+
+async function cancelarTurnoGestion(){
+  if (!TURNO_GESTION) return;
+
+  const motivo = prompt("Motivo de cancelación (opcional):") || null;
+  const confirma = confirm("¿Confirmás cancelar este turno?");
+  if (!confirma) return;
+
+  gErr.textContent = "";
+  gOk.textContent = "";
+
+  const { error } = await sb.rpc("admin_cancelar_turno", {
+    p_turno_id: TURNO_GESTION.turno_id,
+    p_motivo: motivo
+  });
+
+  if (error){
+    gErr.textContent = error.message;
+    return;
+  }
+
+  gOk.textContent = "✅ Turno cancelado.";
+  await cargarAgenda();
+  setTimeout(closeGestion, 500);
+}
+async function confirmarReprogramacion(){
+  if (!TURNO_GESTION) return;
+
+  const sob = reproChkSobreturno.checked;
+  const motivo = (motivoRepro.value || "").trim() || null;
+
+  let nuevoInicioISO = null;
+
+  if (sob){
+    const dia = REPRO_DIAS_SOBRETURNOS[REPRO_DIA_SOB_INDEX];
+    const hora = (reproHoraManual.value || "").trim();
+
+    if (!dia){
+      gErr.textContent = "No hay día válido para sobreturno.";
+      return;
+    }
+
+    if (!hora){
+      gErr.textContent = "Ingresá hora manual para sobreturno.";
+      return;
+    }
+
+    nuevoInicioISO = `${dia}T${hora}:00-03:00`;
+  } else {
+    const slot = REPRO_CURRENT_SLOTS[REPRO_SLOT_INDEX];
+
+    if (!slot?.inicio_slot){
+      gErr.textContent = "Elegí un slot disponible.";
+      return;
+    }
+
+    nuevoInicioISO = slot.inicio_slot;
+  }
+
+  const confirma = confirm("¿Confirmás reprogramar este turno?");
+  if (!confirma) return;
+
+  gErr.textContent = "";
+  gOk.textContent = "";
+
+  const { error } = await sb.rpc("admin_reprogramar_turno", {
+  p_turno_id: TURNO_GESTION.turno_id,
+  p_nuevo_inicio: nuevoInicioISO,
+  p_motivo: motivo,
+  p_sobreturno: sob
+});
+
+  if (error){
+    gErr.textContent = error.message;
+    return;
+  }
+
+  gOk.textContent = "✅ Turno reprogramado.";
+  await cargarAgenda();
+  setTimeout(closeGestion, 500);
+}
+
+  function addDaysISO(iso, n){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  dt.setUTCDate(dt.getUTCDate()+n);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,"0")}-${String(dt.getUTCDate()).padStart(2,"0")}`;
+}
+
+async function cargarReproSlotsRango(){
+  REPRO_SLOTS_RANGO = [];
+  REPRO_SLOTS_POR_DIA = {};
+  REPRO_DIAS_DISPONIBLES = [];
+  REPRO_CURRENT_SLOTS = [];
+  REPRO_SLOT_INDEX = 0;
+  REPRO_DIA_INDEX = 0;
+
+  if (!TURNO_GESTION?.medico_id) return;
+
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 90);
+
+  const { data, error } = await sb.rpc("get_slots_disponibles_rango", {
+    p_medico_id: TURNO_GESTION.medico_id,
+    p_desde: desde,
+    p_hasta: hasta
+  });
+
+  if (error){
+    gErr.textContent = error.message;
+    return;
+  }
+
+  REPRO_SLOTS_RANGO = data || [];
+
+  REPRO_SLOTS_RANGO.forEach(s=>{
+    const dia = s.dia;
+    if (!REPRO_SLOTS_POR_DIA[dia]) REPRO_SLOTS_POR_DIA[dia] = [];
+    REPRO_SLOTS_POR_DIA[dia].push(s);
+  });
+
+  REPRO_DIAS_DISPONIBLES = Object.keys(REPRO_SLOTS_POR_DIA);
+
+  if (REPRO_DIAS_DISPONIBLES.length){
+    REPRO_DIA_INDEX = 0;
+    cargarReproSlotsDia();
+  } else {
+    reproSlot.innerHTML = `<option value="">Sin turnos disponibles</option>`;
+  }
+}
+
+function cargarReproSlotsDia(){
+  const dia = REPRO_DIAS_DISPONIBLES[REPRO_DIA_INDEX];
+  REPRO_CURRENT_SLOTS = REPRO_SLOTS_POR_DIA[dia] || [];
+  REPRO_SLOT_INDEX = 0;
+  renderReproSlotActual();
+}
+
+function renderReproSlotActual(){
+  reproSlot.innerHTML = "";
+
+  if (!REPRO_CURRENT_SLOTS.length){
+    reproSlot.innerHTML = `<option value="">Sin disponibilidad</option>`;
+    return;
+  }
+
+  REPRO_CURRENT_SLOTS.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s.inicio_slot;
+
+    const d = new Date(s.inicio_slot);
+    const fecha = d.toLocaleDateString("es-AR", {
+      weekday:"short",
+      day:"numeric",
+      month:"short",
+      timeZone: AR_TZ
+    });
+
+    opt.textContent = `${fecha} · ${fmtHora(s.inicio_slot)}`;
+    reproSlot.appendChild(opt);
+  });
+
+  reproSlot.selectedIndex = REPRO_SLOT_INDEX;
+
+  reproSlotPrev.disabled = REPRO_SLOT_INDEX <= 0;
+  reproSlotNext.disabled = REPRO_SLOT_INDEX >= REPRO_CURRENT_SLOTS.length - 1;
+}
+
+function reproSlotSiguiente(){
+  if (REPRO_SLOT_INDEX < REPRO_CURRENT_SLOTS.length - 1){
+    REPRO_SLOT_INDEX++;
+    renderReproSlotActual();
+    return;
+  }
+
+  if (!REPRO_DIAS_DISPONIBLES.length) return;
+
+  REPRO_DIA_INDEX++;
+  if (REPRO_DIA_INDEX >= REPRO_DIAS_DISPONIBLES.length) REPRO_DIA_INDEX = 0;
+
+  cargarReproSlotsDia();
+}
+
+function reproSlotAnterior(){
+  if (REPRO_SLOT_INDEX > 0){
+    REPRO_SLOT_INDEX--;
+    renderReproSlotActual();
+  }
+}
+
+function reproDiaSiguiente(){
+  if (!REPRO_DIAS_DISPONIBLES.length) return;
+
+  REPRO_DIA_INDEX++;
+  if (REPRO_DIA_INDEX >= REPRO_DIAS_DISPONIBLES.length) REPRO_DIA_INDEX = 0;
+
+  cargarReproSlotsDia();
+}
+
+function reproDiaAnterior(){
+  if (!REPRO_DIAS_DISPONIBLES.length) return;
+
+  REPRO_DIA_INDEX--;
+  if (REPRO_DIA_INDEX < 0) REPRO_DIA_INDEX = REPRO_DIAS_DISPONIBLES.length - 1;
+
+  cargarReproSlotsDia();
+}
+
+async function cargarReproDiasSobreturnos(){
+  REPRO_DIAS_SOBRETURNOS = [];
+  REPRO_DIA_SOB_INDEX = 0;
+
+  if (!TURNO_GESTION?.medico_id) return;
+
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 90);
+
+  const { data, error } = await sb.rpc("get_dias_con_slots", {
+    p_medico_id: TURNO_GESTION.medico_id,
+    p_desde: desde,
+    p_hasta: hasta
+  });
+
+  if (error){
+    gErr.textContent = error.message;
+    return;
+  }
+
+  REPRO_DIAS_SOBRETURNOS = (data || []).map(x => x.dia || x);
+  REPRO_DIA_SOB_INDEX = 0;
+
+  renderReproSobFecha();
+}
+
+function renderReproSobFecha(){
+  const dia = REPRO_DIAS_SOBRETURNOS[REPRO_DIA_SOB_INDEX];
+
+  if (!dia){
+    reproSobFechaActual.textContent = "—";
+    return;
+  }
+
+  const d = new Date(`${dia}T12:00:00-03:00`);
+
+  reproSobFechaActual.textContent = d.toLocaleDateString("es-AR", {
+    weekday:"long",
+    day:"numeric",
+    month:"long",
+    timeZone: AR_TZ
+  });
+}
+
+function reproSobDiaSiguiente(){
+  if (!REPRO_DIAS_SOBRETURNOS.length) return;
+
+  REPRO_DIA_SOB_INDEX++;
+  if (REPRO_DIA_SOB_INDEX >= REPRO_DIAS_SOBRETURNOS.length) REPRO_DIA_SOB_INDEX = 0;
+
+  renderReproSobFecha();
+}
+
+function reproSobDiaAnterior(){
+  if (!REPRO_DIAS_SOBRETURNOS.length) return;
+
+  REPRO_DIA_SOB_INDEX--;
+  if (REPRO_DIA_SOB_INDEX < 0) REPRO_DIA_SOB_INDEX = REPRO_DIAS_SOBRETURNOS.length - 1;
+
+  renderReproSobFecha();
+}
+
+function syncReproSobUI(){
+  const sob = reproChkSobreturno.checked;
+
+  reproSobNavBox.classList.toggle("active", sob);
+  reproHoraManual.disabled = !sob;
+  reproSlot.disabled = sob;
+
+  reproSlotPrev.disabled = sob;
+  reproSlotNext.disabled = sob;
+  reproDayPrev.disabled = sob;
+  reproDayNext.disabled = sob;
+}
+
+  btnCloseGestion.onclick = closeGestion;
+
+modalGestion.addEventListener("click", (e)=>{
+  if (e.target === modalGestion) closeGestion();
+});
+
+btnGestionCancelar.onclick = cancelarTurnoGestion;
+
+btnMostrarRepro.onclick = ()=>{
+  reproBox.classList.toggle("active");
+};
+
+btnConfirmarRepro.onclick = confirmarReprogramacion;
+
+reproSlotPrev.onclick = reproSlotAnterior;
+reproSlotNext.onclick = reproSlotSiguiente;
+reproDayPrev.onclick = reproDiaAnterior;
+reproDayNext.onclick = reproDiaSiguiente;
+
+reproSobDayPrev.onclick = reproSobDiaAnterior;
+reproSobDayNext.onclick = reproSobDiaSiguiente;
+
+reproChkSobreturno.onchange = syncReproSobUI;
+
+reproSlot.onchange = ()=>{
+  REPRO_SLOT_INDEX = reproSlot.selectedIndex;
+};
+  
+/* ================== AUTH + TENANT ================== */
+async function requireLogin(){
+  const { data } = await sb.auth.getUser();
+  if (!data?.user) { window.location.href = "./login.html"; return null; }
+
+  const email = (data.user.email || "").toLowerCase().trim();
+  userLine.textContent = email ? `Usuario: ${email}` : "";
+  return { ...data.user, email };
+}
+
+/**
+ * tenant_id desde tabla personal (MINUSCULA) por email del usuario logueado
+ * + rol (para control de acceso)
+ */
+async function resolveTenantFromPersonal(user){
+  elErr.textContent = "";
+
+  if (!user?.email) throw new Error("El usuario no tiene email.");
+
+  const pr = await sb
+    .from("personal") // ✅ minúscula
+    .select("tenant_id,activo,rol")
+    .eq("email", user.email)   // email normalizado
+    .eq("activo", true)
+    .maybeSingle();
+
+  if (pr.error) throw new Error("No pude leer personal: " + pr.error.message);
+  if (!pr.data?.tenant_id) throw new Error("Este usuario no tiene tenant_id en personal.");
+  TENANT_ID = pr.data.tenant_id;
+
+  USER_ROLE = String(pr.data.rol || "").toLowerCase().trim();
+
+  // Control de acceso (ajustable)
+  if (!["admin","secre"].includes(USER_ROLE)){
+    throw new Error("Acceso denegado: rol inválido para Secretaría.");
+  }
+
+  // branding desde Tenants
+  const tr = await sb
+    .from("Tenants")
+    .select("id,nombre,theme,color_primario,color_secundario,logo_url,logo_alt,nombre_corto")
+    .eq("id", TENANT_ID)
+    .eq("activo", true)
+    .maybeSingle();
+
+  if (tr.error || !tr.data?.id) {
+    brandTitle.textContent = "Secretaría";
+    brandSubtitle.textContent = "Agenda diaria";
+    return;
+  }
+
+  TENANT = tr.data;
+
+  const title = TENANT?.theme?.header?.title || TENANT?.nombre || "Secretaría";
+  const subtitle = TENANT?.theme?.header?.subtitle || "Agenda diaria";
+  brandTitle.textContent = `${title} · Secretaría`;
+  brandSubtitle.textContent = subtitle;
+  document.title = `${title} · Secretaría`;
+
+  // tema
+  const c1 = TENANT?.color_primario || "#111111";
+  const c2 = TENANT?.color_secundario || "#f6f7f8";
+  document.body.style.background = c2;
+
+  const style = document.createElement("style");
+  style.textContent = `
+    button.primary{ background:${c1}; }
+    .pLink{ text-decoration-color:${c1}; }
+  `;
+  document.head.appendChild(style);
+}
+
+/* ================== DATA LOADERS ================== */
+async function cargarPracticas(){
+  try{
+    // Si Practicas es multi-tenant, deberías filtrar por TENANT_ID.
+    // La dejo como la tenías: globales activas.
+    const { data, error } = await sb
+      .from("Practicas")
+      .select("id,nombre,activo")
+      .eq("activo", true)
+      .order("nombre", { ascending:true });
+
+    if (!error && (data||[]).length){
+      PRACTICAS = data.map(x=>({ id:x.id, nombre:x.nombre }));
+    }
+  }catch(e){}
+}
+
+async function cargarMedicosTenant(){
+  elErr.textContent = "";
+  elMedico.innerHTML = `<option value="">Todos</option>`;
+  MEDICOS_TENANT = [];
+  MEDICOS_SET = new Set();
+
+  if (!TENANT_ID) return;
+
+  const { data, error } = await sb
+    .from("Medicos")
+    .select('id,"Nombre",activo,tenant_id')
+    .eq("tenant_id", TENANT_ID)
+    .eq("activo", true)
+    .order("Nombre", { ascending:true });
+
+  if (error){
+    elErr.textContent = "No pude cargar médicos: " + error.message;
+    return;
+  }
+
+  MEDICOS_TENANT = (data||[]).map(m=>({ id:m.id, nombre:m["Nombre"] }));
+  MEDICOS_SET = new Set(MEDICOS_TENANT.map(m=>String(m.id)));
+
+  MEDICOS_TENANT.forEach(m=>{
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = m.nombre;
+    elMedico.appendChild(opt);
+  });
+}
+
+async function patchTurno(turno_id, patch){
+  elErr.textContent = "";
+  const payload = {
+    p_turno_id: turno_id,
+    p_estado: patch.estado ?? null,
+    p_copago: patch.copago ?? null,
+    p_nota: patch.nota ?? null,
+    p_sobreturno: patch.sobreturno ?? null,
+    p_practica_id: patch.practica_id ?? null,
+    p_copago_transferencia: patch.copago_transferencia ?? null
+  };
+
+  const { error } = await sb.rpc("admin_update_turno", payload);
+  if (error){ elErr.textContent = error.message; return false; }
+  return true;
+}
+
+/* flags ausentes (filtrado por tenant via medico_id IN MEDICOS_SET) */
+async function cargarFlagsAusentesDesdeTurnos(p_pacientes_ids){
+  AUSENTES_FLAG = new Map();
+  const ids = (p_pacientes_ids||[]).filter(Boolean);
+  if (!ids.length) return;
+  if (!MEDICOS_SET.size) { AUSENTES_FLAG = new Map(); return; }
+
+  ids.forEach(id=> AUSENTES_FLAG.set(String(id), false));
+
+  const desde = new Date();
+  desde.setFullYear(desde.getFullYear() - 2);
+
+  const { data, error } = await sb
+  .from("Turnos")
+  .select("paciente_id")
+  .in("paciente_id", ids)
+  .in("medico_id", Array.from(MEDICOS_SET))
+  .eq("estado", "ausente")
+  .or("ausencia_regularizada.is.null,ausencia_regularizada.eq.false")
+  .gte("inicio", desde.toISOString())
+  .limit(10000);
+
+  if (error) { AUSENTES_FLAG = new Map(); return; }
+  (data||[]).forEach(r=>{
+    if (r?.paciente_id) AUSENTES_FLAG.set(String(r.paciente_id), true);
+  });
+}
+
+/* ================== AGENDA RPC (tenant-aware con fallback) ================== */
+async function rpcAgendaTenant(){
+  // prefer: get_agenda_dia_tenant (backend correcto)
+  try{
+    const res = await sb.rpc("get_agenda_dia_tenant", {
+      p_fecha: elFecha.value,
+      p_tenant_id: TENANT_ID,
+      p_medico_id: elMedico.value || null,
+      p_estado: elEstado.value
+    });
+    if (res.error) throw res.error;
+    return res.data || [];
+  }catch(e){
+    // fallback: get_agenda_dia + filtro por medico_id IN tenant
+    const res2 = await sb.rpc("get_agenda_dia", {
+      p_fecha: elFecha.value,
+      p_medico_id: elMedico.value || null,
+      p_estado: elEstado.value
+    });
+    if (res2.error) throw res2.error;
+    const all = res2.data || [];
+    return all.filter(r => MEDICOS_SET.has(String(r.medico_id)));
+  }
+}
+
+async function cargarAgenda(){
+  elErr.textContent = ""; elOk.textContent = "";
+  elBody.innerHTML = ""; elCards.innerHTML = ""; elKpis.innerHTML = "";
+
+  if (!TENANT_ID) { elErr.textContent = "No se pudo resolver tenant del usuario."; return; }
+  if (!MEDICOS_SET.size) { elErr.textContent = "No hay médicos activos para esta clínica."; return; }
+
+  const medicoSel = elMedico.value || null;
+  if (medicoSel && !MEDICOS_SET.has(String(medicoSel))) elMedico.value = "";
+
+ let rows = [];
+
+try{
+  rows = await rpcAgendaTenant();
+
+  // ✅ cache local agenda
+  AGENDA_ROWS = rows;
+
+}catch(e){
+  elErr.textContent = e?.message || "Error cargando agenda.";
+  return;
+}
+  const ids = Array.from(new Set(rows.map(r=>r.paciente_id).filter(Boolean)));
+  await cargarFlagsAusentesDesdeTurnos(ids);
+
+  const total = rows.length;
+  const pendientes = rows.filter(r=>r.estado==="pendiente").length;
+  const presentes  = rows.filter(r=>r.estado==="presente").length;
+  const ausentes   = rows.filter(r=>r.estado==="ausente").length;
+  const copagoTotal = rows.reduce((acc,r)=> acc + (Number(r.copago)||0), 0);
+
+  elKpis.innerHTML = `
+    <div class="pill">Total: <b>${total}</b></div>
+    <div class="pill">Pendientes: <b>${pendientes}</b></div>
+    <div class="pill">Presentes: <b>${presentes}</b></div>
+    <div class="pill">Ausentes: <b>${ausentes}</b></div>
+    <div class="pill" id="kpiCopago" style="cursor:pointer">
+  Copago total: <b>$${copagoTotal.toFixed(0)}</b>
+</div>
+  `;
+
+document.getElementById("kpiCopago").onclick = () => abrirModalCopago(AGENDA_ROWS);
+
+  if (!rows.length){
+    elBody.innerHTML = `<tr><td colspan="8" class="muted">Sin turnos para ese filtro.</td></tr>`;
+    elCards.innerHTML = `<div class="muted">Sin turnos para ese filtro.</div>`;
+    return;
+  }
+
+  renderAgendaAccordion(rows);
+}
+
+/* ================== PACIENTE FICHA + HISTORIAL (tenant via medico_id IN set) ================== */
+async function abrirFichaPaciente(r){
+  const pacienteId = r.paciente_id || null;
+  
+  PACIENTE_FICHA_ACTUAL = pacienteId;
+  mTitle.textContent = r.paciente_nombre || "Paciente";
+  mSub.textContent = r.medico_nombre ? `Médico actual: ${r.medico_nombre}` : "—";
+
+  mDni.textContent = r.dni || "—";
+  mOS.textContent = r.obra_social || "—";
+  mAf.textContent = (r.numero_afiliado ?? "—");
+  mTel.textContent = r.telefono || "—";
+  mEmail.textContent = r.email || "—";
+
+  setWarn(true, "Cargando warning…");
+  mHist.innerHTML = `<div class="muted">Cargando…</div>`;
+  openModal();
+
+  if (!pacienteId){
+    setWarn(false, "⚠️ Falta paciente_id.");
+    mHist.innerHTML = `<div class="muted">Sin historial (falta paciente_id).</div>`;
+    return;
+  }
+
+  // Pacientes
+  try{
+    const { data, error } = await sb
+      .from("Pacientes")
+      .select("dni,nombre,obra_social,numero_afiliado,telefono,email,id_paciente")
+      .eq("id_paciente", pacienteId)
+      .single();
+
+    if (!error && data){
+      mTitle.textContent = data.nombre || mTitle.textContent;
+      mDni.textContent = data.dni || mDni.textContent;
+      mOS.textContent  = data.obra_social || mOS.textContent;
+      mAf.textContent  = (data.numero_afiliado ?? mAf.textContent);
+      mTel.textContent = data.telefono || mTel.textContent;
+      mEmail.textContent = data.email || mEmail.textContent;
+    } else if (error){
+      setWarn(false, `⚠️ No pude leer Pacientes. ${error.message}`);
+    }
+  }catch(e){
+    setWarn(false, "⚠️ Error leyendo Pacientes.");
+  }
+
+  // warning administrativo v2
+try{
+  const w = await sb.rpc("secre_warning_paciente_v2", {
+    p_paciente_id: pacienteId,
+    p_anios: 2
+  });
+
+  const info = (w.data || [])[0];
+
+  const estado = info?.estado || "sin_historial";
+  const aus = info?.ausentes || 0;
+  const reg = info?.regularizados || 0;
+
+  if (estado === "con_ausencias"){
+    setWarn(false, `⚠️ ${aus} ausencia(s) sin regularizar.`);
+  }
+  else if (estado === "regularizado"){
+    setWarn(true, `✅ ${reg} ausencia(s) regularizada(s).`);
+  }
+  else if (estado === "sin_ausencias"){
+    setWarn(true, "✅ Sin ausencias registradas.");
+  }
+  else{
+    setWarn(true, "Sin historial reciente.");
+  }
+
+}catch(e){
+  setWarn(false, "⚠️ No pude verificar estado administrativo.");
+}
+
+  // historial turnos (filtrado por tenant via medico_id IN)
+  try{
+    const desde = new Date();
+    desde.setFullYear(desde.getFullYear() - 2);
+
+    const { data, error } = await sb
+      .from("Turnos")
+      .select("inicio,estado,medico_id,practica_id")
+      .eq("paciente_id", pacienteId)
+      .in("medico_id", Array.from(MEDICOS_SET))
+      .gte("inicio", desde.toISOString())
+      .order("inicio", { ascending:false })
+      .limit(80);
+
+    if (error) throw error;
+
+    const rows = data || [];
+    if (!rows.length){
+      mHist.innerHTML = `<div class="muted">Sin historial en los últimos 2 años.</div>`;
+      return;
+    }
+
+    const medicoMap = new Map(MEDICOS_TENANT.map(m=>[String(m.id), m.nombre]));
+    const practMap = new Map(PRACTICAS.map(p=>[String(p.id), p.nombre]));
+
+    mHist.innerHTML = rows.map(h=>{
+      const fecha = h?.inicio ? new Date(h.inicio).toLocaleDateString("es-AR",{timeZone:AR_TZ}) : "-";
+      const hora  = h?.inicio ? fmtHora(h.inicio) : "";
+      const estado = h?.estado || "-";
+      const medico = medicoMap.get(String(h.medico_id)) || "—";
+      const practica = h?.practica_id ? (practMap.get(String(h.practica_id)) || h.practica_id) : "";
+      const badge = (estado==="ausente") ? "⚠️ Ausente" : (estado==="presente" ? "✅ Presente" : estado);
+
+      return `
+        <div class="histItem">
+          <div><b>${fecha}</b> ${hora ? "· "+hora : ""}</div>
+          <div class="muted">Estado: <b>${badge}</b></div>
+          <div class="muted">Médico: <b>${medico}</b>${practica ? ` · Práctica: <b>${practica}</b>` : ""}</div>
+        </div>
+      `;
+    }).join("");
+  }catch(e){
+    mHist.innerHTML = `<div class="muted">No pude cargar historial. ${e?.message || ""}</div>`;
+  }
+}
+
+/* ================== RENDER ================== */
+function renderAgendaAccordion(rows){
+  elBody.innerHTML = "";
+  elCards.innerHTML = "";
+
+  const grupos = groupByMedico(rows);
+
+  grupos.forEach(g=>{
+    const gid = safeId(g.medico_id || g.medico_nombre);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td colspan="8" style="padding:0;border-bottom:0">
+        <details class="acc" open>
+          <summary>
+            <span>${g.medico_nombre}</span>
+            <span class="pillMini">Turnos: <b>${g.items.length}</b></span>
+          </summary>
+          <div class="accBody">
+            <table class="innerTable">
+              <tbody id="inner_${gid}"></tbody>
+            </table>
+          </div>
+        </details>
+      </td>
+    `;
+    elBody.appendChild(tr);
+
+    const inner = tr.querySelector(`#inner_${gid}`);
+
+    g.items.forEach(r=>{
+      const row = document.createElement("tr");
+      row.dataset.turno = r.turno_id;
+
+      const pacienteId = r.paciente_id || null;
+      const practicaSelected = String(r.practica_id || "consulta");
+
+      row.innerHTML = `
+        <td><b>${fmtHora(r.inicio)}</b></td>
+<td>
+          <span class="pLink" data-ficha="${r.turno_id}">${r.paciente_nombre || "-"}</span>
+          ${sigHTMLForPaciente(pacienteId)}
+        </td>
+        <td>${r.obra_social || "-"}</td>
+    
+  <td>
+  <input class="copagoInput" data-copago="${r.turno_id}" value="${r.copago ?? ""}" placeholder="0" inputmode="numeric"/>
+</td>
+
+<td class="transfCell">
+  <input type="checkbox" data-copago-transfer="${r.turno_id}" ${r.copago_transferencia ? "checked" : ""}/>
+</td>
+        <td>
+          <select class="estadoSelect" data-estado="${r.turno_id}">
+            <option value="pendiente" ${r.estado==="pendiente"?"selected":""}>Pendiente</option>
+            <option value="presente"  ${r.estado==="presente" ?"selected":""}>Presente</option>
+            <option value="ausente"   ${r.estado==="ausente"  ?"selected":""}>Ausente</option>
+            <option value="cancelado" ${r.estado==="cancelado"?"selected":""}>Cancelado</option>
+            <option value="reprogramado" ${r.estado==="reprogramado"?"selected":""}>Reprogramado</option>
+          </select>
+        </td>
+      
+          <td>
+            <select data-practica="${r.turno_id}">
+              ${practicaOptionsHTML(practicaSelected)}
+             </select>
+           </td>
+
+          <td>
+           <button class="small gestionBtn" data-gestion="${r.turno_id}" type="button">Gestión</button>
+          </td>
+      `;
+      inner.appendChild(row);
+      row.querySelector(`[data-ficha="${r.turno_id}"]`).onclick = ()=> abrirFichaPaciente(r);
+    });
+  });
+
+  // Mobile
+  grupos.forEach(g=>{
+    const det = document.createElement("details");
+    det.className = "acc";
+    det.open = true;
+    det.innerHTML = `
+      <summary>
+        <span>${g.medico_nombre}</span>
+        <span class="pillMini">Turnos: <b>${g.items.length}</b></span>
+      </summary>
+      <div class="accBody"></div>
+    `;
+    elCards.appendChild(det);
+
+    const inner = det.querySelector(".accBody");
+    g.items.forEach(r=>{
+      const div = document.createElement("div");
+      div.className = "turnoCard";
+      div.dataset.turno = r.turno_id;
+
+      const pacienteId = r.paciente_id || null;
+      const practicaSelected = String(r.practica_id || "consulta");
+
+      div.innerHTML = `
+        <div class="turnoTop">
+          <div>
+            <div class="turnoHora">${fmtHora(r.inicio)}</div>
+            <div class="muted">${r.medico_nombre || "-"}</div>
+          </div>
+        </div>
+
+        <div class="turnoLinea">
+          <b>Paciente:</b>
+          <span class="pLink" data-ficha="${r.turno_id}">${r.paciente_nombre || "-"}</span>
+          ${sigHTMLForPaciente(pacienteId)}
+        </div>
+
+        <div class="turnoLinea"><b>OS:</b> ${r.obra_social || "-"} ${r.numero_afiliado ? "· " + r.numero_afiliado : ""}</div>
+
+        <div class="actions">
+          <select class="full estadoSelect" data-estado="${r.turno_id}">
+            <option value="pendiente" ${r.estado==="pendiente"?"selected":""}>Pendiente</option>
+            <option value="presente"  ${r.estado==="presente" ?"selected":""}>Presente</option>
+            <option value="ausente"   ${r.estado==="ausente"  ?"selected":""}>Ausente</option>
+            <option value="cancelado" ${r.estado==="cancelado"?"selected":""}>Cancelado</option>
+            <option value="reprogramado" ${r.estado==="reprogramado"?"selected":""}>Reprogramado</option>
+          </select>
+
+  <input class="full" data-copago="${r.turno_id}" value="${r.copago ?? ""}" placeholder="Copago" inputmode="numeric" />
+
+<label class="full mini" style="display:flex;gap:6px;align-items:center">
+  <input type="checkbox" data-copago-transfer="${r.turno_id}" ${r.copago_transferencia ? "checked" : ""}/>
+  Copago por transferencia
+</label>
+        <select class="full" data-practica="${r.turno_id}">
+          ${practicaOptionsHTML(practicaSelected)}
+        </select>
+
+        <button
+          class="full gestionBtn"
+          data-gestion="${r.turno_id}"
+          type="button"
+        >
+         Gestión
+       </button>
+       
+        </div>
+      `;
+      inner.appendChild(div);
+      div.querySelector(`[data-ficha="${r.turno_id}"]`).onclick = ()=> abrirFichaPaciente(r);
+    });
+  });
+
+  document.querySelectorAll("select.estadoSelect").forEach(applyEstadoColor);
+
+  document.querySelectorAll("[data-estado]").forEach(sel=>{
+    sel.onchange = async () => {
+      applyEstadoColor(sel);
+      const id = sel.getAttribute("data-estado");
+      const row = document.querySelector(`[data-turno="${id}"]`);
+      row && row.classList.add("saving");
+      const ok = await patchTurno(id, { estado: sel.value });
+      row && row.classList.remove("saving");
+      if (ok){
+  AGENDA_ROWS = AGENDA_ROWS.map(r =>
+    String(r.turno_id) === String(id)
+      ? { ...r, estado: sel.value }
+      : r
+  );
+  toastOk("✅ Estado actualizado");
+}
+    };
+  });
+
+  document.querySelectorAll("[data-copago]").forEach(inp=>{
+    const saveNow = async ()=>{
+      const id = inp.getAttribute("data-copago");
+      const v = (inp.value ?? "").trim();
+      const num = v === "" ? null : Number(v);
+      if (v !== "" && Number.isNaN(num)) return;
+
+      const row = document.querySelector(`[data-turno="${id}"]`);
+      row && row.classList.add("saving");
+      const ok = await patchTurno(id, { copago: num });
+      row && row.classList.remove("saving");
+      if (ok){
+  AGENDA_ROWS = AGENDA_ROWS.map(r =>
+    String(r.turno_id) === String(id)
+      ? { ...r, copago: num }
+      : r
+  );
+  toastOk("✅ Copago actualizado");
+}
+    };
+    inp.onblur = saveNow;
+    inp.onkeydown = (e)=>{ if (e.key==="Enter"){ e.preventDefault(); inp.blur(); } };
+  });
+
+  document.querySelectorAll("[data-copago-transfer]").forEach(chk=>{
+  chk.onchange = async ()=>{
+    const id = chk.getAttribute("data-copago-transfer");
+    const row = document.querySelector(`[data-turno="${id}"]`);
+    const inp = document.querySelector(`[data-copago="${id}"]`);
+
+    const v = (inp?.value ?? "").trim();
+    const num = v === "" ? null : Number(v);
+    if (v !== "" && Number.isNaN(num)) return;
+
+    row && row.classList.add("saving");
+
+    const ok = await patchTurno(id, {
+      copago: num,
+      copago_transferencia: chk.checked
+    });
+
+    row && row.classList.remove("saving");
+
+    if (ok){
+      AGENDA_ROWS = AGENDA_ROWS.map(r =>
+        String(r.turno_id) === String(id)
+          ? { ...r, copago: num, copago_transferencia: chk.checked }
+          : r
+      );
+
+      toastOk(chk.checked ? "✅ Marcado transferencia" : "✅ Marcado efectivo");
+    }
+  };
+});
+
+  document.querySelectorAll("[data-practica]").forEach(sel=>{
+  sel.onchange = async ()=>{
+    const id = sel.getAttribute("data-practica");
+    const practicaId = sel.value || "consulta";
+    const row = document.querySelector(`[data-turno="${id}"]`);
+    row && row.classList.add("saving");
+
+    const ok = await patchTurno(id, {
+      practica_id: practicaId
+    });
+
+    row && row.classList.remove("saving");
+
+    if (ok){
+      AGENDA_ROWS = AGENDA_ROWS.map(r =>
+        String(r.turno_id) === String(id)
+          ? { ...r, practica_id: practicaId }
+          : r
+      );
+
+      toastOk("✅ Práctica actualizada");
+    }
+  };
+});
+
+document.querySelectorAll("[data-gestion]").forEach(btn=>{
+  btn.onclick = async ()=>{
+    const id = btn.getAttribute("data-gestion");
+
+    const turno = AGENDA_ROWS.find(r =>
+      String(r.turno_id) === String(id)
+    );
+
+    if (!turno) return;
+
+    await openGestion(turno);
+  };
+});
+
+}
+/* ================== MAIN ================== */
+document.addEventListener("DOMContentLoaded", async () => {
+  const user = await requireLogin();
+  if (!user) return;
+
+  btnLogout.onclick = hardLogout;
+  btnRefresh.onclick = cargarAgenda;
+  btnIrTurnos.onclick = () => { window.location.href = "./secre_turno.html"; };
+  btnDispo.onclick = () => { window.location.href = "./disponibilidad.html"; };
+  btnAdmin.onclick = () => { window.location.href = "./admin.html"; };
+
+  elFecha.value = isoDateARNow();
+  elFecha.onchange = cargarAgenda;
+  btnHoy.onclick = async ()=>{
+  elFecha.value = isoDateARNow();
+  await cargarAgenda();
+};
+
+btnManana.onclick = async ()=>{
+  elFecha.value = addDaysISO(isoDateARNow(), 1);
+  await cargarAgenda();
+};
+  elMedico.onchange = cargarAgenda;
+  elEstado.onchange = cargarAgenda;
+
+  try{
+    await resolveTenantFromPersonal(user);
+    await cargarPracticas();
+    await cargarMedicosTenant();
+    await cargarAgenda();
+  }catch(e){
+    elErr.textContent = e?.message || "Error iniciando pantalla.";
+  }
+});
+</script>
+</body>
+</html>
