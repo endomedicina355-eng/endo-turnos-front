@@ -53,25 +53,126 @@
 <script>
 const SUPABASE_URL=window.__SB__?.url;const SUPABASE_ANON_KEY=window.__SB__?.anonKey;if(!SUPABASE_URL||!SUPABASE_ANON_KEY){alert("Falta config.js");throw new Error("Missing Supabase config")}
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const AR_TZ="America/Argentina/Buenos_Aires",IDLE_MIN=20;let idleTimer=null,ME=null,TENANT=null,DIAS_AGENDA=[],DIA_INDEX=0,AGENDA_CACHE=new Map(),AGENDA_ROWS=[];
-const brandTitle=document.getElementById("brandTitle"),brandSubtitle=document.getElementById("brandSubtitle"),userLine=document.getElementById("userLine"),dateTitle=document.getElementById("dateTitle"),dateSub=document.getElementById("dateSub"),btnPrevDay=document.getElementById("btnPrevDay"),btnNextDay=document.getElementById("btnNextDay"),btnRefresh=document.getElementById("btnRefresh"),btnAusencias=document.getElementById("btnAusencias"),btnLogout=document.getElementById("btnLogout"),elKpis=document.getElementById("kpis"),elErr=document.getElementById("err"),elOk=document.getElementById("ok"),elBody=document.getElementById("tbody"),elCards=document.getElementById("cards"),modalPaciente=document.getElementById("modalPaciente"),btnCloseModal=document.getElementById("btnCloseModal"),mTitle=document.getElementById("mTitle"),mSub=document.getElementById("mSub"),mDni=document.getElementById("mDni"),mAf=document.getElementById("mAf"),mOS=document.getElementById("mOS"),mTel=document.getElementById("mTel"),mEmail=document.getElementById("mEmail"),mHist=document.getElementById("mHist");
-async function hardLogout(){try{await sb.auth.signOut()}catch(e){}location.href="./login.html"}function resetIdle(){if(idleTimer)clearTimeout(idleTimer);idleTimer=setTimeout(hardLogout,IDLE_MIN*60*1000)}["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>addEventListener(ev,resetIdle,{passive:true}));resetIdle();
+const AR_TZ = "America/Argentina/Buenos_Aires";
+const IDLE_MIN = 20;
+
+let idleTimer = null;
+let ME = null;
+let TENANT = null;
+
+let DIAS_AGENDA = [];
+let DIA_INDEX = 0;
+
+let AGENDA_CACHE = new Map();
+let AGENDA_ROWS = [];
+
+let realtimeTurnosChannel = null;
+let realtimeReloadTimer = null;
+const brandTitle = document.getElementById("brandTitle");
+const brandSubtitle = document.getElementById("brandSubtitle");
+const userLine = document.getElementById("userLine");
+
+const dateTitle = document.getElementById("dateTitle");
+const dateSub = document.getElementById("dateSub");
+
+const btnPrevDay = document.getElementById("btnPrevDay");
+const btnNextDay = document.getElementById("btnNextDay");
+const btnRefresh = document.getElementById("btnRefresh");
+const btnAusencias = document.getElementById("btnAusencias");
+const btnLogout = document.getElementById("btnLogout");
+
+const elKpis = document.getElementById("kpis");
+const elErr = document.getElementById("err");
+const elOk = document.getElementById("ok");
+const elBody = document.getElementById("tbody");
+const elCards = document.getElementById("cards");
+
+const modalPaciente = document.getElementById("modalPaciente");
+const btnCloseModal = document.getElementById("btnCloseModal");
+
+const mTitle = document.getElementById("mTitle");
+const mSub = document.getElementById("mSub");
+const mDni = document.getElementById("mDni");
+const mAf = document.getElementById("mAf");
+const mOS = document.getElementById("mOS");
+const mTel = document.getElementById("mTel");
+const mEmail = document.getElementById("mEmail");
+const mHist = document.getElementById("mHist");
+
+  function iniciarRealtimeTurnos() {
+  if (!ME?.medico_id) return;
+
+  if (realtimeTurnosChannel) {
+    sb.removeChannel(realtimeTurnosChannel);
+  }
+
+  realtimeTurnosChannel = sb
+    .channel(`agenda-medico-${ME.medico_id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "Turnos",
+        filter: `medico_id=eq.${ME.medico_id}`
+      },
+      () => {
+        clearTimeout(realtimeReloadTimer);
+
+        realtimeReloadTimer = setTimeout(async () => {
+          const fechaActual = DIAS_AGENDA[DIA_INDEX];
+
+          if (fechaActual) {
+            AGENDA_CACHE.delete(fechaActual);
+          }
+
+          await cargarDiasAgenda();
+          await cargarAgendaActual(true);
+        }, 500);
+      }
+    )
+    .subscribe(status => {
+      console.log("Realtime médico:", status);
+    });
+}
+
+  async function hardLogout(){try{await sb.auth.signOut()}catch(e){}location.href="./login.html"}function resetIdle(){if(idleTimer)clearTimeout(idleTimer);idleTimer=setTimeout(hardLogout,IDLE_MIN*60*1000)}["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>addEventListener(ev,resetIdle,{passive:true}));resetIdle();
 function isoDateARNow(){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:AR_TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const get=t=>parts.find(p=>p.type===t)?.value;return `${get("year")}-${get("month")}-${get("day")}`}
 function addDaysISO(iso,n){const[y,m,d]=iso.split("-").map(Number),dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+n);return[dt.getUTCFullYear(),String(dt.getUTCMonth()+1).padStart(2,"0"),String(dt.getUTCDate()).padStart(2,"0")].join("-")}
 function fmtHora(ts){return new Date(ts).toLocaleTimeString("es-AR",{timeZone:AR_TZ,hour:"2-digit",minute:"2-digit",hour12:false})}function fmtFecha(iso){return new Date(`${iso}T12:00:00-03:00`).toLocaleDateString("es-AR",{timeZone:AR_TZ,weekday:"long",day:"numeric",month:"long",year:"numeric"})}function money(value){return new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(value)||0)}function toast(msg){elOk.textContent=msg;setTimeout(()=>{if(elOk.textContent===msg)elOk.textContent=""},1600)}
 function applyEstadoColor(sel){sel.classList.remove("pendiente","presente","atendido","ausente");if(["pendiente","presente","atendido","ausente"].includes(sel.value))sel.classList.add(sel.value)}
-async function cargarIdentidad(){const{data:{user}}=await sb.auth.getUser();if(!user){location.href="./login.html";return false}const{data,error}=await sb.rpc("cfg_get_me");if(error)throw error;if(!data?.length)throw new Error("Usuario sin perfil activo.");ME=data[0];if(String(ME.rol||"").toLowerCase()!=="medico")throw new Error("Acceso exclusivo para médicos.");if(!ME.tenant_id||!ME.medico_id)throw new Error("El usuario médico no está vinculado correctamente.");userLine.textContent=`Usuario: ${ME.nombre||user.email}`;const tenantRes=await sb.from("Tenants").select("id,nombre,theme,color_primario,color_secundario").eq("id",ME.tenant_id).eq("activo",true).maybeSingle();if(tenantRes.error)throw tenantRes.error;TENANT=tenantRes.data||null;const title=TENANT?.theme?.header?.title||TENANT?.nombre||"ReserMed";brandTitle.textContent=`${title} · ${ME.nombre||"Médico"}`;brandSubtitle.textContent="Sala de espera y agenda profesional";document.title=`${title} · Agenda médica`;document.documentElement.style.setProperty("--primary",TENANT?.color_primario||"#111");document.documentElement.style.setProperty("--bg",TENANT?.color_secundario||"#f6f7f8");return true}
-async function cargarDiasAgenda(){const hoy=isoDateARNow(),desde=addDaysISO(hoy,-90),hasta=addDaysISO(hoy,180);const{data,error}=await sb.rpc("medico_get_dias_agenda",{p_desde:desde,p_hasta:hasta});if(error)throw error;DIAS_AGENDA=(data||[]).map(x=>String(x.dia||x)).filter(Boolean).sort();if(!DIAS_AGENDA.length){DIA_INDEX=0;return}const hoyIndex=DIAS_AGENDA.indexOf(hoy);if(hoyIndex>=0){DIA_INDEX=hoyIndex;return}const prox=DIAS_AGENDA.findIndex(d=>d>hoy);DIA_INDEX=prox>=0?prox:DIAS_AGENDA.length-1}
-async function pedirAgendaDia(fecha,forzar=false){if(!forzar&&AGENDA_CACHE.has(fecha))return AGENDA_CACHE.get(fecha);const{data,error}=await sb.rpc("medico_get_agenda_dia",{p_fecha:fecha});if(error)throw error;const rows=data||[];AGENDA_CACHE.set(fecha,rows);return rows}
-async function cargarAgendaActual(forzar=false){elErr.textContent="";elOk.textContent="";elBody.innerHTML="";elCards.innerHTML="";elKpis.innerHTML="";if(!DIAS_AGENDA.length){dateTitle.textContent="Sin agenda";dateSub.textContent="No hay días de atención dentro del período consultado.";btnPrevDay.disabled=true;btnNextDay.disabled=true;return}const fecha=DIAS_AGENDA[DIA_INDEX];dateTitle.textContent=fmtFecha(fecha);dateSub.textContent="Agenda del día seleccionado";btnPrevDay.disabled=DIA_INDEX<=0;btnNextDay.disabled=DIA_INDEX>=DIAS_AGENDA.length-1;try{AGENDA_ROWS=await pedirAgendaDia(fecha,forzar);renderKpis(AGENDA_ROWS);renderAgenda(AGENDA_ROWS)}catch(e){elErr.textContent=e?.message||"Error cargando agenda."}}
+
+  async function cargarIdentidad(){const{data:{user}}=await sb.auth.getUser();if(!user){location.href="./login.html";return false}const{data,error}=await sb.rpc("cfg_get_me");if(error)throw error;if(!data?.length)throw new Error("Usuario sin perfil activo.");ME=data[0];if(String(ME.rol||"").toLowerCase()!=="medico")throw new Error("Acceso exclusivo para médicos.");if(!ME.tenant_id||!ME.medico_id)throw new Error("El usuario médico no está vinculado correctamente.");userLine.textContent=`Usuario: ${ME.nombre||user.email}`;const tenantRes=await sb.from("Tenants").select("id,nombre,theme,color_primario,color_secundario").eq("id",ME.tenant_id).eq("activo",true).maybeSingle();if(tenantRes.error)throw tenantRes.error;TENANT=tenantRes.data||null;const title=TENANT?.theme?.header?.title||TENANT?.nombre||"ReserMed";brandTitle.textContent=`${title} · ${ME.nombre||"Médico"}`;brandSubtitle.textContent="Sala de espera y agenda profesional";document.title=`${title} · Agenda médica`;document.documentElement.style.setProperty("--primary",TENANT?.color_primario||"#111");document.documentElement.style.setProperty("--bg",TENANT?.color_secundario||"#f6f7f8");return true}
+
+  async function cargarDiasAgenda(){const hoy=isoDateARNow(),desde=addDaysISO(hoy,-90),hasta=addDaysISO(hoy,180);const{data,error}=await sb.rpc("medico_get_dias_agenda",{p_desde:desde,p_hasta:hasta});if(error)throw error;DIAS_AGENDA=(data||[]).map(x=>String(x.dia||x)).filter(Boolean).sort();if(!DIAS_AGENDA.length){DIA_INDEX=0;return}const hoyIndex=DIAS_AGENDA.indexOf(hoy);if(hoyIndex>=0){DIA_INDEX=hoyIndex;return}const prox=DIAS_AGENDA.findIndex(d=>d>hoy);DIA_INDEX=prox>=0?prox:DIAS_AGENDA.length-1}
+
+  async function pedirAgendaDia(fecha,forzar=false){if(!forzar&&AGENDA_CACHE.has(fecha))return AGENDA_CACHE.get(fecha);const{data,error}=await sb.rpc("medico_get_agenda_dia",{p_fecha:fecha});if(error)throw error;const rows=data||[];AGENDA_CACHE.set(fecha,rows);return rows}
+
+  async function cargarAgendaActual(forzar=false){elErr.textContent="";elOk.textContent="";elBody.innerHTML="";elCards.innerHTML="";elKpis.innerHTML="";if(!DIAS_AGENDA.length){dateTitle.textContent="Sin agenda";dateSub.textContent="No hay días de atención dentro del período consultado.";btnPrevDay.disabled=true;btnNextDay.disabled=true;return}const fecha=DIAS_AGENDA[DIA_INDEX];dateTitle.textContent=fmtFecha(fecha);dateSub.textContent="Agenda del día seleccionado";btnPrevDay.disabled=DIA_INDEX<=0;btnNextDay.disabled=DIA_INDEX>=DIAS_AGENDA.length-1;try{AGENDA_ROWS=await pedirAgendaDia(fecha,forzar);renderKpis(AGENDA_ROWS);renderAgenda(AGENDA_ROWS)}catch(e){elErr.textContent=e?.message||"Error cargando agenda."}}
 function renderKpis(rows){const total=rows.length,pendientes=rows.filter(r=>r.estado==="pendiente").length,presentes=rows.filter(r=>r.estado==="presente").length,atendidos=rows.filter(r=>r.estado==="atendido").length,totalCopago=rows.reduce((a,r)=>a+(Number(r.copago)||0),0),efectivo=rows.filter(r=>r.copago_transferencia!==true).reduce((a,r)=>a+(Number(r.copago)||0),0),transferencia=rows.filter(r=>r.copago_transferencia===true).reduce((a,r)=>a+(Number(r.copago)||0),0);elKpis.innerHTML=`<div class="pill">Turnos<b>${total}</b></div><div class="pill">En espera<b>${presentes}</b></div><div class="pill">Pendientes<b>${pendientes}</b></div><div class="pill">Atendidos<b>${atendidos}</b></div><div class="pill">Efectivo<b>${money(efectivo)}</b></div><div class="pill">Transferencia<b>${money(transferencia)}</b></div><div class="pill" style="grid-column:1/-1">Copago total del día<b>${money(totalCopago)}</b></div>`}
 function estadoOptions(estado){return[["pendiente","Pendiente"],["presente","Presente"],["atendido","Atendido"],["ausente","Ausente"]].map(([v,l])=>`<option value="${v}" ${estado===v?"selected":""}>${l}</option>`).join("")}
 function renderAgenda(rows){if(!rows.length){elBody.innerHTML=`<tr><td colspan="8" class="muted">Sin turnos para este día.</td></tr>`;elCards.innerHTML=`<div class="muted">Sin turnos para este día.</div>`;return}rows.forEach(r=>{const tr=document.createElement("tr");tr.dataset.turno=r.turno_id;tr.innerHTML=`<td><b>${fmtHora(r.inicio)}</b></td><td><span class="patientLink" data-paciente="${r.turno_id}">${r.paciente_nombre||"—"}</span></td><td>${r.obra_social||"—"}</td><td><select class="estadoSelect" data-estado="${r.turno_id}">${estadoOptions(r.estado)}</select></td><td>${r.practica_nombre||r.practica_id||"Consulta"}</td><td><b>${money(r.copago)}</b></td><td>${r.copago_transferencia?"✓":"—"}</td><td><button class="attendedBtn ${r.estado==="atendido"?"done":""}" data-atendido="${r.turno_id}" type="button">${r.estado==="atendido"?"Atendido ✓":"Marcar atendido"}</button></td>`;elBody.appendChild(tr);tr.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});rows.forEach(r=>{const card=document.createElement("div");card.className="turnoCard";card.dataset.turno=r.turno_id;card.innerHTML=`<div class="turnoHora">${fmtHora(r.inicio)}</div><div class="turnoLinea"><b>Paciente:</b> <span class="patientLink" data-paciente="${r.turno_id}">${r.paciente_nombre||"—"}</span></div><div class="turnoLinea"><b>Obra social:</b> ${r.obra_social||"—"}</div><div class="turnoLinea"><b>Práctica:</b> ${r.practica_nombre||r.practica_id||"Consulta"}</div><div class="turnoLinea"><b>Copago:</b> ${money(r.copago)} ${r.copago_transferencia?"· Transferencia":"· Efectivo"}</div><div class="mobileActions"><select class="estadoSelect" data-estado="${r.turno_id}">${estadoOptions(r.estado)}</select><button class="attendedBtn ${r.estado==="atendido"?"done":""}" data-atendido="${r.turno_id}" type="button">${r.estado==="atendido"?"Atendido ✓":"Marcar atendido"}</button></div>`;elCards.appendChild(card);card.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});document.querySelectorAll("select.estadoSelect").forEach(applyEstadoColor);document.querySelectorAll("[data-estado]").forEach(sel=>{sel.onchange=async()=>{await actualizarEstado(sel.getAttribute("data-estado"),sel.value,sel)}});document.querySelectorAll("[data-atendido]").forEach(btn=>{btn.onclick=async()=>{await actualizarEstado(btn.getAttribute("data-atendido"),"atendido",btn)}})}
-async function actualizarEstado(turnoId,estado,elemento){elemento?.closest("[data-turno]")?.classList.add("saving");elErr.textContent="";const{error}=await sb.rpc("medico_set_turno_estado",{p_turno_id:turnoId,p_estado:estado});elemento?.closest("[data-turno]")?.classList.remove("saving");if(error){elErr.textContent=error.message;await cargarAgendaActual(true);return}const fecha=DIAS_AGENDA[DIA_INDEX];AGENDA_CACHE.delete(fecha);toast(estado==="atendido"?"✅ Paciente marcado como atendido.":"✅ Estado actualizado.");await cargarAgendaActual(true)}
+
+  async function actualizarEstado(turnoId,estado,elemento){elemento?.closest("[data-turno]")?.classList.add("saving");elErr.textContent="";const{error}=await sb.rpc("medico_set_turno_estado",{p_turno_id:turnoId,p_estado:estado});elemento?.closest("[data-turno]")?.classList.remove("saving");if(error){elErr.textContent=error.message;await cargarAgendaActual(true);return}const fecha=DIAS_AGENDA[DIA_INDEX];AGENDA_CACHE.delete(fecha);toast(estado==="atendido"?"✅ Paciente marcado como atendido.":"✅ Estado actualizado.");await cargarAgendaActual(true)}
 function openModal(){modalPaciente.style.display="flex"}function closeModal(){modalPaciente.style.display="none"}btnCloseModal.onclick=closeModal;modalPaciente.addEventListener("click",e=>{if(e.target===modalPaciente)closeModal()});
 async function abrirFichaPaciente(r){mTitle.textContent=r.paciente_nombre||"Paciente";mSub.textContent=`Turno: ${fmtHora(r.inicio)}`;mDni.textContent=r.dni||"—";mAf.textContent=r.numero_afiliado||"—";mOS.textContent=r.obra_social||"—";mTel.textContent=r.telefono||"—";mEmail.textContent=r.email||"—";mHist.innerHTML=`<div class="muted">Cargando historial…</div>`;openModal();if(!r.paciente_id){mHist.innerHTML=`<div class="muted">Paciente sin identificador.</div>`;return}const{data,error}=await sb.rpc("medico_get_historial_paciente",{p_paciente_id:r.paciente_id,p_anios:2});if(error){mHist.innerHTML=`<div class="muted">${error.message}</div>`;return}const rows=data||[];if(!rows.length){mHist.innerHTML=`<div class="muted">Sin historial reciente.</div>`;return}mHist.innerHTML=rows.map(h=>{const fecha=new Date(h.inicio).toLocaleDateString("es-AR",{timeZone:AR_TZ}),hora=fmtHora(h.inicio);return`<div class="histItem"><div><b>${fecha} · ${hora}</b></div><div class="muted">Estado: <b>${h.estado||"—"}</b></div><div class="muted">${h.practica_nombre?`Práctica: <b>${h.practica_nombre}</b>`:""}${h.medico_nombre?` · Médico: <b>${h.medico_nombre}</b>`:""}</div></div>`}).join("")}
 btnPrevDay.onclick=async()=>{if(DIA_INDEX<=0)return;DIA_INDEX--;await cargarAgendaActual()};btnNextDay.onclick=async()=>{if(DIA_INDEX>=DIAS_AGENDA.length-1)return;DIA_INDEX++;await cargarAgendaActual()};btnRefresh.onclick=async()=>{const fecha=DIAS_AGENDA[DIA_INDEX];if(fecha)AGENDA_CACHE.delete(fecha);await cargarAgendaActual(true)};btnAusencias.onclick=()=>{location.href="./medico_ausencias.html"};btnLogout.onclick=hardLogout;
-document.addEventListener("DOMContentLoaded",async()=>{try{const ok=await cargarIdentidad();if(!ok)return;await cargarDiasAgenda();await cargarAgendaActual()}catch(e){elErr.textContent=e?.message||"Error iniciando agenda médica."}});
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const ok = await cargarIdentidad();
+
+    if (!ok) return;
+
+    await cargarDiasAgenda();
+    await cargarAgendaActual();
+
+    iniciarRealtimeTurnos();
+
+  } catch (e) {
+    elErr.textContent =
+      e?.message || "Error iniciando agenda médica.";
+  }
+});
 </script>
 </body>
 </html>
