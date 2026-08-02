@@ -162,9 +162,54 @@ function applyEstadoColor(sel){sel.classList.remove("pendiente","presente","aten
   async function cargarAgendaActual(forzar=false){elErr.textContent="";elOk.textContent="";elBody.innerHTML="";elCards.innerHTML="";elKpis.innerHTML="";if(!DIAS_AGENDA.length){dateTitle.textContent="Sin agenda";dateSub.textContent="No hay días de atención dentro del período consultado.";btnPrevDay.disabled=true;btnNextDay.disabled=true;return}const fecha=DIAS_AGENDA[DIA_INDEX];dateTitle.textContent=fmtFecha(fecha);dateSub.textContent="Agenda del día seleccionado";btnPrevDay.disabled=DIA_INDEX<=0;btnNextDay.disabled=DIA_INDEX>=DIAS_AGENDA.length-1;try{AGENDA_ROWS=await pedirAgendaDia(fecha,forzar);renderKpis(AGENDA_ROWS);renderAgenda(AGENDA_ROWS)}catch(e){elErr.textContent=e?.message||"Error cargando agenda."}}
 function renderKpis(rows){const total=rows.length,pendientes=rows.filter(r=>r.estado==="pendiente").length,presentes=rows.filter(r=>r.estado==="presente").length,atendidos=rows.filter(r=>r.estado==="atendido").length,totalCopago=rows.reduce((a,r)=>a+(Number(r.copago)||0),0),efectivo=rows.filter(r=>r.copago_transferencia!==true).reduce((a,r)=>a+(Number(r.copago)||0),0),transferencia=rows.filter(r=>r.copago_transferencia===true).reduce((a,r)=>a+(Number(r.copago)||0),0);elKpis.innerHTML=`<div class="pill">Turnos<b>${total}</b></div><div class="pill">En espera<b>${presentes}</b></div><div class="pill">Pendientes<b>${pendientes}</b></div><div class="pill">Atendidos<b>${atendidos}</b></div><div class="pill">Efectivo<b>${money(efectivo)}</b></div><div class="pill">Transferencia<b>${money(transferencia)}</b></div><div class="pill" style="grid-column:1/-1">Copago total del día<b>${money(totalCopago)}</b></div>`}
 function estadoOptions(estado){return[["pendiente","Pendiente"],["presente","Presente"],["atendido","Atendido"],["ausente","Ausente"]].map(([v,l])=>`<option value="${v}" ${estado===v?"selected":""}>${l}</option>`).join("")}
-function renderAgenda(rows){if(!rows.length){elBody.innerHTML=`<tr><td colspan="8" class="muted">Sin turnos para este día.</td></tr>`;elCards.innerHTML=`<div class="muted">Sin turnos para este día.</div>`;return}rows.forEach(r=>{const tr=document.createElement("tr");tr.dataset.turno=r.turno_id;tr.innerHTML=`<td><b>${fmtHora(r.inicio)}</b></td><td><span class="patientLink" data-paciente="${r.turno_id}">${r.paciente_nombre||"—"}</span></td><td>${r.obra_social||"—"}</td><td><select class="estadoSelect" data-estado="${r.turno_id}">${estadoOptions(r.estado)}</select></td><td>${r.practica_nombre||r.practica_id||"Consulta"}</td><td><b>${money(r.copago)}</b></td><td>${r.copago_transferencia?"✓":"—"}</td><td><button class="attendedBtn ${r.estado==="atendido"?"done":""}" data-atendido="${r.turno_id}" type="button">${r.estado==="atendido"?"Atendido ✓":"Marcar atendido"}</button></td>`;elBody.appendChild(tr);tr.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});rows.forEach(r=>{const card=document.createElement("div");card.className="turnoCard";card.dataset.turno=r.turno_id;card.innerHTML=`<div class="turnoHora">${fmtHora(r.inicio)}</div><div class="turnoLinea"><b>Paciente:</b> <span class="patientLink" data-paciente="${r.turno_id}">${r.paciente_nombre||"—"}</span></div><div class="turnoLinea"><b>Obra social:</b> ${r.obra_social||"—"}</div><div class="turnoLinea"><b>Práctica:</b> ${r.practica_nombre||r.practica_id||"Consulta"}</div><div class="turnoLinea"><b>Copago:</b> ${money(r.copago)} ${r.copago_transferencia?"· Transferencia":"· Efectivo"}</div><div class="mobileActions"><select class="estadoSelect" data-estado="${r.turno_id}">${estadoOptions(r.estado)}</select><button class="attendedBtn ${r.estado==="atendido"?"done":""}" data-atendido="${r.turno_id}" type="button">${r.estado==="atendido"?"Atendido ✓":"Marcar atendido"}</button></div>`;elCards.appendChild(card);card.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});document.querySelectorAll("select.estadoSelect").forEach(applyEstadoColor);document.querySelectorAll("[data-estado]").forEach(sel=>{sel.onchange=async()=>{await actualizarEstado(sel.getAttribute("data-estado"),sel.value,sel)}});document.querySelectorAll("[data-atendido]").forEach(btn=>{btn.onclick=async()=>{await actualizarEstado(btn.getAttribute("data-atendido"),"atendido",btn)}})}
+function renderAgenda(rows){if(!rows.length){elBody.innerHTML=`<tr><td colspan="8" class="muted">Sin turnos para este día.</td></tr>`;elCards.innerHTML=`<div class="muted">Sin turnos para este día.</div>`;return}rows.forEach(r=>{const tr=document.createElement("tr");tr.dataset.turno=r.turno_id;tr.innerHTML=`<td><b>${fmtHora(r.inicio)}</b></td><td><span class="patientLink" data-paciente="${r.turno_id}">${r.paciente_nombre||"—"}</span></td><td>${r.obra_social||"—"}</td>
 
-  async function actualizarEstado(turnoId,estado,elemento){elemento?.closest("[data-turno]")?.classList.add("saving");elErr.textContent="";const{error}=await sb.rpc("medico_set_turno_estado",{p_turno_id:turnoId,p_estado:estado});elemento?.closest("[data-turno]")?.classList.remove("saving");if(error){elErr.textContent=error.message;await cargarAgendaActual(true);return}const fecha=DIAS_AGENDA[DIA_INDEX];AGENDA_CACHE.delete(fecha);toast(estado==="atendido"?"✅ Paciente marcado como atendido.":"✅ Estado actualizado.");await cargarAgendaActual(true)}
+<td>
+  <span class="estadoBadge ${r.estado}">
+    ${r.estado}
+  </span>
+</td>
+<td>${r.practica_nombre||r.practica_id||"Consulta"}</td><td><b>${money(r.copago)}</b></td><td>${r.copago_transferencia?"✓":"—"}</td><td><button class="attendedBtn ${r.estado==="atendido"?"done":""}" data-atendido="${r.turno_id}" type="button">${r.estado==="atendido"?"Atendido ✓":"Marcar atendido"}</button></td>`;elBody.appendChild(tr);tr.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});rows.forEach(r=>{const card=document.createElement("div");card.className="turnoCard";card.dataset.turno=r.turno_id;card.innerHTML=`<div class="turnoHora">${fmtHora(r.inicio)}</div><div class="turnoLinea"><b>Paciente:</b> <span class="patientLink" data-paciente="${r.turno_id}">${r.paciente_nombre||"—"}</span></div><div class="turnoLinea"><b>Obra social:</b> ${r.obra_social||"—"}</div><div class="turnoLinea"><b>Práctica:</b> ${r.practica_nombre||r.practica_id||"Consulta"}</div><div class="turnoLinea"><b>Copago:</b> ${money(r.copago)} ${r.copago_transferencia?"· Transferencia":"· Efectivo"}</div><div class="mobileActions"><select class="estadoSelect" data-estado="${r.turno_id}">${estadoOptions(r.estado)}</select><button class="attendedBtn ${r.estado==="atendido"?"done":""}" data-atendido="${r.turno_id}" type="button">${r.estado==="atendido"?"Atendido ✓":"Marcar atendido"}</button></div>`;elCards.appendChild(card);card.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});document.querySelectorAll("select.estadoSelect").forEach(applyEstadoColor);document.querySelectorAll("[data-estado]").forEach(sel=>{sel.onchange=async()=>{await actualizarEstado(sel.getAttribute("data-estado"),sel.value,sel)}});document.querySelectorAll("[data-atendido]").forEach(btn=>{btn.onclick=async()=>{await actualizarEstado(btn.getAttribute("data-atendido"),"atendido",btn)}})}
+
+  async function actualizarEstado(turnoId, estado, elemento) {
+  elemento
+    ?.closest("[data-turno]")
+    ?.classList.add("saving");
+
+  elErr.textContent = "";
+
+  const { error } = await sb.rpc(
+    "medico_set_turno_estado",
+    {
+      p_turno_id: turnoId,
+      p_estado: estado
+    }
+  );
+
+  elemento
+    ?.closest("[data-turno]")
+    ?.classList.remove("saving");
+
+  if (error) {
+    elErr.textContent = error.message;
+    await cargarAgendaActual(true);
+    return;
+  }
+
+  const fecha = DIAS_AGENDA[DIA_INDEX];
+
+  if (fecha) {
+    AGENDA_CACHE.delete(fecha);
+  }
+
+  toast(
+    estado === "atendido"
+      ? "✅ Paciente marcado como atendido."
+      : "✅ Estado actualizado."
+  );
+
+  // Realtime actualizará la agenda.
+}
 function openModal(){modalPaciente.style.display="flex"}function closeModal(){modalPaciente.style.display="none"}btnCloseModal.onclick=closeModal;modalPaciente.addEventListener("click",e=>{if(e.target===modalPaciente)closeModal()});
 async function abrirFichaPaciente(r){mTitle.textContent=r.paciente_nombre||"Paciente";mSub.textContent=`Turno: ${fmtHora(r.inicio)}`;mDni.textContent=r.dni||"—";mAf.textContent=r.numero_afiliado||"—";mOS.textContent=r.obra_social||"—";mTel.textContent=r.telefono||"—";mEmail.textContent=r.email||"—";mHist.innerHTML=`<div class="muted">Cargando historial…</div>`;openModal();if(!r.paciente_id){mHist.innerHTML=`<div class="muted">Paciente sin identificador.</div>`;return}const{data,error}=await sb.rpc("medico_get_historial_paciente",{p_paciente_id:r.paciente_id,p_anios:2});if(error){mHist.innerHTML=`<div class="muted">${error.message}</div>`;return}const rows=data||[];if(!rows.length){mHist.innerHTML=`<div class="muted">Sin historial reciente.</div>`;return}mHist.innerHTML=rows.map(h=>{const fecha=new Date(h.inicio).toLocaleDateString("es-AR",{timeZone:AR_TZ}),hora=fmtHora(h.inicio);return`<div class="histItem"><div><b>${fecha} · ${hora}</b></div><div class="muted">Estado: <b>${h.estado||"—"}</b></div><div class="muted">${h.practica_nombre?`Práctica: <b>${h.practica_nombre}</b>`:""}${h.medico_nombre?` · Médico: <b>${h.medico_nombre}</b>`:""}</div></div>`}).join("")}
 btnPrevDay.onclick=async()=>{if(DIA_INDEX<=0)return;DIA_INDEX--;await cargarAgendaActual()};btnNextDay.onclick=async()=>{if(DIA_INDEX>=DIAS_AGENDA.length-1)return;DIA_INDEX++;await cargarAgendaActual()};btnRefresh.onclick=async()=>{const fecha=DIAS_AGENDA[DIA_INDEX];if(fecha)AGENDA_CACHE.delete(fecha);await cargarAgendaActual(true)};btnAusencias.onclick=()=>{location.href="./medico_ausencias.html"};btnLogout.onclick=hardLogout;
