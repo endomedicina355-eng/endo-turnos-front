@@ -28,6 +28,40 @@
     .modalHead{display:flex;justify-content:space-between;gap:12px;padding:14px;border-bottom:1px solid #eee}.modalTitle{font-weight:900}.modalBody{padding:14px;overflow:auto}.modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.box{border:1px solid #eee;border-radius:14px;padding:12px}.histItem{padding:10px 0;border-bottom:1px solid #eee}.histItem:last-child{border-bottom:0}
     @media(max-width:900px){.kpi{grid-template-columns:repeat(2,1fr)}.tableWrap{display:none}.cards{display:block}}
     @media(max-width:650px){.dateNav{grid-template-columns:1fr 1fr}.dateBox{grid-column:1/-1;grid-row:1}.modalGrid{grid-template-columns:1fr}}
+  .estadoBadge{
+  display:inline-flex;
+  align-items:center;
+  padding:7px 11px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:900;
+  text-transform:capitalize;
+}
+
+.estadoBadge.pendiente{
+  background:#e7f0ff;
+  border:1px solid #b6d0ff;
+  color:#0b3d91;
+}
+
+.estadoBadge.presente{
+  background:#dff5e5;
+  border:1px solid #a7e1b7;
+  color:#0f5132;
+}
+
+.estadoBadge.atendido{
+  background:#e8def8;
+  border:1px solid #c9b5ef;
+  color:#4b267b;
+}
+
+.estadoBadge.ausente{
+  background:#fde2e6;
+  border:1px solid #f2b7c2;
+  color:#842029;
+}
+  
   </style>
 </head>
 <body>
@@ -169,7 +203,23 @@ function renderAgenda(rows){if(!rows.length){elBody.innerHTML=`<tr><td colspan="
     ${r.estado}
   </span>
 </td>
-<td>${r.practica_nombre||r.practica_id||"Consulta"}</td><td><b>${money(r.copago)}</b></td><td>${r.copago_transferencia?"✓":"—"}</td><td><button class="attendedBtn ${r.estado==="atendido"?"done":""}" data-atendido="${r.turno_id}" type="button">${r.estado==="atendido"?"Atendido ✓":"Marcar atendido"}</button></td>`;elBody.appendChild(tr);tr.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});rows.forEach(r=>{const card=document.createElement("div");card.className="turnoCard";card.dataset.turno=r.turno_id;card.innerHTML=`<div class="turnoHora">${fmtHora(r.inicio)}</div><div class="turnoLinea"><b>Paciente:</b> <span class="patientLink" data-paciente="${r.turno_id}">${r.paciente_nombre||"—"}</span></div><div class="turnoLinea"><b>Obra social:</b> ${r.obra_social||"—"}</div><div class="turnoLinea"><b>Práctica:</b> ${r.practica_nombre||r.practica_id||"Consulta"}</div><div class="turnoLinea"><b>Copago:</b> ${money(r.copago)} ${r.copago_transferencia?"· Transferencia":"· Efectivo"}</div><div class="mobileActions"><select class="estadoSelect" data-estado="${r.turno_id}">${estadoOptions(r.estado)}</select><button class="attendedBtn ${r.estado==="atendido"?"done":""}" data-atendido="${r.turno_id}" type="button">${r.estado==="atendido"?"Atendido ✓":"Marcar atendido"}</button></div>`;elCards.appendChild(card);card.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});document.querySelectorAll("select.estadoSelect").forEach(applyEstadoColor);document.querySelectorAll("[data-estado]").forEach(sel=>{sel.onchange=async()=>{await actualizarEstado(sel.getAttribute("data-estado"),sel.value,sel)}});document.querySelectorAll("[data-atendido]").forEach(btn=>{btn.onclick=async()=>{await actualizarEstado(btn.getAttribute("data-atendido"),"atendido",btn)}})}
+<td>${r.practica_nombre||r.practica_id||"Consulta"}</td><td><b>${money(r.copago)}</b></td><td>${r.copago_transferencia?"✓":"—"}</td><td><button class="attendedBtn ${r.estado==="atendido"?"done":""}" data-atendido="${r.turno_id}" type="button">${r.estado==="atendido"?"Atendido ✓":"Marcar atendido"}</button></td>`;elBody.appendChild(tr);tr.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});rows.forEach(r=>{const card=document.createElement("div");card.className="turnoCard";card.dataset.turno=r.turno_id;card.innerHTML=`<div class="turnoHora">${fmtHora(r.inicio)}</div><div class="turnoLinea"><b>Paciente:</b> <span class="patientLink" data-paciente="${r.turno_id}">${r.paciente_nombre||"—"}</span></div><div class="turnoLinea"><b>Obra social:</b> ${r.obra_social||"—"}</div><div class="turnoLinea"><b>Práctica:</b> ${r.practica_nombre||r.practica_id||"Consulta"}</div><div class="turnoLinea"><b>Copago:</b> ${money(r.copago)} ${r.copago_transferencia?"· Transferencia":"· Efectivo"}</div>
+<div class="mobileActions">
+  <div>
+    <span class="estadoBadge ${r.estado}">
+      ${r.estado}
+    </span>
+  </div>
+
+  <button
+    class="attendedBtn ${r.estado==="atendido" ? "done" : ""}"
+    data-atendido="${r.turno_id}"
+    type="button"
+  >
+    ${r.estado==="atendido" ? "Atendido ✓" : "Marcar atendido"}
+  </button>
+</div>`;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                          elCards.appendChild(card);card.querySelector(`[data-paciente="${r.turno_id}"]`).onclick=()=>abrirFichaPaciente(r)});document.querySelectorAll("select.estadoSelect").forEach(applyEstadoColor);document.querySelectorAll("[data-estado]").forEach(sel=>{sel.onchange=async()=>{await actualizarEstado(sel.getAttribute("data-estado"),sel.value,sel)}});document.querySelectorAll("[data-atendido]").forEach(btn=>{btn.onclick=async()=>{await actualizarEstado(btn.getAttribute("data-atendido"),"atendido",btn)}})}
 
   async function actualizarEstado(turnoId, estado, elemento) {
   elemento
