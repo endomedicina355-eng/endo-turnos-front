@@ -116,48 +116,37 @@ const mHist = document.getElementById("mHist");
         table: "Turnos",
         filter: `medico_id=eq.${ME.medico_id}`
       },
-      () => {
+      (payload) => {
+        console.log("Cambio Realtime recibido:", payload);
+
         clearTimeout(realtimeReloadTimer);
 
         realtimeReloadTimer = setTimeout(async () => {
           const fechaActual = DIAS_AGENDA[DIA_INDEX];
 
-          if (fechaActual) {
-            AGENDA_CACHE.delete(fechaActual);
-          }
+          if (!fechaActual) return;
 
-          (payload) => {
-  console.log("Cambio Realtime recibido:", payload);
-
-  clearTimeout(realtimeReloadTimer);
-
-  realtimeReloadTimer = setTimeout(async () => {
-    const fechaActual = DIAS_AGENDA[DIA_INDEX];
-
-    if (!fechaActual) return;
-
-    AGENDA_CACHE.delete(fechaActual);
-    await cargarAgendaActual(true);
-  }, 500);
-}
+          AGENDA_CACHE.delete(fechaActual);
+          await cargarAgendaActual(true);
+        }, 500);
+      }
     )
     .subscribe((status, error) => {
-  console.log("Realtime médico:", status, error);
+      console.log("Realtime médico:", status, error);
 
-  if (status === "SUBSCRIBED") {
-    dateSub.textContent = "Agenda sincronizada en tiempo real";
-  }
+      if (status === "SUBSCRIBED") {
+        dateSub.textContent = "Agenda sincronizada en tiempo real";
+      }
 
-  if (
-    status === "CHANNEL_ERROR" ||
-    status === "TIMED_OUT" ||
-    status === "CLOSED"
-  ) {
-    dateSub.textContent = `Realtime sin conexión: ${status}`;
-  }
-});
+      if (
+        status === "CHANNEL_ERROR" ||
+        status === "TIMED_OUT" ||
+        status === "CLOSED"
+      ) {
+        dateSub.textContent = `Realtime sin conexión: ${status}`;
+      }
+    });
 }
-
   async function hardLogout(){try{await sb.auth.signOut()}catch(e){}location.href="./login.html"}function resetIdle(){if(idleTimer)clearTimeout(idleTimer);idleTimer=setTimeout(hardLogout,IDLE_MIN*60*1000)}["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>addEventListener(ev,resetIdle,{passive:true}));resetIdle();
 function isoDateARNow(){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:AR_TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const get=t=>parts.find(p=>p.type===t)?.value;return `${get("year")}-${get("month")}-${get("day")}`}
 function addDaysISO(iso,n){const[y,m,d]=iso.split("-").map(Number),dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+n);return[dt.getUTCFullYear(),String(dt.getUTCMonth()+1).padStart(2,"0"),String(dt.getUTCDate()).padStart(2,"0")].join("-")}
