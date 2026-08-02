@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mis ausencias</title>
+  <style>
+    :root{--primary:#111;--bg:#f6f7f8;--card:#fff;--border:#e7e7e7;--muted:#666;--danger:#b00020;--ok:#0a7a27}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#111;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1000px;margin:0 auto;padding:18px}
+    .header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .brand{font-weight:900}.muted{color:var(--muted);font-size:13px}
+    .right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
+    .sectionTitle{font-size:18px;font-weight:900;margin-bottom:4px}
+    .hr{height:1px;background:#eee;margin:14px 0}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}
+    input{width:100%;height:46px;padding:10px 12px;border-radius:12px;border:1px solid #ddd;background:#fff;font-size:14px}
+    button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:800}
+    button.primary{border:0;background:var(--primary);color:#fff;font-weight:900}
+    button.small{padding:8px 10px;font-size:13px}
+    button.danger{background:#fde2e6;border-color:#f2b7c2;color:#842029;font-weight:900}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .error{color:var(--danger);font-size:13px;margin-top:8px}.ok{color:var(--ok);font-size:13px;margin-top:8px}
+    .infoBox{background:#f8f9fa;border:1px solid #e7e7e7;border-radius:12px;padding:12px;font-size:13px;color:#444}
+    .tableWrap{overflow:auto;margin-top:10px}table{width:100%;border-collapse:collapse;min-width:640px}
+    th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;text-align:left;vertical-align:middle}
+    th{color:#666;font-size:12px;font-weight:800}.empty{padding:18px 10px;color:#666;text-align:center}
+    .globalPill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;border:1px solid #ddd;background:#fff;padding:6px 10px;font-size:12px;font-weight:800}
+    .loading{opacity:.65;pointer-events:none}
+    @media(max-width:700px){.row{grid-template-columns:1fr}.full{grid-column:auto}.wrap{padding:12px}.card{padding:14px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="brand" id="brandTitle">Mis ausencias</div>
+      <div class="muted" id="brandSubtitle">Gestioná tus bloqueos personales y consultá los feriados de la clínica</div>
+      <div class="muted" id="userLine"></div>
+    </div>
+    <div class="right">
+      <button id="btnBack" class="small" type="button">← Volver a agenda</button>
+      <button id="btnLogout" class="small" type="button">Salir</button>
+    </div>
+  </div>
+
+  <div class="card" id="cardNueva">
+    <div class="sectionTitle">Nueva ausencia</div>
+    <div class="muted">Bloqueá un rango parcial o un día completo de tu agenda.</div>
+    <div class="hr"></div>
+    <div class="row">
+      <div><div class="muted">Desde</div><input id="ausDesde" type="datetime-local" /></div>
+      <div><div class="muted">Hasta</div><input id="ausHasta" type="datetime-local" /></div>
+      <div class="full"><div class="muted">Motivo (opcional)</div><input id="ausMotivo" placeholder="Congreso, licencia, vacaciones, enfermedad..." /></div>
+    </div>
+    <div class="actions">
+      <button id="btnAddAus" class="primary" type="button">Agregar ausencia</button>
+      <button id="btnDiaCompleto" type="button">Usar día completo</button>
+    </div>
+    <div class="error" id="errAus"></div>
+    <div class="ok" id="okAus"></div>
+  </div>
+
+  <div class="card">
+    <div class="sectionTitle">Mis próximas ausencias</div>
+    <div class="muted">Solo podés eliminar bloqueos personales de tu propia agenda.</div>
+    <div class="hr"></div>
+    <div class="tableWrap">
+      <table>
+        <thead><tr><th>Desde</th><th>Hasta</th><th>Motivo</th><th></th></tr></thead>
+        <tbody id="ausBody"><tr><td colspan="4" class="empty">Cargando ausencias…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+      <div>
+        <div class="sectionTitle">Feriados y bloqueos globales</div>
+        <div class="muted">Estas fechas afectan a todos los profesionales y son solo informativas.</div>
+      </div>
+      <span class="globalPill">Solo lectura</span>
+    </div>
+    <div class="hr"></div>
+    <div class="infoBox">Los bloqueos globales son definidos por la clínica. Desde esta pantalla no pueden modificarse.</div>
+    <div class="tableWrap">
+      <table>
+        <thead><tr><th>Desde</th><th>Hasta</th><th>Motivo</th></tr></thead>
+        <tbody id="globalBody"><tr><td colspan="3" class="empty">Cargando bloqueos globales…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="error" id="errGlobal"></div>
+  </div>
+</div>
+
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) { alert("Falta config.js"); throw new Error("Missing Supabase config"); }
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+});
+
+const AR_TZ = "America/Argentina/Buenos_Aires";
+const IDLE_MIN = 20;
+let idleTimer = null;
+let ME = null;
+let TENANT = null;
+
+const brandTitle = document.getElementById("brandTitle");
+const brandSubtitle = document.getElementById("brandSubtitle");
+const userLine = document.getElementById("userLine");
+const btnBack = document.getElementById("btnBack");
+const btnLogout = document.getElementById("btnLogout");
+const cardNueva = document.getElementById("cardNueva");
+const ausDesde = document.getElementById("ausDesde");
+const ausHasta = document.getElementById("ausHasta");
+const ausMotivo = document.getElementById("ausMotivo");
+const btnAddAus = document.getElementById("btnAddAus");
+const btnDiaCompleto = document.getElementById("btnDiaCompleto");
+const errAus = document.getElementById("errAus");
+const okAus = document.getElementById("okAus");
+const errGlobal = document.getElementById("errGlobal");
+const ausBody = document.getElementById("ausBody");
+const globalBody = document.getElementById("globalBody");
+
+function isoDateARNow(){
+  const parts = new Intl.DateTimeFormat("en-CA", {timeZone:AR_TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+  const get = type => parts.find(part => part.type === type)?.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function fmtDT(ts){
+  if(!ts) return "—";
+  return new Date(ts).toLocaleString("es-AR", {timeZone:AR_TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+
+function toISOFromLocal(value){ return new Date(value).toISOString(); }
+function setDiaCompleto(isoDate){ ausDesde.value = `${isoDate}T00:00`; ausHasta.value = `${isoDate}T23:59`; }
+function clearMsgs(){ errAus.textContent=""; okAus.textContent=""; errGlobal.textContent=""; }
+function setOk(message){ okAus.textContent=message; setTimeout(()=>{ if(okAus.textContent===message) okAus.textContent=""; },1800); }
+function setLoading(value){ cardNueva.classList.toggle("loading",value); btnAddAus.disabled=value; btnDiaCompleto.disabled=value; }
+
+async function hardLogout(){ try{ await sb.auth.signOut(); }catch(e){} window.location.href="./login.html"; }
+function resetIdle(){ if(idleTimer) clearTimeout(idleTimer); idleTimer=setTimeout(hardLogout,IDLE_MIN*60*1000); }
+["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>window.addEventListener(ev,resetIdle,{passive:true}));
+resetIdle();
+
+async function cargarIdentidad(){
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user){ window.location.href="./login.html"; return false; }
+
+  const { data, error } = await sb.rpc("cfg_get_me");
+  if(error) throw error;
+  if(!data?.length) throw new Error("Usuario sin perfil activo.");
+
+  ME = data[0];
+  if(String(ME.rol||"").trim().toLowerCase() !== "medico") throw new Error("Acceso exclusivo para médicos.");
+  if(!ME.tenant_id || !ME.medico_id) throw new Error("El usuario médico no está vinculado correctamente.");
+
+  userLine.textContent = `Usuario: ${ME.nombre || user.email}`;
+
+  const tenantRes = await sb.from("Tenants")
+    .select("id,nombre,theme,color_primario,color_secundario")
+    .eq("id",ME.tenant_id).eq("activo",true).maybeSingle();
+  if(tenantRes.error) throw tenantRes.error;
+
+  TENANT = tenantRes.data || null;
+  const title = TENANT?.theme?.header?.title || TENANT?.nombre || "ReserMed";
+  brandTitle.textContent = `${title} · Mis ausencias`;
+  brandSubtitle.textContent = `${ME.nombre || "Médico"} · Bloqueos personales y feriados`;
+  document.title = `${title} · Mis ausencias`;
+  document.documentElement.style.setProperty("--primary", TENANT?.color_primario || "#111");
+  document.documentElement.style.setProperty("--bg", TENANT?.color_secundario || "#f6f7f8");
+  return true;
+}
+
+async function cargarAusencias(){
+  ausBody.innerHTML = `<tr><td colspan="4" class="empty">Cargando ausencias…</td></tr>`;
+  const desde = new Date(); desde.setHours(0,0,0,0);
+  const { data, error } = await sb.rpc("medico_list_mis_ausencias", { p_desde: desde.toISOString() });
+
+  if(error){
+    ausBody.innerHTML = `<tr><td colspan="4" class="empty">No se pudieron cargar las ausencias.</td></tr>`;
+    errAus.textContent = error.message;
+    return;
+  }
+
+  const rows = data || [];
+  if(!rows.length){
+    ausBody.innerHTML = `<tr><td colspan="4" class="empty">Sin ausencias futuras.</td></tr>`;
+    return;
+  }
+
+  ausBody.innerHTML = rows.map(row=>`
+    <tr>
+      <td>${fmtDT(row.inicio)}</td>
+      <td>${fmtDT(row.fin)}</td>
+      <td>${row.motivo || "—"}</td>
+      <td><button class="small danger" type="button" data-delete-ausencia="${row.id}">Eliminar</button></td>
+    </tr>
+  `).join("");
+
+  ausBody.querySelectorAll("[data-delete-ausencia]").forEach(button=>{
+    button.onclick = async ()=>{
+      const id = button.getAttribute("data-delete-ausencia");
+      if(!confirm("¿Eliminar esta ausencia?")) return;
+      await eliminarAusencia(id);
+    };
+  });
+}
+
+async function agregarAusencia(){
+  clearMsgs();
+  const desde = ausDesde.value;
+  const hasta = ausHasta.value;
+  const motivo = (ausMotivo.value || "").trim() || null;
+
+  if(!desde || !hasta){ errAus.textContent="Completá fecha y hora desde/hasta."; return; }
+  if(desde >= hasta){ errAus.textContent="El rango seleccionado no es válido."; return; }
+
+  setLoading(true);
+  try{
+    const { error } = await sb.rpc("medico_add_mi_ausencia", {
+      p_inicio: toISOFromLocal(desde),
+      p_fin: toISOFromLocal(hasta),
+      p_motivo: motivo
+    });
+    if(error) throw error;
+    ausMotivo.value = "";
+    setOk("✅ Ausencia agregada.");
+    await cargarAusencias();
+  }catch(error){
+    errAus.textContent = error?.message || "No se pudo agregar la ausencia.";
+  }finally{
+    setLoading(false);
+  }
+}
+
+async function eliminarAusencia(id){
+  clearMsgs();
+  const { error } = await sb.rpc("medico_delete_mi_ausencia", { p_bloqueo_id:id });
+  if(error){ errAus.textContent=error.message; return; }
+  setOk("✅ Ausencia eliminada.");
+  await cargarAusencias();
+}
+
+async function cargarGlobales(){
+  globalBody.innerHTML = `<tr><td colspan="3" class="empty">Cargando bloqueos globales…</td></tr>`;
+  errGlobal.textContent = "";
+  const desde = new Date(); desde.setHours(0,0,0,0);
+  const { data, error } = await sb.rpc("cfg_list_bloqueos_globales", { p_desde: desde.toISOString() });
+
+  if(error){
+    globalBody.innerHTML = `<tr><td colspan="3" class="empty">No se pudieron cargar los bloqueos globales.</td></tr>`;
+    errGlobal.textContent = error.message;
+    return;
+  }
+
+  const rows = data || [];
+  if(!rows.length){
+    globalBody.innerHTML = `<tr><td colspan="3" class="empty">Sin feriados o bloqueos globales futuros.</td></tr>`;
+    return;
+  }
+
+  globalBody.innerHTML = rows.map(row=>`
+    <tr><td>${fmtDT(row.inicio)}</td><td>${fmtDT(row.fin)}</td><td>${row.motivo || "—"}</td></tr>
+  `).join("");
+}
+
+btnBack.onclick = ()=>{ window.location.href="./medico.html"; };
+btnLogout.onclick = hardLogout;
+btnDiaCompleto.onclick = ()=>{ setDiaCompleto(ausDesde.value?.slice(0,10) || isoDateARNow()); };
+ausDesde.addEventListener("change",()=>{ const dia=ausDesde.value.slice(0,10); if(dia) setDiaCompleto(dia); });
+btnAddAus.onclick = agregarAusencia;
+
+document.addEventListener("DOMContentLoaded",async()=>{
+  try{
+    const ok = await cargarIdentidad();
+    if(!ok) return;
+    setDiaCompleto(isoDateARNow());
+    await Promise.all([cargarAusencias(),cargarGlobales()]);
+  }catch(error){
+    errAus.textContent = error?.message || "Error iniciando Mis ausencias.";
+    cardNueva.style.display = "none";
+  }
+});
+</script>
+</body>
+</html>
