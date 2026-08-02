@@ -255,7 +255,7 @@ async function cargarGlobales(){
   globalBody.innerHTML = `<tr><td colspan="3" class="empty">Cargando bloqueos globales…</td></tr>`;
   errGlobal.textContent = "";
   const desde = new Date(); desde.setHours(0,0,0,0);
-  const { data, error } = await sb.rpc("cfg_list_bloqueos_globales", { p_desde: desde.toISOString() });
+  const { data, error } = await sb.rpc("medico_list_bloqueos_globales", { p_desde: desde.toISOString() });
 
   if(error){
     globalBody.innerHTML = `<tr><td colspan="3" class="empty">No se pudieron cargar los bloqueos globales.</td></tr>`;
