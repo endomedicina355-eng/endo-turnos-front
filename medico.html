@@ -126,10 +126,20 @@ const mHist = document.getElementById("mHist");
             AGENDA_CACHE.delete(fechaActual);
           }
 
-          await cargarDiasAgenda();
-          await cargarAgendaActual(true);
-        }, 500);
-      }
+          (payload) => {
+  console.log("Cambio Realtime recibido:", payload);
+
+  clearTimeout(realtimeReloadTimer);
+
+  realtimeReloadTimer = setTimeout(async () => {
+    const fechaActual = DIAS_AGENDA[DIA_INDEX];
+
+    if (!fechaActual) return;
+
+    AGENDA_CACHE.delete(fechaActual);
+    await cargarAgendaActual(true);
+  }, 500);
+}
     )
     .subscribe((status, error) => {
   console.log("Realtime médico:", status, error);
