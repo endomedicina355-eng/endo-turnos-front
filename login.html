@@ -3,34 +3,113 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Acceso · Secretaría</title>
+  <title>Acceso · ReserMed</title>
+
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f7f8;margin:0;color:#111}
-    .card{max-width:360px;margin:90px auto;background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:20px}
-    h2{margin:0 0 6px 0}
-    .muted{color:#666;font-size:13px;margin:0 0 14px 0}
-    input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ddd;margin:8px 0;font-size:14px;box-sizing:border-box}
-    button{width:100%;padding:12px;border-radius:12px;border:0;background:#111;color:#fff;font-weight:800;cursor:pointer;margin-top:10px}
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:#f6f7f8;
+      margin:0;
+      color:#111
+    }
+
+    .card{
+      max-width:360px;
+      margin:90px auto;
+      background:#fff;
+      border:1px solid #e7e7e7;
+      border-radius:14px;
+      padding:20px
+    }
+
+    h2{margin:0 0 6px}
+    .muted{color:#666;font-size:13px;margin:0 0 14px}
+
+    input{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid #ddd;
+      margin:8px 0;
+      font-size:14px;
+      box-sizing:border-box
+    }
+
+    button{
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+      border:0;
+      background:#111;
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+      margin-top:10px
+    }
+
     button:disabled{opacity:.5}
+
     .err{color:#b00020;font-size:13px;margin-top:10px}
     .ok{color:#0a7a27;font-size:13px;margin-top:10px}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap}
-    .check{display:flex;align-items:center;gap:8px;font-size:13px;color:#333;user-select:none}
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:10px;
+      flex-wrap:wrap
+    }
+
+    .check{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      color:#333;
+      user-select:none
+    }
+
     .check input{width:auto;margin:0}
-    .link{font-size:13px;color:#111;text-decoration:underline;text-underline-offset:3px;cursor:pointer;opacity:.8}
+
+    .link{
+      font-size:13px;
+      color:#111;
+      text-decoration:underline;
+      text-underline-offset:3px;
+      cursor:pointer;
+      opacity:.8
+    }
   </style>
 </head>
 
 <body>
   <div class="card">
-    <h2>Secretaría</h2>
-    <p class="muted">Ingresá con tu usuario para ver la agenda.</p>
+    <h2>Ingreso al sistema</h2>
+    <p class="muted">
+      Ingresá con tu usuario para acceder a tu agenda.
+    </p>
 
-    <input id="email" placeholder="Email" autocomplete="username" />
-    <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password" />
+    <input
+      id="email"
+      placeholder="Usuario o email"
+      autocomplete="username"
+      autocapitalize="none"
+      spellcheck="false"
+    />
+
+    <input
+      id="pass"
+      type="password"
+      placeholder="Contraseña"
+      autocomplete="current-password"
+    />
 
     <div class="row">
-      <label class="check" title="Si usás una PC compartida, activalo para no dejar la sesión guardada.">
+      <label
+        class="check"
+        title="Activá esta opción si utilizás un dispositivo compartido."
+      >
         <input type="checkbox" id="chkKiosco" />
         Modo compartido
       </label>
@@ -38,74 +117,173 @@
       <span class="link" id="btnClear">Borrar</span>
     </div>
 
-    <button id="btn">Entrar</button>
+    <button id="btn" type="button">Entrar</button>
+
     <div id="err" class="err"></div>
     <div id="ok" class="ok"></div>
   </div>
 
   <script src="./config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
     const SUPABASE_URL = window.__SB__?.url;
     const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) { alert("Falta config.js"); throw new Error("Missing config"); }
 
-    function makeClient(persistSession=true){
-      return supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth:{ persistSession, autoRefreshToken:true, detectSessionInUrl:true }
-      });
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      alert("Falta config.js");
+      throw new Error("Missing config");
+    }
+
+    function makeClient(persistSession = true) {
+      return supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        }
+      );
     }
 
     let sb = makeClient(true);
 
     const btn = document.getElementById("btn");
     const err = document.getElementById("err");
-    const ok  = document.getElementById("ok");
+    const ok = document.getElementById("ok");
     const inEmail = document.getElementById("email");
     const inPass = document.getElementById("pass");
     const chkKiosco = document.getElementById("chkKiosco");
     const btnClear = document.getElementById("btnClear");
 
-    (async function boot(){
-      try{
-        const { data } = await sb.auth.getSession();
-        if (data?.session) window.location.href = "./secretaria.html";
-      }catch(e){}
-    })();
+    function normalizarUsuario(valor) {
+      const usuario = String(valor || "")
+        .trim()
+        .toLowerCase();
 
-    function setLoading(v){
-      btn.disabled = v;
-      btn.textContent = v ? "Ingresando…" : "Entrar";
+      if (!usuario) return "";
+
+      if (usuario.includes("@")) {
+        return usuario;
+      }
+
+      return `${usuario}@resermed.com.ar`;
+    }
+
+    async function redirigirSegunRol() {
+      const { data, error } = await sb.rpc("cfg_get_me");
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const perfil = (data || [])[0];
+
+      if (!perfil) {
+        throw new Error("Usuario sin perfil activo.");
+      }
+
+      const rol = String(perfil.rol || "")
+        .trim()
+        .toLowerCase();
+
+      if (rol === "medico") {
+        window.location.href = "./medico.html";
+        return;
+      }
+
+      if (["admin", "secre", "ceo"].includes(rol)) {
+        window.location.href = "./secretaria.html";
+        return;
+      }
+
+      throw new Error("El usuario no tiene un rol habilitado.");
+    }
+
+    async function cerrarSesionSilenciosamente() {
+      try {
+        await sb.auth.signOut();
+      } catch (e) {}
+    }
+
+    async function boot() {
+      try {
+        const { data } = await sb.auth.getSession();
+
+        if (data?.session) {
+          await redirigirSegunRol();
+        }
+      } catch (e) {
+        await cerrarSesionSilenciosamente();
+        err.textContent = e?.message || "No se pudo validar la sesión.";
+      }
+    }
+
+    function setLoading(valor) {
+      btn.disabled = valor;
+      btn.textContent = valor ? "Ingresando…" : "Entrar";
     }
 
     btnClear.onclick = () => {
-      err.textContent=""; ok.textContent="";
-      inEmail.value=""; inPass.value="";
+      err.textContent = "";
+      ok.textContent = "";
+      inEmail.value = "";
+      inPass.value = "";
       inEmail.focus();
     };
 
-    async function doLogin(){
-      err.textContent=""; ok.textContent="";
-      const email = inEmail.value.trim();
+    async function doLogin() {
+      err.textContent = "";
+      ok.textContent = "";
+
+      const email = normalizarUsuario(inEmail.value);
       const password = inPass.value;
-      if(!email || !password){ err.textContent="Completá email y contraseña."; return; }
+
+      if (!email || !password) {
+        err.textContent = "Completá usuario y contraseña.";
+        return;
+      }
 
       sb = makeClient(!chkKiosco.checked);
       setLoading(true);
 
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error){
-        err.textContent="Usuario o contraseña incorrectos.";
-        setLoading(false);
-        return;
-      }
+      try {
+        const { error: loginError } =
+          await sb.auth.signInWithPassword({
+            email,
+            password
+          });
 
-      ok.textContent="✅ Acceso correcto";
-      window.location.href = "./secretaria.html";
+        if (loginError) {
+          throw new Error("Usuario o contraseña incorrectos.");
+        }
+
+        ok.textContent = "✅ Acceso correcto";
+
+        await redirigirSegunRol();
+
+      } catch (e) {
+        err.textContent =
+          e?.message || "No se pudo iniciar sesión.";
+
+        setLoading(false);
+      }
     }
 
     btn.onclick = doLogin;
-    [inEmail,inPass].forEach(el=> el.addEventListener("keydown",(e)=>{ if(e.key==="Enter") doLogin(); }));
+
+    [inEmail, inPass].forEach(elemento => {
+      elemento.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          doLogin();
+        }
+      });
+    });
+
+    boot();
   </script>
 </body>
 </html>
