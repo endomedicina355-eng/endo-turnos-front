@@ -240,12 +240,22 @@ async function cargarPersonal(){
         <td>${p.nombre || "-"}</td>
         <td>${p.email || "-"}</td>
         <td>
-          <select data-rol="${p.id}">
-            <option value="secre" ${p.rol==="secre" ? "selected" : ""}>Secretaría</option>
-            <option value="admin" ${p.rol==="admin" ? "selected" : ""}>Admin</option>
-            <option value="ceo" ${p.rol==="ceo" ? "selected" : ""}>CEO</option>
-          </select>
-        </td>
+  ${
+    p.rol === "medico"
+      ? `
+        <select disabled title="El rol médico se administra desde el módulo de médicos">
+          <option value="medico" selected>Médico</option>
+        </select>
+      `
+      : `
+        <select data-rol="${p.id}">
+          <option value="secre" ${p.rol === "secre" ? "selected" : ""}>Secretaría</option>
+          <option value="admin" ${p.rol === "admin" ? "selected" : ""}>Admin</option>
+          <option value="ceo" ${p.rol === "ceo" ? "selected" : ""}>CEO</option>
+        </select>
+      `
+  }
+</td>
         <td>
           <span class="statePill ${activo ? "on" : "off"}">${activo ? "Activo" : "Inactivo"}</span>
         </td>
