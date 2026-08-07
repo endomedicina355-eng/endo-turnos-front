@@ -460,16 +460,702 @@ textarea{
     </div>
 
     <div>
-      <div class="muted">Derivado por</div>
+  <div class="muted">Derivado por</div>
 
-      <select id="derivador">
-        <option value="">Sin derivador</option>
+  <div class="inline" style="align-items:stretch">
+    <div style="position:relative;flex:1;min-width:0">
+      <input
+        id="derivadorBuscar"
+        type="text"
+        autocomplete="off"
+        placeholder="Buscar apellido, nombre o matrícula..."
+      />
+
+      <div
+        id="derivadorResultados"
+        style="
+          display:none;
+          position:absolute;
+          left:0;
+          right:0;
+          top:calc(100% + 4px);
+          background:#fff;
+          border:1px solid #ddd;
+          border-radius:12px;
+          box-shadow:0 8px 20px rgba(0,0,0,.12);
+          max-height:220px;
+          overflow:auto;
+          z-index:50;
+        "
+      ></div>
+    </div>
+
+    <button
+      id="btnNuevoDerivador"
+      type="button"
+      style="font-weight:900;min-width:44px"
+      title="Agregar derivador"
+    >
+      +
+    </button>
+  </div>
+
+  <div
+    id="derivadorSeleccionado"
+    class="muted"
+    style="margin-top:6px"
+  >
+    Sin derivador
+  </div>
+</div>
+
+    <div>
+      <div class="muted">Tiempo adicional</div>
+
+      <select id="bloqueoSlots">
+        <option value="0">Sin bloqueo</option>
+        <option value="1">Bloquear +1 slot</option>
+        <option value="2">Bloquear +2 slots</option>
+        <option value="3">Bloquear +3 slots</option>
       </select>
 
       <div class="muted" style="margin-top:6px">
-        Opcional.
+        Usar solo cuando una práctica necesita más tiempo.
       </div>
     </div>
+
+  </div>
+</div>
+  <div class="turnoGrid">
+    <div class="slotCard recomendadoCard">
+      <div class="slotCardTitle">Próximo turno recomendado</div>
+      <div class="slotRecomendadoBig" id="slotRecomendado">—</div>
+      <div class="muted" style="margin-top:4px">Primer turno disponible automático</div>
+
+      <button id="btnUsarRecomendado" class="primary btnFull">
+        Reservar este turno
+      </button>
+    </div>
+
+    <div class="slotCard">
+      <div class="slotCardTitle">Próximo turno disponible</div>
+
+      <div class="slotNav">
+        <button id="slotPrev" class="slotBtn">←</button>
+        <select id="slot" class="slotSelect" size="3"></select>
+        <button id="slotNext" class="slotBtn">→</button>
+      </div>
+
+      <div class="slotDayNav">
+        <button id="dayPrev" class="slotBtn">◀ Día</button>
+        <button id="dayNext" class="slotBtn">Día ▶</button>
+      </div>
+    </div>
+
+    <div class="sobreturnoCard">
+  <div>
+    <div class="sobreturnoTitle">Sobreturno manual</div>
+
+    <label class="inline" style="gap:8px">
+      <input id="chkSobreturno" type="checkbox" />
+      <b>Activar sobreturno</b>
+    </label>
+
+    <span id="lblSobreturno" class="tag" style="display:none;margin-top:8px">
+      SOBRETURNO
+    </span>
+
+    <div id="sobturnoNavBox" class="sobturnoNavBox">
+      <div class="muted">Día para sobreturno</div>
+      <div class="sobFechaActual" id="sobFechaActual">—</div>
+
+      <div class="sobDayNav">
+        <button id="sobDayPrev" class="slotBtn" type="button">◀</button>
+        <button id="sobDayNext" class="slotBtn" type="button">▶</button>
+      </div>
+
+      <div class="muted">Hora manual</div>
+      <input id="horaManual" type="time" disabled />
+    </div>
+  </div>
+</div>
+  </div>
+
+  <div class="turnoFooter">
+    <div>
+      <div class="muted">Nota (opcional)</div>
+      <textarea id="nota" placeholder="Opcional"></textarea>
+    </div>
+
+    <div class="crearBox">
+      <button id="btnCrearTurno" class="primary" disabled>Crear turno</button>
+      <div class="error" id="errT"></div>
+      <div class="ok" id="okT"></div>
+    </div>
+  </div>
+
+  <div class="tipBox">
+    <div class="pill green">Tip</div>
+    <div class="muted" style="margin-top:10px">
+      1) Buscá paciente por DNI o crealo.<br/>
+      2) Elegí médico y fecha.<br/>
+      3) Si sobreturno: tildá “Sobreturno” y poné hora manual.<br/>
+      4) Crear.
+    </div>
+  </div>
+</div>
+
+<!-- Modal Historial -->
+<div class="modalBg" id="modalBg">
+  <div class="modal">
+    <div class="modalHead">
+      <div><b>Historial del paciente</b></div>
+      <button id="btnCerrarModal" class="small">Cerrar</button>
+    </div>
+    <div class="modalBody">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+
+    <div class="muted" id="histTitle"></div>
+
+    <button
+      id="btnRegularizarPaciente"
+      class="small"
+      type="button"
+      style="font-weight:900"
+    >
+      Regularizar deuda / historial
+    </button>
+
+  </div>
+
+  <table>
+  
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Médico</th>
+            <th>Estado</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Secretaría · Turnos</title>
+  <style>
+    :root{
+      --primary:#111;
+      --bg:#f6f7f8;
+      --card:#fff;
+      --border:#e7e7e7;
+      --muted:#666;
+      --danger:#b00020;
+      --ok:#0a7a27;
+    }
+
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:#111}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .header{display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .brand{font-weight:900}
+    .muted{color:var(--muted);font-size:13px}
+    .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
+    .row{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
+    @media(max-width:900px){.row{grid-template-columns:1fr}}
+
+    input,select,textarea{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  font-size:14px;
+  background:#fff;
+  box-sizing:border-box
+}
+
+select{
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+}
+
+textarea{
+  min-height:44px;
+  resize:vertical
+}
+
+    button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
+    button.primary{background:var(--primary);color:#fff;border:0;font-weight:800}
+    button.small{padding:8px 10px;border-radius:10px;font-size:13px}
+
+    .error{color:var(--danger);font-size:13px;margin-top:8px}
+    .ok{color:var(--ok);font-size:13px;margin-top:8px}
+    .hr{height:1px;background:#eee;margin:14px 0}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+    .pill.red{border-color:#f2b7c2;background:#fde2e6;color:#842029;font-weight:800}
+    .pill.green{border-color:#a7e1b7;background:#dff5e5;color:#0f5132;font-weight:800}
+    .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .tag{font-size:12px;border:1px solid #ddd;border-radius:999px;padding:4px 8px;display:inline-block}
+
+    /* Modal */
+    .modalBg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:18px;z-index:999}
+    .modal{background:#fff;max-width:820px;width:100%;border-radius:14px;border:1px solid #e7e7e7;overflow:hidden}
+    .modalHead{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #eee}
+    .modalBody{padding:14px;max-height:65vh;overflow:auto}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
+    th{color:#666;font-weight:700;text-align:left;font-size:12px}
+
+    /* ================= BLOQUES TURNOS ================= */
+
+.slotCard{
+  border:1px solid #e7e7e7;
+  border-radius:12px;
+  padding:14px;
+  background:#f9fafb;
+}
+
+.slotCardTitle{
+  font-weight:700;
+  font-size:13px;
+  color:#444;
+  margin-bottom:8px;
+}
+
+.slotNav{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.slotSelect{
+  font-size:16px;
+  font-weight:700;
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  background:white;
+  min-width:140px;
+}
+.slotSelect{
+  height:120px;
+}    
+
+.slotBtn{
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:10px;
+  width:36px;
+  height:36px;
+  cursor:pointer;
+  font-weight:700;
+  font-size:16px;
+}
+.slotDayNav{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  margin-top:12px;
+}
+
+.slotDayNav button{
+  width:auto;
+  height:36px;
+  padding:0 14px;
+  font-size:14px;
+}
+    .sobreturnoCard{
+  border:1px solid #f2b7c2;
+  background:#fff5f6;
+  border-radius:12px;
+  padding:14px;
+}
+
+.sobreturnoTitle{
+  font-weight:700;
+  color:#842029;
+  font-size:13px;
+  margin-bottom:8px;
+}
+
+.sobreturnoRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+#btnCrearTurno{
+  font-size:17px;
+  font-weight:900;
+  padding:15px 26px;
+  border-radius:14px;
+  min-width:180px;
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
+}
+
+#btnCrearTurno:disabled{
+  opacity:.45;
+  box-shadow:none;
+  cursor:not-allowed;
+}    
+.turnoTop{
+  display:grid;
+  grid-template-columns: 1fr 280px;
+  gap:14px;
+  align-items:end;
+}
+
+.turnoGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:14px;
+  align-items:stretch;
+  margin-top:14px;
+}
+
+.slotCard,
+.sobreturnoCard{
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.recomendadoCard{
+  border:2px solid #111;
+  background:#fff;
+}
+
+.slotRecomendadoBig{
+  font-size:22px;
+  font-weight:900;
+  line-height:1.15;
+}
+
+.btnFull{
+  margin-top:10px;
+  width:100%;
+}
+
+.slotNav{
+  justify-content:center;
+}
+
+.sobturnoNavBox{
+  display:none;
+  margin-top:14px;
+  padding:12px;
+  border:1px solid #f2b7c2;
+  border-radius:12px;
+  background:#fff;
+}
+
+.sobturnoNavBox.active{
+  display:block;
+}
+
+.sobFechaActual{
+  font-size:18px;
+  font-weight:900;
+  margin:8px 0 12px;
+  line-height:1.15;
+}
+
+.sobDayNav{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.turnoFooter{
+  display:grid;
+  grid-template-columns: 1fr 260px;
+  gap:16px;
+  align-items:start;
+  margin-top:14px;
+  clear:both;
+}
+
+.crearBox{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  align-self:start;
+}
+
+#btnCrearTurno{
+  width:100%;
+  min-width:0;
+  font-size:17px;
+  font-weight:900;
+  padding:15px 26px;
+  border-radius:14px;
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
+}
+
+#btnCrearTurno:disabled{
+  opacity:.45;
+  box-shadow:none;
+  cursor:not-allowed;
+}
+
+.tipBox{
+  margin-top:14px;
+  padding:12px 14px;
+  border:1px solid #d8eadc;
+  background:#f3faf5;
+  border-radius:14px;
+}
+
+ .detalleTurno{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid #e7e7e7;
+  border-radius:14px;
+  background:#fafafa;
+}
+
+.detalleGrid{
+  display:grid;
+  grid-template-columns:1.4fr 1fr 220px;
+  gap:14px;
+  align-items:start;
+}
+
+.practicaAdd{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+}
+
+.practicasLista{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  margin-top:9px;
+}
+
+.practicaItem{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 10px;
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:10px;
+  font-size:13px;
+}
+
+.practicaItem:first-child{
+  border-color:#bbb;
+  font-weight:700;
+}
+
+.btnRemovePractica{
+  border:0;
+  background:transparent;
+  padding:2px 6px;
+  font-size:16px;
+  color:#842029;
+}
+
+.resumenTiempo{
+  margin-top:9px;
+  font-size:12px;
+  color:#666;
+}
+
+@media(max-width:900px){
+  .detalleGrid{
+    grid-template-columns:1fr;
+  }
+}   
+
+@media(max-width:900px){
+  .turnoTop,
+  .turnoGrid,
+  .turnoFooter{
+    grid-template-columns:1fr;
+  }
+}
+    
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="brand" id="brandTitle">Secretaría</div>
+      <div class="muted" id="brandSubtitle">Alta de turnos / sobreturnos</div>
+    </div>
+    <div class="right">
+      <button id="btnBack" class="small">Volver a agenda</button>
+      <button id="btnLogout" class="small">Salir</button>
+    </div>
+  </div>
+
+  <!-- 1) Buscar o crear paciente -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div class="brand" style="font-weight:900">Buscar o crear paciente</div>
+        <div class="muted">Buscá por DNI. Si no existe, cargás datos y se guarda/actualiza.</div>
+      </div>
+      <div class="inline">
+        <span id="warnAusente" class="pill" style="display:none"></span>
+        <button id="btnHistorial" class="small" disabled>Historial</button>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="row">
+      <div>
+        <div class="muted">DNI</div>
+        <div class="inline">
+          <input id="dni" inputmode="numeric" placeholder="Ej: 33123456" />
+          <button id="btnBuscar" class="primary">Buscar</button>
+          <button id="btnLimpiar" class="small">Limpiar</button>
+        </div>
+      </div>
+      <div>
+        <div class="muted">Nombre y apellido</div>
+        <input id="nombre" placeholder="Nombre completo" />
+      </div>
+      <div>
+        <div class="muted">Teléfono</div>
+        <input id="telefono" inputmode="tel" placeholder="Ej: 11..." />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <div class="muted">Email (opcional)</div>
+        <input id="email" inputmode="email" placeholder="Ej: mail@..." />
+      </div>
+      <div>
+        <div class="muted">Obra social</div>
+        <input id="obra_social" placeholder="PARTICULAR / INSSSEP / ..." />
+      </div>
+      <div>
+        <div class="muted">N° afiliado</div>
+        <input id="numero_afiliado" inputmode="numeric" placeholder="Ej: 12345" />
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:12px">
+      <button id="btnGuardarPaciente" class="primary">Guardar paciente</button>
+      <div class="error" id="errP"></div>
+      <div class="ok" id="okP"></div>
+    </div>
+  </div>
+
+<!-- 2) Crear turno -->
+<div class="card">
+  <div class="brand" style="font-weight:900">Crear turno</div>
+  <div class="muted">Elegí médico + fecha. Si NO es sobreturno, usás slots disponibles. Si es sobreturno, ponés la hora manual.</div>
+
+  <div class="hr"></div>
+
+  <div class="turnoTop">
+    <div>
+      <div class="muted">Médico</div>
+      <select id="medico"></select>
+    </div>
+
+    <div>
+      <div class="muted">Fecha</div>
+      <input id="fecha" type="date" />
+    </div>
+
+    <input id="copago" type="number" style="display:none" />
+  </div>
+
+  <div class="detalleTurno">
+  <div class="brand">Detalle del turno</div>
+  <div class="muted">
+    Seleccioná una o más prácticas. Cada práctica ocupa un slot.
+  </div>
+
+  <div class="detalleGrid" style="margin-top:12px">
+
+    <div>
+      <div class="muted">Prácticas</div>
+
+      <div class="practicaAdd">
+        <select id="practicaSelect"></select>
+        <button id="btnAgregarPractica" type="button">
+          + Agregar
+        </button>
+      </div>
+
+      <div id="practicasLista" class="practicasLista"></div>
+      <div id="resumenTiempo" class="resumenTiempo"></div>
+    </div>
+
+    <div>
+  <div class="muted">Derivado por</div>
+
+  <div class="inline" style="align-items:stretch">
+    <div style="position:relative;flex:1;min-width:0">
+      <input
+        id="derivadorBuscar"
+        type="text"
+        autocomplete="off"
+        placeholder="Buscar apellido, nombre o matrícula..."
+      />
+
+      <div
+        id="derivadorResultados"
+        style="
+          display:none;
+          position:absolute;
+          left:0;
+          right:0;
+          top:calc(100% + 4px);
+          background:#fff;
+          border:1px solid #ddd;
+          border-radius:12px;
+          box-shadow:0 8px 20px rgba(0,0,0,.12);
+          max-height:220px;
+          overflow:auto;
+          z-index:50;
+        "
+      ></div>
+    </div>
+
+    <button
+      id="btnNuevoDerivador"
+      type="button"
+      style="font-weight:900;min-width:44px"
+      title="Agregar derivador"
+    >
+      +
+    </button>
+  </div>
+
+  <div
+    id="derivadorSeleccionado"
+    class="muted"
+    style="margin-top:6px"
+  >
+    Sin derivador
+  </div>
+</div>
 
     <div>
       <div class="muted">Tiempo adicional</div>
@@ -649,7 +1335,22 @@ const elPracticaSelect = document.getElementById("practicaSelect");
 const btnAgregarPractica = document.getElementById("btnAgregarPractica");
 const practicasLista = document.getElementById("practicasLista");
 
-const elDerivador = document.getElementById("derivador");
+const elDerivadorBuscar = document.getElementById("derivadorBuscar");
+const derivadorResultados = document.getElementById("derivadorResultados");
+const derivadorSeleccionado = document.getElementById("derivadorSeleccionado");
+const btnNuevoDerivador = document.getElementById("btnNuevoDerivador");
+
+const modalDerivadorBg = document.getElementById("modalDerivadorBg");
+const btnCerrarDerivador = document.getElementById("btnCerrarDerivador");
+
+const nuevoDerivadorNombre = document.getElementById("nuevoDerivadorNombre");
+const nuevoDerivadorMatricula = document.getElementById("nuevoDerivadorMatricula");
+const nuevoDerivadorEspecialidad = document.getElementById("nuevoDerivadorEspecialidad");
+const nuevoDerivadorInstitucion = document.getElementById("nuevoDerivadorInstitucion");
+
+const btnGuardarDerivador = document.getElementById("btnGuardarDerivador");
+const errDerivador = document.getElementById("errDerivador");
+const okDerivador = document.getElementById("okDerivador");  
 const elBloqueoSlots = document.getElementById("bloqueoSlots");
 const resumenTiempo = document.getElementById("resumenTiempo");  
 const chkSob = document.getElementById("chkSobreturno");
@@ -696,6 +1397,7 @@ let DIA_SOB_INDEX = 0;
 let PRACTICAS_CATALOGO = [];
 let PRACTICAS_SELECCIONADAS = [];
 let DERIVADORES_CATALOGO = [];  
+let DERIVADOR_SELECCIONADO_ID = null;
   
 /* ================= HELPERS ================= */
 function isoDateARNow(){
@@ -1038,31 +1740,258 @@ async function cargarDerivadores(){
 
   DERIVADORES_CATALOGO = data || [];
 
-  elDerivador.innerHTML =
-    `<option value="">Sin derivador</option>`;
+  DERIVADOR_SELECCIONADO_ID = null;
 
-  DERIVADORES_CATALOGO.forEach(d=>{
+  derivadorSeleccionado.textContent = "Sin derivador";
+  elDerivadorBuscar.value = "";
+}
 
-    const opt = document.createElement("option");
+function normalizarTextoDerivador(v){
+  return String(v || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
-    opt.value = d.id;
 
-    let texto = d.nombre;
+function renderResultadosDerivador(){
+
+  const q = normalizarTextoDerivador(
+    elDerivadorBuscar.value
+  );
+
+  derivadorResultados.innerHTML = "";
+
+  if (!q){
+    derivadorResultados.style.display = "none";
+    return;
+  }
+
+  const coincidencias =
+    DERIVADORES_CATALOGO
+      .filter(d => {
+
+        const texto = normalizarTextoDerivador(
+          `${d.nombre || ""} ${d.matricula || ""} ${d.especialidad || ""} ${d.institucion || ""}`
+        );
+
+        return texto.includes(q);
+
+      })
+      .slice(0,20);
+
+
+  if (!coincidencias.length){
+
+    derivadorResultados.innerHTML = `
+      <div
+        class="muted"
+        style="padding:10px 12px"
+      >
+        Sin coincidencias
+      </div>
+    `;
+
+    derivadorResultados.style.display = "block";
+    return;
+  }
+
+
+  coincidencias.forEach(d => {
+
+    const item = document.createElement("button");
+
+    item.type = "button";
+
+    item.style.cssText = `
+      display:block;
+      width:100%;
+      text-align:left;
+      border:0;
+      border-bottom:1px solid #eee;
+      border-radius:0;
+      padding:10px 12px;
+      background:#fff;
+    `;
+
+    let detalle = "";
+
+    if (d.matricula){
+      detalle += ` · MP ${d.matricula}`;
+    }
 
     if (d.especialidad){
-      texto += ` · ${d.especialidad}`;
+      detalle += ` · ${d.especialidad}`;
     }
 
     if (d.institucion){
-      texto += ` · ${d.institucion}`;
+      detalle += ` · ${d.institucion}`;
     }
 
-    opt.textContent = texto;
+    item.innerHTML = `
+      <div style="font-weight:800">
+        ${d.nombre || "-"}
+      </div>
 
-    elDerivador.appendChild(opt);
+      <div class="muted">
+        ${detalle || "Derivador"}
+      </div>
+    `;
+
+    item.onclick = () => {
+      seleccionarDerivador(d);
+    };
+
+    derivadorResultados.appendChild(item);
   });
-}  
 
+
+  derivadorResultados.style.display = "block";
+}
+
+
+function seleccionarDerivador(d){
+
+  DERIVADOR_SELECCIONADO_ID = d?.id || null;
+
+  if (!d){
+    derivadorSeleccionado.textContent = "Sin derivador";
+    elDerivadorBuscar.value = "";
+    derivadorResultados.style.display = "none";
+    return;
+  }
+
+  elDerivadorBuscar.value = d.nombre || "";
+
+  let texto = d.nombre || "";
+
+  if (d.matricula){
+    texto += ` · MP ${d.matricula}`;
+  }
+
+  derivadorSeleccionado.textContent =
+    `Seleccionado: ${texto}`;
+
+  derivadorResultados.style.display = "none";
+}
+
+
+function abrirModalDerivador(){
+
+  errDerivador.textContent = "";
+  okDerivador.textContent = "";
+
+  nuevoDerivadorNombre.value =
+    elDerivadorBuscar.value.trim();
+
+  nuevoDerivadorMatricula.value = "";
+  nuevoDerivadorEspecialidad.value = "";
+  nuevoDerivadorInstitucion.value = "";
+
+  modalDerivadorBg.style.display = "flex";
+
+  setTimeout(()=>{
+    nuevoDerivadorNombre.focus();
+  },50);
+}
+
+
+function cerrarModalDerivador(){
+  modalDerivadorBg.style.display = "none";
+}
+
+
+async function guardarNuevoDerivador(){
+
+  errDerivador.textContent = "";
+  okDerivador.textContent = "";
+
+  const nombre =
+    nuevoDerivadorNombre.value.trim();
+
+  const matricula =
+    nuevoDerivadorMatricula.value.trim();
+
+  const especialidad =
+    nuevoDerivadorEspecialidad.value.trim();
+
+  const institucion =
+    nuevoDerivadorInstitucion.value.trim();
+
+
+  if (!nombre){
+    errDerivador.textContent =
+      "Ingresá apellido y nombre.";
+    return;
+  }
+
+
+  btnGuardarDerivador.disabled = true;
+
+
+  const { data:id, error } =
+    await sb.rpc(
+      "secre_add_derivador",
+      {
+        p_nombre:nombre,
+        p_matricula:matricula || null,
+        p_especialidad:especialidad || null,
+        p_institucion:institucion || null
+      }
+    );
+
+
+  btnGuardarDerivador.disabled = false;
+
+
+  if (error){
+    errDerivador.textContent =
+      error.message;
+    return;
+  }
+
+
+  let existente =
+    DERIVADORES_CATALOGO.find(
+      d => String(d.id) === String(id)
+    );
+
+
+  if (!existente){
+
+    existente = {
+      id,
+      nombre,
+      matricula:matricula || null,
+      especialidad:especialidad || null,
+      institucion:institucion || null
+    };
+
+    DERIVADORES_CATALOGO.push(existente);
+
+    DERIVADORES_CATALOGO.sort(
+      (a,b) =>
+        String(a.nombre || "")
+          .localeCompare(
+            String(b.nombre || ""),
+            "es"
+          )
+    );
+
+  }
+
+
+  seleccionarDerivador(existente);
+
+  okDerivador.textContent =
+    "✅ Derivador guardado.";
+
+  setTimeout(()=>{
+    cerrarModalDerivador();
+  },500);
+}
+  
 /* ================= Fecha: primer día con slots ================= */
 async function setFechaPrimerDiaConSlots(){
   if (!DIAS_DISPONIBLES.length){
@@ -1614,14 +2543,17 @@ async function crearTurno(){
     PRACTICAS_SELECCIONADAS.map(p => p.nombre);
 
   const derivadorId =
-    elDerivador.value || null;
+  DERIVADOR_SELECCIONADO_ID || null;
 
-  const derivadorNombre =
-    derivadorId
-      ? elDerivador.options[
-          elDerivador.selectedIndex
-        ]?.text || ""
-      : "Sin derivador";
+const derivadorActual =
+  derivadorId
+    ? DERIVADORES_CATALOGO.find(
+        d => String(d.id) === String(derivadorId)
+      )
+    : null;
+
+const derivadorNombre =
+  derivadorActual?.nombre || "Sin derivador";
 
   const bloqueoSlots =
     Number(elBloqueoSlots.value || 0);
@@ -1828,7 +2760,10 @@ async function crearTurno(){
 
   elNota.value = "";
 
-  elDerivador.value = "";
+  DERIVADOR_SELECCIONADO_ID = null;
+elDerivadorBuscar.value = "";
+derivadorSeleccionado.textContent = "Sin derivador";
+derivadorResultados.style.display = "none";
 
   elBloqueoSlots.value = "0";
 
@@ -1911,6 +2846,1783 @@ document.getElementById("btnCrearTurno").onclick = crearTurno;
 
 btnAgregarPractica.onclick = agregarPracticaSeleccionada;
 elBloqueoSlots.onchange = actualizarResumenTiempo;
+
+elDerivadorBuscar.addEventListener(
+  "input",
+  renderResultadosDerivador
+);
+
+btnNuevoDerivador.onclick =
+  abrirModalDerivador;
+
+btnCerrarDerivador.onclick =
+  cerrarModalDerivador;
+
+btnGuardarDerivador.onclick =
+  guardarNuevoDerivador;
+
+modalDerivadorBg.onclick = (e)=>{
+  if (e.target === modalDerivadorBg){
+    cerrarModalDerivador();
+  }
+};
+
+document.addEventListener("click",(e)=>{
+
+  if (
+    !elDerivadorBuscar.contains(e.target) &&
+    !derivadorResultados.contains(e.target)
+  ){
+    derivadorResultados.style.display = "none";
+  }
+
+});  
+  
+document.getElementById("slotNext").onclick = slotNext;
+document.getElementById("slotPrev").onclick = slotPrev;
+
+// 🔥 BOTÓN BIG BOX (RECOMENDADO)
+document.getElementById("btnUsarRecomendado").onclick = async () => {
+  if (!SLOT_RECOMENDADO_FIJO) return;
+
+  elFecha.value = FECHA_RECOMENDADA_FIJA;
+
+  DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
+
+  await cargarSlots();
+  syncSobturnoUI();
+
+const idx = CURRENT_SLOTS.findIndex(s =>
+  s.inicio_slot === SLOT_RECOMENDADO_FIJO.inicio_slot
+);
+
+if (idx !== -1){
+  CURRENT_SLOT_INDEX = idx;
+  renderSlotActual();
+}
+};
+
+elSlot.onchange = () => {
+  CURRENT_SLOT_INDEX = elSlot.selectedIndex;
+};
+
+document.getElementById("dayNext").onclick = dayNext;
+document.getElementById("dayPrev").onclick = dayPrev;
+
+sobDayNext.onclick = async () => {
+  if (!DIAS_SOBRETURNOS.length) return;
+
+  DIA_SOB_INDEX++;
+  if (DIA_SOB_INDEX >= DIAS_SOBRETURNOS.length){
+    DIA_SOB_INDEX = 0;
+  }
+
+  elFecha.value = DIAS_SOBRETURNOS[DIA_SOB_INDEX];
+
+  await cargarSlots();
+  syncSobturnoUI();
+};
+
+sobDayPrev.onclick = async () => {
+  if (!DIAS_SOBRETURNOS.length) return;
+
+  DIA_SOB_INDEX--;
+  if (DIA_SOB_INDEX < 0){
+    DIA_SOB_INDEX = DIAS_SOBRETURNOS.length - 1;
+  }
+
+  elFecha.value = DIAS_SOBRETURNOS[DIA_SOB_INDEX];
+
+  await cargarSlots();
+  syncSobturnoUI();
+};
+
+document.getElementById("btnLimpiar").onclick = () => {
+  errP.textContent = "";
+  okP.textContent = "";
+  okT.textContent = "";
+  errT.textContent = "";
+
+  currentPacienteId = null;
+
+  btnHistorial.disabled = true;
+  btnCrear.disabled = true;
+  warnAusente.style.display = "none";
+
+  elDni.value = "";
+  elNombre.value = "";
+  elTel.value = "";
+  elEmail.value = "";
+  elOS.value = "";
+  elAf.value = "";
+
+  elDni.focus();
+};
+  /* ================= Nav ================= */
+document.getElementById("btnBack").onclick = ()=> window.location.href = "./secretaria.html";
+
+/* ================= INIT ================= */
+(async () => {
+  const ok = await guard();
+  if (!ok) return;
+
+  try{
+    await resolveTenantFromPersonal();
+  }catch(e){
+    errT.textContent = `No pude resolver tenant: ${e.message || e}`;
+    elMedico.innerHTML = `<option value="">Error: sin tenant</option>`;
+    return;
+  }
+
+  await cargarTenantBranding();
+
+await cargarMedicosTenant();
+
+await cargarPracticas();
+
+await cargarDerivadores();
+
+  elFecha.value = isoDateARNow();
+
+  if (elMedico.value){
+await cargarSlotsRango();
+await cargarDiasSobreturnos();
+await setFechaPrimerDiaConSlots();
+await cargarSlots();
+}
+
+  // set hora actual sistema
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mm = String(now.getMinutes()).padStart(2,"0");
+  elHoraManual.value = `${hh}:${mm}`;
+
+  syncSobturnoUI();
+
+  elMedico.onchange = async () => {
+  CURRENT_SLOTS = [];
+  CURRENT_SLOT_INDEX = 0;
+  SLOT_RECOMENDADO_FIJO = null;
+  FECHA_RECOMENDADA_FIJA = null;
+  elSlot.innerHTML = "";
+
+  await cargarSlotsRango();
+  await cargarDiasSobreturnos();
+  await setFechaPrimerDiaConSlots();
+  await cargarSlots();
+  syncSobturnoUI();
+};
+  
+  elFecha.onchange = async () => {
+  CURRENT_SLOTS = [];
+  CURRENT_SLOT_INDEX = 0;
+
+  DIA_INDEX = DIAS_DISPONIBLES.findIndex(d => d === elFecha.value);
+  DIA_SOB_INDEX = DIAS_SOBRETURNOS.findIndex(d => d === elFecha.value);
+
+  if (DIA_INDEX < 0) DIA_INDEX = 0;
+  if (DIA_SOB_INDEX < 0) DIA_SOB_INDEX = 0;
+
+  await cargarSlots();
+  syncSobturnoUI();
+};
+
+  elDni.addEventListener("keydown",(e)=>{
+    if(e.key==="Enter"){
+      e.preventDefault();
+      buscarPaciente();
+    }
+  });
+})();
+
+  </script>
+</body>
+</html>
+  
+
+<!-- ✅ config.js (NO hardcode anon key acá) -->
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* ================= CONFIG ================= */
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  alert("Falta config.js (window.__SB__). Creá config.js junto al HTML.");
+}
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ================= TZ ================= */
+const AR_TZ = "America/Argentina/Buenos_Aires";
+const fmtDate = (ts)=> new Date(ts).toLocaleDateString("es-AR",{ timeZone: AR_TZ });
+const fmtHour = (ts)=> new Date(ts).toLocaleTimeString("es-AR",{ timeZone: AR_TZ, hour:"2-digit", minute:"2-digit", hour12:false });
+
+/* ================= DOM ================= */
+const brandTitle = document.getElementById("brandTitle");
+const brandSubtitle = document.getElementById("brandSubtitle");
+
+const elDni = document.getElementById("dni");
+const elNombre = document.getElementById("nombre");
+const elTel = document.getElementById("telefono");
+const elEmail = document.getElementById("email");
+const elOS = document.getElementById("obra_social");
+const elAf = document.getElementById("numero_afiliado");
+const errP = document.getElementById("errP");
+const okP = document.getElementById("okP");
+
+const elMedico = document.getElementById("medico");
+const elFecha = document.getElementById("fecha");
+const elSlot = document.getElementById("slot");
+const elHoraManual = document.getElementById("horaManual");
+const elCopago = document.getElementById("copago");
+const elNota = document.getElementById("nota");
+const elPracticaSelect = document.getElementById("practicaSelect");
+const btnAgregarPractica = document.getElementById("btnAgregarPractica");
+const practicasLista = document.getElementById("practicasLista");
+
+const elDerivadorBuscar = document.getElementById("derivadorBuscar");
+const derivadorResultados = document.getElementById("derivadorResultados");
+const derivadorSeleccionado = document.getElementById("derivadorSeleccionado");
+const btnNuevoDerivador = document.getElementById("btnNuevoDerivador");
+
+const modalDerivadorBg = document.getElementById("modalDerivadorBg");
+const btnCerrarDerivador = document.getElementById("btnCerrarDerivador");
+
+const nuevoDerivadorNombre = document.getElementById("nuevoDerivadorNombre");
+const nuevoDerivadorMatricula = document.getElementById("nuevoDerivadorMatricula");
+const nuevoDerivadorEspecialidad = document.getElementById("nuevoDerivadorEspecialidad");
+const nuevoDerivadorInstitucion = document.getElementById("nuevoDerivadorInstitucion");
+
+const btnGuardarDerivador = document.getElementById("btnGuardarDerivador");
+const errDerivador = document.getElementById("errDerivador");
+const okDerivador = document.getElementById("okDerivador");  
+const elBloqueoSlots = document.getElementById("bloqueoSlots");
+const resumenTiempo = document.getElementById("resumenTiempo");  
+const chkSob = document.getElementById("chkSobreturno");
+const lblSob = document.getElementById("lblSobreturno");
+const btnCrear = document.getElementById("btnCrearTurno");
+const errT = document.getElementById("errT");
+const okT = document.getElementById("okT");
+const btnPrev = document.getElementById("slotPrev");
+const btnNext = document.getElementById("slotNext");
+const sobturnoNavBox = document.getElementById("sobturnoNavBox");
+const sobFechaActual = document.getElementById("sobFechaActual");
+const sobDayPrev = document.getElementById("sobDayPrev");
+const sobDayNext = document.getElementById("sobDayNext");  
+
+  
+const btnHistorial = document.getElementById("btnHistorial");
+const warnAusente = document.getElementById("warnAusente");
+const modalBg = document.getElementById("modalBg");
+const btnCerrarModal = document.getElementById("btnCerrarModal");
+const histBody = document.getElementById("histBody");
+const histTitle = document.getElementById("histTitle");
+const btnRegularizarPaciente = document.getElementById("btnRegularizarPaciente");  
+
+/* ================= STATE ================= */
+let TENANT_ID = null;
+let CURRENT_USER_EMAIL = null;
+
+let MEDICOS_TENANT = [];
+let MEDICOS_TENANT_SET = new Set();
+
+let currentPacienteId = null;
+let currentDurMin = 15;
+let SLOT_CACHE = {};
+let CURRENT_SLOTS = [];
+let CURRENT_SLOT_INDEX = 0;  
+let DIAS_DISPONIBLES = [];
+let DIA_INDEX = 0;
+let SLOT_RECOMENDADO_FIJO = null;
+let FECHA_RECOMENDADA_FIJA = null;  
+let SLOTS_RANGO = [];
+let SLOTS_POR_DIA = {};
+let DIAS_SOBRETURNOS = [];
+let DIA_SOB_INDEX = 0; 
+let PRACTICAS_CATALOGO = [];
+let PRACTICAS_SELECCIONADAS = [];
+let DERIVADORES_CATALOGO = [];  
+let DERIVADOR_SELECCIONADO_ID = null;
+  
+/* ================= HELPERS ================= */
+function isoDateARNow(){
+  const parts = new Intl.DateTimeFormat("en-CA",{ timeZone: AR_TZ, year:"numeric", month:"2-digit", day:"2-digit"}).formatToParts(new Date());
+  const y = parts.find(p=>p.type==="year").value;
+  const m = parts.find(p=>p.type==="month").value;
+  const d = parts.find(p=>p.type==="day").value;
+  return `${y}-${m}-${d}`;
+}
+function addDaysISO(iso, n){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  dt.setUTCDate(dt.getUTCDate()+n);
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth()+1).padStart(2,"0");
+  const dd = String(dt.getUTCDate()).padStart(2,"0");
+  return `${yy}-${mm}-${dd}`;
+}
+function diffMinutes(a,b){
+  return Math.round((new Date(b).getTime() - new Date(a).getTime())/60000);
+}
+
+/* ================= Auto logout (inactividad) ================= */
+const IDLE_MIN = 20;
+let idleTimer = null;
+function resetIdle(){
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(async ()=>{
+    try{ await sb.auth.signOut(); }catch(e){}
+    window.location.href = "./login.html";
+  }, IDLE_MIN * 60 * 1000);
+}
+["click","keydown","mousemove","touchstart","scroll"].forEach(ev=> window.addEventListener(ev, resetIdle, {passive:true}));
+resetIdle();
+
+/* ================= AUTH GUARD ================= */
+async function guard(){
+  const { data } = await sb.auth.getUser();
+  if (!data?.user) { window.location.href = "./login.html"; return false; }
+
+  CURRENT_USER_EMAIL = (data.user.email || "").toLowerCase().trim();
+
+  document.getElementById("btnLogout").onclick = async () => {
+    await sb.auth.signOut();
+    window.location.href = "./login.html";
+  };
+  return true;
+}
+
+/* ================= RESOLVE TENANT desde personal ================= */
+async function resolveTenantFromPersonal(){
+  errT.textContent = "";
+
+  if (!CURRENT_USER_EMAIL){
+    const { data } = await sb.auth.getUser();
+    CURRENT_USER_EMAIL = (data?.user?.email || "").toLowerCase().trim();
+  }
+  if (!CURRENT_USER_EMAIL){
+    throw new Error("No pude obtener email del usuario logueado.");
+  }
+
+  // ✅ FIX: antes decía "Personal", ahora es "personal"
+  const { data, error } = await sb
+    .from("personal")
+    .select("tenant_id,activo,rol,nombre")
+    .eq("email", CURRENT_USER_EMAIL)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("No hay fila en personal para este email.");
+  if (data.activo !== true) throw new Error("Usuario inactivo en personal.");
+  if (!data.tenant_id) throw new Error("personal.tenant_id es NULL.");
+
+  TENANT_ID = data.tenant_id;
+}
+
+/* ================= TENANT BRANDING (por tenant_id) ================= */
+async function cargarTenantBranding(){
+  try{
+    if (!TENANT_ID){
+      brandTitle.textContent = "Secretaría";
+      brandSubtitle.textContent = "Alta de turnos / sobreturnos";
+      return;
+    }
+
+    const { data, error } = await sb
+      .from("Tenants")
+      .select("id,nombre,theme,color_primario,color_secundario")
+      .eq("id", TENANT_ID)
+      .maybeSingle();
+
+    if (error || !data?.id){
+      brandTitle.textContent = "Secretaría";
+      brandSubtitle.textContent = "Alta de turnos / sobreturnos";
+      return;
+    }
+
+    const title = data?.theme?.header?.title || data?.nombre || "Secretaría";
+    const subtitle = data?.theme?.header?.subtitle || "Alta de turnos / sobreturnos";
+    brandTitle.textContent = title;
+    brandSubtitle.textContent = subtitle;
+
+    const c1 = data.color_primario || "#111";
+    const c2 = data.color_secundario || "#f6f7f8";
+    document.documentElement.style.setProperty("--primary", c1);
+    document.documentElement.style.setProperty("--bg", c2);
+    document.title = `${title} · Turnos Secretaría`;
+  }catch(e){
+    // marca blanca si falla
+    brandTitle.textContent = "Secretaría";
+    brandSubtitle.textContent = "Alta de turnos / sobreturnos";
+  }
+}
+
+/* ================= MEDICOS por tenant ================= */
+async function cargarMedicosTenant(){
+  errT.textContent = "";
+  elMedico.innerHTML = "";
+
+  if (!TENANT_ID){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "No se pudo resolver tenant";
+    elMedico.appendChild(opt);
+    MEDICOS_TENANT = [];
+    MEDICOS_TENANT_SET = new Set();
+    return;
+  }
+
+  const { data, error } = await sb
+    .from("Medicos")
+    .select('id,"Nombre",activo,tenant_id')
+    .eq("tenant_id", TENANT_ID)
+    .eq("activo", true)
+    .order("Nombre", { ascending:true });
+
+  if (error){
+    errT.textContent = `No pude cargar médicos. ${error.message}`;
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Error cargando médicos";
+    elMedico.appendChild(opt);
+    return;
+  }
+
+  MEDICOS_TENANT = (data||[]).map(m=>({ id:m.id, nombre:m["Nombre"] }));
+  MEDICOS_TENANT_SET = new Set(MEDICOS_TENANT.map(m=>String(m.id)));
+
+  if (!MEDICOS_TENANT.length){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Sin médicos activos";
+    elMedico.appendChild(opt);
+    return;
+  }
+
+  MEDICOS_TENANT.forEach(m=>{
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = m.nombre;
+    elMedico.appendChild(opt);
+  });
+}
+
+/* ================= PRACTICAS ================= */
+
+async function cargarPracticas(){
+  const { data, error } = await sb.rpc("secre_list_practicas");
+
+  if (error){
+    errT.textContent = `No pude cargar prácticas: ${error.message}`;
+    return;
+  }
+
+  PRACTICAS_CATALOGO = data || [];
+
+  elPracticaSelect.innerHTML = "";
+
+  PRACTICAS_CATALOGO.forEach(p=>{
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.nombre;
+    elPracticaSelect.appendChild(opt);
+  });
+
+  // Consulta por defecto
+  const consulta =
+    PRACTICAS_CATALOGO.find(
+      p => String(p.codigo || "").toLowerCase() === "consulta"
+    )
+    || PRACTICAS_CATALOGO[0];
+
+  PRACTICAS_SELECCIONADAS = [];
+
+  if (consulta){
+    PRACTICAS_SELECCIONADAS.push({
+      id: consulta.id,
+      nombre: consulta.nombre
+    });
+  }
+
+  renderPracticasSeleccionadas();
+}
+
+
+function agregarPracticaSeleccionada(){
+  const id = elPracticaSelect.value;
+  if (!id) return;
+
+  const p = PRACTICAS_CATALOGO.find(x => x.id === id);
+  if (!p) return;
+
+  const consulta = PRACTICAS_CATALOGO.find(
+    x => String(x.codigo || "").toLowerCase() === "consulta"
+  );
+
+  // Si solamente está la Consulta automática y elegimos otra práctica,
+  // reemplazar Consulta en vez de agregarla.
+  if (
+    PRACTICAS_SELECCIONADAS.length === 1 &&
+    consulta &&
+    PRACTICAS_SELECCIONADAS[0].id === consulta.id &&
+    p.id !== consulta.id
+  ){
+    PRACTICAS_SELECCIONADAS = [{
+      id: p.id,
+      nombre: p.nombre
+    }];
+  }
+  else{
+    // Permitimos repetidas:
+    // ej. RM rodilla derecha + RM rodilla izquierda.
+    PRACTICAS_SELECCIONADAS.push({
+      id: p.id,
+      nombre: p.nombre
+    });
+  }
+
+  renderPracticasSeleccionadas();
+}
+
+function quitarPractica(index){
+
+  // Siempre debe quedar al menos una práctica.
+  if (PRACTICAS_SELECCIONADAS.length <= 1){
+    return;
+  }
+
+  PRACTICAS_SELECCIONADAS.splice(index,1);
+
+  renderPracticasSeleccionadas();
+}
+
+
+function renderPracticasSeleccionadas(){
+
+  practicasLista.innerHTML = "";
+
+  PRACTICAS_SELECCIONADAS.forEach((p,index)=>{
+
+    const div = document.createElement("div");
+    div.className = "practicaItem";
+
+    div.innerHTML = `
+      <div>
+        ${index + 1}. ${p.nombre}
+      </div>
+
+      ${
+        PRACTICAS_SELECCIONADAS.length > 1
+        ? `<button
+             type="button"
+             class="btnRemovePractica"
+             data-remove-practica="${index}"
+           >×</button>`
+        : ""
+      }
+    `;
+
+    practicasLista.appendChild(div);
+  });
+
+
+  practicasLista
+    .querySelectorAll("[data-remove-practica]")
+    .forEach(btn=>{
+
+      btn.onclick = ()=>{
+
+        const index =
+          Number(btn.getAttribute("data-remove-practica"));
+
+        quitarPractica(index);
+      };
+
+    });
+
+  actualizarResumenTiempo();
+}
+
+
+function actualizarResumenTiempo(){
+
+  const cantPracticas =
+    Math.max(PRACTICAS_SELECCIONADAS.length,1);
+
+  const bloqueo =
+    Number(elBloqueoSlots?.value || 0);
+
+  const minutosPracticas =
+    currentDurMin * cantPracticas;
+
+  const minutosBloqueo =
+    currentDurMin * bloqueo;
+
+  const total =
+    minutosPracticas + minutosBloqueo;
+
+  resumenTiempo.textContent =
+    `${cantPracticas} práctica${cantPracticas === 1 ? "" : "s"} · ` +
+    `${minutosPracticas} min de turno` +
+    (bloqueo
+      ? ` + ${minutosBloqueo} min bloqueados`
+      : "") +
+    ` · Total agenda: ${total} min`;
+}
+
+
+/* ================= DERIVADORES ================= */
+
+async function cargarDerivadores(){
+
+  const { data, error } =
+    await sb.rpc("secre_list_derivadores");
+
+  if (error){
+    console.warn("No pude cargar derivadores", error);
+    return;
+  }
+
+  DERIVADORES_CATALOGO = data || [];
+
+  DERIVADOR_SELECCIONADO_ID = null;
+
+  derivadorSeleccionado.textContent = "Sin derivador";
+  elDerivadorBuscar.value = "";
+}
+
+function normalizarTextoDerivador(v){
+  return String(v || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+
+function renderResultadosDerivador(){
+
+  const q = normalizarTextoDerivador(
+    elDerivadorBuscar.value
+  );
+
+  derivadorResultados.innerHTML = "";
+
+  if (!q){
+    derivadorResultados.style.display = "none";
+    return;
+  }
+
+  const coincidencias =
+    DERIVADORES_CATALOGO
+      .filter(d => {
+
+        const texto = normalizarTextoDerivador(
+          `${d.nombre || ""} ${d.matricula || ""} ${d.especialidad || ""} ${d.institucion || ""}`
+        );
+
+        return texto.includes(q);
+
+      })
+      .slice(0,20);
+
+
+  if (!coincidencias.length){
+
+    derivadorResultados.innerHTML = `
+      <div
+        class="muted"
+        style="padding:10px 12px"
+      >
+        Sin coincidencias
+      </div>
+    `;
+
+    derivadorResultados.style.display = "block";
+    return;
+  }
+
+
+  coincidencias.forEach(d => {
+
+    const item = document.createElement("button");
+
+    item.type = "button";
+
+    item.style.cssText = `
+      display:block;
+      width:100%;
+      text-align:left;
+      border:0;
+      border-bottom:1px solid #eee;
+      border-radius:0;
+      padding:10px 12px;
+      background:#fff;
+    `;
+
+    let detalle = "";
+
+    if (d.matricula){
+      detalle += ` · MP ${d.matricula}`;
+    }
+
+    if (d.especialidad){
+      detalle += ` · ${d.especialidad}`;
+    }
+
+    if (d.institucion){
+      detalle += ` · ${d.institucion}`;
+    }
+
+    item.innerHTML = `
+      <div style="font-weight:800">
+        ${d.nombre || "-"}
+      </div>
+
+      <div class="muted">
+        ${detalle || "Derivador"}
+      </div>
+    `;
+
+    item.onclick = () => {
+      seleccionarDerivador(d);
+    };
+
+    derivadorResultados.appendChild(item);
+  });
+
+
+  derivadorResultados.style.display = "block";
+}
+
+
+function seleccionarDerivador(d){
+
+  DERIVADOR_SELECCIONADO_ID = d?.id || null;
+
+  if (!d){
+    derivadorSeleccionado.textContent = "Sin derivador";
+    elDerivadorBuscar.value = "";
+    derivadorResultados.style.display = "none";
+    return;
+  }
+
+  elDerivadorBuscar.value = d.nombre || "";
+
+  let texto = d.nombre || "";
+
+  if (d.matricula){
+    texto += ` · MP ${d.matricula}`;
+  }
+
+  derivadorSeleccionado.textContent =
+    `Seleccionado: ${texto}`;
+
+  derivadorResultados.style.display = "none";
+}
+
+
+function abrirModalDerivador(){
+
+  errDerivador.textContent = "";
+  okDerivador.textContent = "";
+
+  nuevoDerivadorNombre.value =
+    elDerivadorBuscar.value.trim();
+
+  nuevoDerivadorMatricula.value = "";
+  nuevoDerivadorEspecialidad.value = "";
+  nuevoDerivadorInstitucion.value = "";
+
+  modalDerivadorBg.style.display = "flex";
+
+  setTimeout(()=>{
+    nuevoDerivadorNombre.focus();
+  },50);
+}
+
+
+function cerrarModalDerivador(){
+  modalDerivadorBg.style.display = "none";
+}
+
+
+async function guardarNuevoDerivador(){
+
+  errDerivador.textContent = "";
+  okDerivador.textContent = "";
+
+  const nombre =
+    nuevoDerivadorNombre.value.trim();
+
+  const matricula =
+    nuevoDerivadorMatricula.value.trim();
+
+  const especialidad =
+    nuevoDerivadorEspecialidad.value.trim();
+
+  const institucion =
+    nuevoDerivadorInstitucion.value.trim();
+
+
+  if (!nombre){
+    errDerivador.textContent =
+      "Ingresá apellido y nombre.";
+    return;
+  }
+
+
+  btnGuardarDerivador.disabled = true;
+
+
+  const { data:id, error } =
+    await sb.rpc(
+      "secre_add_derivador",
+      {
+        p_nombre:nombre,
+        p_matricula:matricula || null,
+        p_especialidad:especialidad || null,
+        p_institucion:institucion || null
+      }
+    );
+
+
+  btnGuardarDerivador.disabled = false;
+
+
+  if (error){
+    errDerivador.textContent =
+      error.message;
+    return;
+  }
+
+
+  let existente =
+    DERIVADORES_CATALOGO.find(
+      d => String(d.id) === String(id)
+    );
+
+
+  if (!existente){
+
+    existente = {
+      id,
+      nombre,
+      matricula:matricula || null,
+      especialidad:especialidad || null,
+      institucion:institucion || null
+    };
+
+    DERIVADORES_CATALOGO.push(existente);
+
+    DERIVADORES_CATALOGO.sort(
+      (a,b) =>
+        String(a.nombre || "")
+          .localeCompare(
+            String(b.nombre || ""),
+            "es"
+          )
+    );
+
+  }
+
+
+  seleccionarDerivador(existente);
+
+  okDerivador.textContent =
+    "✅ Derivador guardado.";
+
+  setTimeout(()=>{
+    cerrarModalDerivador();
+  },500);
+}
+  
+/* ================= Fecha: primer día con slots ================= */
+async function setFechaPrimerDiaConSlots(){
+  if (!DIAS_DISPONIBLES.length){
+    elFecha.value = isoDateARNow();
+    return;
+  }
+
+  DIA_INDEX = 0;
+  elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
+}
+  /* ================= Slots ================= */
+async function cargarSlots(){
+  errT.textContent = "";
+  elSlot.innerHTML = "";
+
+  if (!elMedico.value || !elFecha.value) return;
+
+  CURRENT_SLOTS = SLOTS_POR_DIA[elFecha.value] || [];
+
+  if (!CURRENT_SLOTS.length){
+    elSlot.innerHTML = `<option value="">Sin turnos disponibles</option>`;
+    btnCrear.disabled = true;
+    btnPrev.disabled = true;
+    btnNext.disabled = true;
+    return;
+  }
+
+  currentDurMin = diffMinutes(
+    CURRENT_SLOTS[0].inicio_slot,
+    CURRENT_SLOTS[0].fin_slot
+  ) || 15;
+
+  actualizarResumenTiempo();
+
+  CURRENT_SLOT_INDEX = 0;
+  renderSlotActual();
+}
+  
+function renderSlotRecomendado(){
+  const elReco = document.getElementById("slotRecomendado");
+  if (!elReco) return;
+
+  if (!SLOT_RECOMENDADO_FIJO){
+    elReco.textContent = "Sin disponibilidad";
+    return;
+  }
+
+  const d = new Date(SLOT_RECOMENDADO_FIJO.inicio_slot);
+
+  const fecha = d.toLocaleDateString("es-AR",{
+    weekday:"short",
+    day:"numeric",
+    month:"short",
+    timeZone: AR_TZ
+  });
+
+  const hora = fmtHour(SLOT_RECOMENDADO_FIJO.inicio_slot);
+
+  elReco.textContent = `${fecha} · ${hora}`;
+}
+
+async function cargarSlotRecomendadoFijo(){
+  SLOT_RECOMENDADO_FIJO = null;
+  FECHA_RECOMENDADA_FIJA = null;
+
+  if (!elMedico.value) {
+    renderSlotRecomendado();
+    return;
+  }
+
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 120);
+
+  const { data, error } = await sb.rpc("get_dias_con_slots", {
+    p_medico_id: elMedico.value,
+    p_desde: desde,
+    p_hasta: hasta
+  });
+
+  if (error || !data?.length){
+    renderSlotRecomendado();
+    return;
+  }
+
+  const dias = (data || []).map(x => x.dia || x);
+
+  for (const dia of dias){
+    const cacheKey = elMedico.value + "_" + dia;
+
+    let slots = SLOT_CACHE[cacheKey];
+
+    if (!slots){
+      const { data: slotsData, error: errSlots } = await sb.rpc("get_slots_dia", {
+        p_medico_id: elMedico.value,
+        p_fecha: dia
+      });
+
+      if (errSlots) continue;
+
+      slots = slotsData || [];
+      SLOT_CACHE[cacheKey] = slots;
+    }
+
+    if (slots.length){
+      FECHA_RECOMENDADA_FIJA = dia;
+      SLOT_RECOMENDADO_FIJO = slots[0];
+      renderSlotRecomendado();
+      return;
+    }
+  }
+
+  renderSlotRecomendado();
+}
+
+  async function cargarSlotsRango(){
+
+  SLOTS_RANGO = [];
+  SLOTS_POR_DIA = {};
+
+  if (!elMedico.value) return;
+
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 90);
+
+  const { data, error } = await sb.rpc(
+    "get_slots_disponibles_rango",
+    {
+      p_medico_id: elMedico.value,
+      p_desde: desde,
+      p_hasta: hasta
+    }
+  );
+
+  if (error){
+    errT.textContent = error.message;
+    return;
+  }
+
+  SLOTS_RANGO = data || [];
+
+   
+
+  // agrupar por día
+  SLOTS_RANGO.forEach(s => {
+
+    const dia = s.dia;
+
+    if (!SLOTS_POR_DIA[dia]){
+      SLOTS_POR_DIA[dia] = [];
+    }
+
+    SLOTS_POR_DIA[dia].push(s);
+  });
+
+  // días reales con slots libres
+  DIAS_DISPONIBLES = Object.keys(SLOTS_POR_DIA);
+
+  // recomendado
+  SLOT_RECOMENDADO_FIJO = SLOTS_RANGO[0] || null;
+
+  FECHA_RECOMENDADA_FIJA =
+    SLOT_RECOMENDADO_FIJO?.dia || null;
+
+  renderSlotRecomendado();
+}
+
+  async function cargarDiasSobreturnos(){
+  DIAS_SOBRETURNOS = [];
+  DIA_SOB_INDEX = 0;
+
+  if (!elMedico.value) return;
+
+  const desde = isoDateARNow();
+  const hasta = addDaysISO(desde, 90);
+
+  const { data, error } = await sb.rpc("get_dias_con_slots", {
+    p_medico_id: elMedico.value,
+    p_desde: desde,
+    p_hasta: hasta
+  });
+
+  if (error){
+    errT.textContent = error.message;
+    return;
+  }
+
+  DIAS_SOBRETURNOS = (data || []).map(x => x.dia || x);
+
+  DIA_SOB_INDEX = DIAS_SOBRETURNOS.findIndex(d => d === elFecha.value);
+
+  if (DIA_SOB_INDEX < 0){
+    DIA_SOB_INDEX = 0;
+  }
+}
+  
+function renderSlotActual(){
+
+  elSlot.innerHTML = "";
+
+  if (!CURRENT_SLOTS.length){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Sin disponibilidad";
+    elSlot.appendChild(opt);
+    btnCrear.disabled = true;
+    return;
+  }
+
+  CURRENT_SLOTS.forEach(slot => {
+
+    const opt = document.createElement("option");
+    opt.value = slot.inicio_slot;
+
+    const d = new Date(slot.inicio_slot);
+
+    const fecha = d.toLocaleDateString("es-AR",{
+  weekday:"short",
+  day:"numeric",
+  month:"short",
+  timeZone: AR_TZ
+});
+
+    const hora = fmtHour(slot.inicio_slot);
+
+    opt.textContent = `${fecha} · ${hora}`;
+
+    elSlot.appendChild(opt);
+  });
+
+  elSlot.selectedIndex = CURRENT_SLOT_INDEX;
+
+  btnCrear.disabled = !currentPacienteId;
+
+  btnPrev.disabled = CURRENT_SLOT_INDEX <= 0;
+  btnNext.disabled = CURRENT_SLOT_INDEX >= CURRENT_SLOTS.length - 1;
+}
+
+async function slotNext(){
+
+  if (CURRENT_SLOT_INDEX < CURRENT_SLOTS.length - 1){
+    CURRENT_SLOT_INDEX++;
+    renderSlotActual();
+    return;
+  }
+
+  if (!DIAS_DISPONIBLES.length) return;
+
+  DIA_INDEX++;
+
+  if (DIA_INDEX >= DIAS_DISPONIBLES.length){
+    DIA_INDEX = 0;
+  }
+
+  elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
+
+  await cargarSlots();
+  syncSobturnoUI();
+}
+  
+function slotPrev(){
+  if (CURRENT_SLOT_INDEX > 0){
+    CURRENT_SLOT_INDEX--;
+    renderSlotActual();
+    syncSobturnoUI();
+  }
+}
+  
+async function dayNext(){
+
+  if(!DIAS_DISPONIBLES.length) return;
+
+  DIA_INDEX++;
+
+  if(DIA_INDEX >= DIAS_DISPONIBLES.length){
+    DIA_INDEX = 0;
+  }
+
+  elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
+
+  await cargarSlots();
+  syncSobturnoUI();
+}
+
+async function dayPrev(){
+
+  if(!DIAS_DISPONIBLES.length) return;
+
+  DIA_INDEX--;    
+
+  if(DIA_INDEX < 0){
+    DIA_INDEX = DIAS_DISPONIBLES.length - 1;
+  }
+
+  elFecha.value = DIAS_DISPONIBLES[DIA_INDEX];
+
+  await cargarSlots();
+  syncSobturnoUI();
+}
+  
+ 
+  /* ================= Buscar paciente ================= */
+async function buscarPaciente(){
+  errP.textContent = ""; okP.textContent = "";
+  btnHistorial.disabled = true;
+  warnAusente.style.display = "none";
+  currentPacienteId = null;
+  btnCrear.disabled = true;
+
+  const dni = (elDni.value||"").trim();
+  if (!dni){ errP.textContent = "Ingresá DNI."; return; }
+
+  const { data, error } = await sb.rpc("secre_get_paciente_por_dni", { p_dni: dni });
+  if (error){ errP.textContent = error.message; return; }
+
+  const p = (data||[])[0];
+  if (!p){
+    okP.textContent = "No existe. Completá datos y guardá.";
+    return;
+  }
+
+  currentPacienteId = p.id_paciente;
+  elNombre.value = p.nombre || "";
+  elTel.value = p.telefono || "";
+  elEmail.value = p.email || "";
+  elOS.value = p.obra_social || "";
+  elAf.value = p.numero_afiliado ?? "";
+
+  okP.textContent = "✅ Paciente encontrado.";
+  btnHistorial.disabled = false;
+  btnCrear.disabled = false;
+
+  const w = await sb.rpc("secre_warning_paciente_v2", {
+  p_paciente_id: currentPacienteId,
+  p_anios: 2
+});
+
+const info = (w.data || [])[0];
+
+const estado = info?.estado || "sin_historial";
+const aus = info?.ausentes || 0;
+const reg = info?.regularizados || 0;
+
+if (estado === "con_ausencias"){
+  warnAusente.className = "pill red";
+  warnAusente.textContent = `⚠ ${aus} ausencia(s) sin regularizar`;
+}
+else if (estado === "regularizado"){
+  warnAusente.className = "pill green";
+  warnAusente.textContent = `✅ ${reg} ausencia(s) regularizada(s)`;
+}
+else if (estado === "sin_ausencias"){
+  warnAusente.className = "pill green";
+  warnAusente.textContent = "✅ Sin ausencias";
+}
+else{
+  warnAusente.className = "pill";
+  warnAusente.textContent = "Sin historial";
+}
+
+warnAusente.style.display = "inline-flex";
+
+}  
+
+/* ================= Guardar paciente ================= */
+async function guardarPaciente(){
+  errP.textContent=""; okP.textContent="";
+  const dni = (elDni.value||"").trim();
+  if (!dni){ errP.textContent="Ingresá DNI."; return; }
+  if (!(elNombre.value||"").trim()){ errP.textContent="Ingresá nombre."; return; }
+
+  const { data, error } = await sb.rpc("secre_upsert_paciente", {
+    p_dni: dni,
+    p_nombre: (elNombre.value||"").trim(),
+    p_telefono: (elTel.value||"").trim(),
+    p_email: (elEmail.value||"").trim(),
+    p_obra_social: (elOS.value||"").trim(),
+    p_numero_afiliado: (elAf.value||"").trim()
+  });
+
+  if (error){ errP.textContent=error.message; return; }
+
+  currentPacienteId = data;
+  okP.textContent = "✅ Paciente guardado.";
+  btnHistorial.disabled = false;
+  btnCrear.disabled = false;
+}
+
+/* ================= Historial modal ================= */
+async function abrirHistorial(){
+  if (!currentPacienteId) return;
+
+  histBody.innerHTML = "";
+  histTitle.textContent = `${(elNombre.value||"").trim()} · DNI ${elDni.value}`;
+
+  const { data, error } = await sb.rpc("secre_historial_paciente", {
+    p_paciente_id: currentPacienteId,
+    p_anios: 2
+  });
+  if (error){ errP.textContent = error.message; return; }
+
+  const rows = data || [];
+  if (!rows.length){
+    histBody.innerHTML = `<tr><td colspan="5" class="muted">Sin historial en 2 años.</td></tr>`;
+  } else {
+    rows.forEach(r=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${fmtDate(r.inicio)}</td>
+        <td>${fmtHour(r.inicio)}</td>
+        <td>${r.medico_nombre || "-"}</td>
+        <td><b>${r.estado || "-"}</b></td>
+        <td>${r.sobreturno ? `<span class="tag"><b>SOBRE</b></span>` : `<span class="tag">Normal</span>`}</td>
+      `;
+      histBody.appendChild(tr);
+    });
+  }
+
+  modalBg.style.display = "flex";
+}
+btnCerrarModal.onclick = ()=> modalBg.style.display = "none";
+modalBg.onclick = (e)=>{ if (e.target === modalBg) modalBg.style.display = "none"; };
+btnRegularizarPaciente.onclick = async ()=>{
+
+  if (!currentPacienteId){
+    alert("Paciente inválido");
+    return;
+  }
+
+  const nota = prompt(
+    "Nota de regularización:",
+    "Pagó deuda en secretaría"
+  );
+
+  if (nota === null) return;
+
+  const confirma = confirm(
+    "¿Regularizar historial de ausencias de este paciente?"
+  );
+
+  if (!confirma) return;
+
+  const { error } = await sb.rpc(
+    "admin_regularizar_ausencias_paciente",
+    {
+      p_paciente_id: currentPacienteId,
+      p_nota: nota
+    }
+  );
+
+  if (error){
+    alert(error.message);
+    return;
+  }
+
+  alert("✅ Historial regularizado");
+
+  modalBg.style.display = "none";
+
+  await buscarPaciente();
+};
+  
+/* ================= limpiar datos ================= */
+
+function limpiarPacientePostTurno(){
+  currentPacienteId = null;
+  btnHistorial.disabled = true;
+  btnCrear.disabled = true;
+  warnAusente.style.display = "none";
+
+  elDni.value = "";
+  elNombre.value = "";
+  elTel.value = "";
+  elEmail.value = "";
+  elOS.value = "";
+  elAf.value = "";
+
+  errP.textContent = "";
+  okP.textContent = "";
+}
+  
+/* ================= Crear turno ================= */
+async function crearTurno(){
+
+  errT.textContent="";
+  okT.textContent="";
+
+  if (!currentPacienteId){
+    errT.textContent="Primero buscá/guardá el paciente.";
+    return;
+  }
+
+  if (!elMedico.value){
+    errT.textContent="Elegí médico.";
+    return;
+  }
+
+  if (!MEDICOS_TENANT_SET.has(String(elMedico.value))){
+    errT.textContent="Médico inválido para este tenant.";
+    return;
+  }
+
+  if (!elFecha.value){
+    errT.textContent="Elegí fecha.";
+    return;
+  }
+
+  if (!PRACTICAS_SELECCIONADAS.length){
+    errT.textContent="Seleccioná al menos una práctica.";
+    return;
+  }
+
+
+  const sob = chkSob.checked;
+
+  let inicioISO = null;
+
+
+  if (sob){
+
+    const hm = (elHoraManual.value||"").trim();
+
+    if (!hm){
+      errT.textContent="Ingresá hora manual.";
+      return;
+    }
+
+    inicioISO =
+      `${elFecha.value}T${hm}:00-03:00`;
+
+  }
+  else {
+
+    inicioISO = elSlot.value;
+
+    if (!inicioISO){
+      errT.textContent="No hay slot disponible.";
+      return;
+    }
+
+  }
+
+
+  const copagoNum = null;
+
+  const practicaIds =
+    PRACTICAS_SELECCIONADAS.map(p => p.id);
+
+  const practicaNombres =
+    PRACTICAS_SELECCIONADAS.map(p => p.nombre);
+
+  const derivadorId =
+  DERIVADOR_SELECCIONADO_ID || null;
+
+const derivadorActual =
+  derivadorId
+    ? DERIVADORES_CATALOGO.find(
+        d => String(d.id) === String(derivadorId)
+      )
+    : null;
+
+const derivadorNombre =
+  derivadorActual?.nombre || "Sin derivador";
+
+  const bloqueoSlots =
+    Number(elBloqueoSlots.value || 0);
+
+
+  const medicoNombre =
+    elMedico.options[
+      elMedico.selectedIndex
+    ]?.text || "";
+
+
+  const fechaTexto =
+    new Date(inicioISO).toLocaleDateString(
+      "es-AR",
+      {
+        weekday:"long",
+        day:"numeric",
+        month:"long",
+        timeZone:AR_TZ
+      }
+    );
+
+
+  const horaTexto =
+    sob
+      ? elHoraManual.value
+      : fmtHour(inicioISO);
+
+
+  const minutosPracticas =
+    currentDurMin * practicaIds.length;
+
+  const minutosBloqueo =
+    currentDurMin * bloqueoSlots;
+
+
+  const confirmacion = confirm(
+
+    `CONFIRMAR TURNO\n\n` +
+
+    `Paciente: ${elNombre.value}\n` +
+
+    `Médico: ${medicoNombre}\n` +
+
+    `Prácticas:\n` +
+    practicaNombres
+      .map((x,i)=>`  ${i+1}. ${x}`)
+      .join("\n") +
+
+    `\n\nDerivado por: ${derivadorNombre}\n` +
+
+    `Fecha: ${fechaTexto}\n` +
+
+    `Hora: ${horaTexto} hs\n` +
+
+    `Duración prácticas: ${minutosPracticas} min\n` +
+
+    (
+      bloqueoSlots
+        ? `Bloqueo adicional: ${minutosBloqueo} min\n`
+        : ""
+    )
+
+  );
+
+
+  if (!confirmacion) return;
+
+
+  btnCrear.disabled = true;
+
+
+  const {
+    data:nuevoTurnoId,
+    error
+  } = await sb.rpc(
+    "secre_crear_turno",
+    {
+
+      p_medico_id:
+        elMedico.value,
+
+      p_paciente_id:
+        currentPacienteId,
+
+      p_inicio:
+        inicioISO,
+
+      p_duracion_min:
+        currentDurMin,
+
+      p_copago:
+        copagoNum,
+
+      p_nota:
+        (elNota.value||"").trim() || null,
+
+      p_sobreturno:
+        sob,
+
+      p_canal:
+        "secre",
+
+      p_practica_ids:
+        practicaIds,
+
+      p_derivador_id:
+        derivadorId,
+
+      p_bloqueo_slots:
+        bloqueoSlots
+    }
+  );
+
+
+  if (error){
+
+    errT.textContent = error.message;
+
+    syncSobturnoUI();
+
+    return;
+  }
+
+
+  /* ================= MAIL ================= */
+
+  try{
+
+    if (nuevoTurnoId){
+
+      await fetch(
+        `${SUPABASE_URL}/functions/v1/send-turno-email`,
+        {
+
+          method:"POST",
+
+          headers:{
+            "Content-Type":"application/json",
+            "Authorization":
+              `Bearer ${SUPABASE_ANON_KEY}`
+          },
+
+          body:JSON.stringify({
+            turno_id:nuevoTurnoId
+          })
+
+        }
+      );
+
+    }
+
+  }
+  catch(e){
+
+    console.warn(
+      "No se pudo enviar mail de confirmación",
+      e
+    );
+
+  }
+
+
+  alert(
+
+    `✅ Turno creado con éxito\n\n` +
+
+    `Paciente: ${elNombre.value}\n` +
+
+    `Médico: ${medicoNombre}\n` +
+
+    `Prácticas: ${practicaNombres.join(", ")}\n` +
+
+    `Fecha: ${fechaTexto}\n` +
+
+    `Hora: ${horaTexto} hs\n` +
+
+    (
+      bloqueoSlots
+        ? `Bloqueo adicional: ${bloqueoSlots} slot(s)\n`
+        : ""
+    ) +
+
+    `${
+      elEmail.value
+        ? "Mail de confirmación enviado."
+        : "Paciente sin email cargado."
+    }`
+
+  );
+
+
+  okT.textContent = "✅ Turno creado.";
+
+
+  delete SLOT_CACHE[
+    elMedico.value + "_" + elFecha.value
+  ];
+
+
+  /* ================= LIMPIAR ================= */
+
+  limpiarPacientePostTurno();
+
+  elNota.value = "";
+
+  DERIVADOR_SELECCIONADO_ID = null;
+elDerivadorBuscar.value = "";
+derivadorSeleccionado.textContent = "Sin derivador";
+derivadorResultados.style.display = "none";
+
+  elBloqueoSlots.value = "0";
+
+  // Volver siempre a Consulta
+  const consulta =
+    PRACTICAS_CATALOGO.find(
+      p =>
+        String(p.codigo || "")
+          .toLowerCase() === "consulta"
+    )
+    || PRACTICAS_CATALOGO[0];
+
+  PRACTICAS_SELECCIONADAS = [];
+
+  if (consulta){
+
+    PRACTICAS_SELECCIONADAS.push({
+      id:consulta.id,
+      nombre:consulta.nombre
+    });
+
+  }
+
+  renderPracticasSeleccionadas();
+
+
+  await cargarSlotsRango();
+  await cargarDiasSobreturnos();
+  await setFechaPrimerDiaConSlots();
+  await cargarSlots();
+
+  syncSobturnoUI();
+}/* ================= Sobreturno UI ================= */
+function actualizarSobFechaActual(){
+  if (!sobFechaActual || !elFecha.value){
+    if (sobFechaActual) sobFechaActual.textContent = "—";
+    return;
+  }
+
+  const d = new Date(`${elFecha.value}T12:00:00-03:00`);
+
+  sobFechaActual.textContent = d.toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: AR_TZ
+  });
+}
+
+function syncSobturnoUI(){
+  const sob = chkSob.checked;
+
+  lblSob.style.display = sob ? "inline-block" : "none";
+  elHoraManual.disabled = !sob;
+  elSlot.disabled = sob;
+
+  if (sobturnoNavBox){
+    sobturnoNavBox.classList.toggle("active", sob);
+  }
+
+  if (sobDayPrev) sobDayPrev.disabled = !sob || !DIAS_SOBRETURNOS.length;
+  if (sobDayNext) sobDayNext.disabled = !sob || !DIAS_SOBRETURNOS.length;
+  
+  if (sob){
+    btnCrear.disabled = !currentPacienteId || !elMedico.value || !elFecha.value || !elHoraManual.value;
+  } else {
+    btnCrear.disabled = !currentPacienteId || !elSlot.value;
+  }
+
+  actualizarSobFechaActual();
+}
+
+chkSob.onchange = syncSobturnoUI;
+
+/* ================= Botones ================= */
+document.getElementById("btnBuscar").onclick = buscarPaciente;
+document.getElementById("btnGuardarPaciente").onclick = guardarPaciente;
+document.getElementById("btnHistorial").onclick = abrirHistorial;
+document.getElementById("btnCrearTurno").onclick = crearTurno;
+
+btnAgregarPractica.onclick = agregarPracticaSeleccionada;
+elBloqueoSlots.onchange = actualizarResumenTiempo;
+
+elDerivadorBuscar.addEventListener(
+  "input",
+  renderResultadosDerivador
+);
+
+btnNuevoDerivador.onclick =
+  abrirModalDerivador;
+
+btnCerrarDerivador.onclick =
+  cerrarModalDerivador;
+
+btnGuardarDerivador.onclick =
+  guardarNuevoDerivador;
+
+modalDerivadorBg.onclick = (e)=>{
+  if (e.target === modalDerivadorBg){
+    cerrarModalDerivador();
+  }
+};
+
+document.addEventListener("click",(e)=>{
+
+  if (
+    !elDerivadorBuscar.contains(e.target) &&
+    !derivadorResultados.contains(e.target)
+  ){
+    derivadorResultados.style.display = "none";
+  }
+
+});  
   
 document.getElementById("slotNext").onclick = slotNext;
 document.getElementById("slotPrev").onclick = slotPrev;
