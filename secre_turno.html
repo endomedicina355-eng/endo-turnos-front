@@ -1074,8 +1074,64 @@ async function cargarPracticas(){
   renderPracticasSeleccionadas();
 }
 
+async function refrescarDisponibilidadPorPracticas(){
 
-function agregarPracticaSeleccionada(){
+  if (chkSob.checked) return;
+
+  const fechaAnterior = elFecha.value;
+
+  await cargarSlotsRango();
+
+  // Si la fecha actual sigue siendo válida, la conservamos
+  const sigueDisponible =
+    DIAS_DISPONIBLES.includes(fechaAnterior);
+
+  if (sigueDisponible){
+
+    DIA_INDEX =
+      DIAS_DISPONIBLES.indexOf(fechaAnterior);
+
+    elFecha.value = fechaAnterior;
+
+  }
+  else if (DIAS_DISPONIBLES.length){
+
+  const siguiente =
+    DIAS_DISPONIBLES.find(
+      dia => dia > fechaAnterior
+    );
+
+  const nuevaFecha =
+    siguiente || DIAS_DISPONIBLES[0];
+
+  DIA_INDEX =
+    DIAS_DISPONIBLES.indexOf(nuevaFecha);
+
+  elFecha.value = nuevaFecha;
+}
+  else{
+
+    DIA_INDEX = 0;
+
+    CURRENT_SLOTS = [];
+
+    elSlot.innerHTML =
+      `<option value="">Sin disponibilidad para estas prácticas</option>`;
+
+    btnCrear.disabled = true;
+    btnPrev.disabled = true;
+    btnNext.disabled = true;
+
+    return;
+  }
+
+  await cargarSlots();
+
+  syncSobturnoUI();
+}
+  
+async function agregarPracticaSeleccionada(){
+
   const id = elPracticaSelect.value;
   if (!id) return;
 
@@ -1086,8 +1142,6 @@ function agregarPracticaSeleccionada(){
     x => String(x.codigo || "").toLowerCase() === "consulta"
   );
 
-  // Si solamente está la Consulta automática y elegimos otra práctica,
-  // reemplazar Consulta en vez de agregarla.
   if (
     PRACTICAS_SELECCIONADAS.length === 1 &&
     consulta &&
@@ -1100,8 +1154,6 @@ function agregarPracticaSeleccionada(){
     }];
   }
   else{
-    // Permitimos repetidas:
-    // ej. RM rodilla derecha + RM rodilla izquierda.
     PRACTICAS_SELECCIONADAS.push({
       id: p.id,
       nombre: p.nombre
@@ -1110,17 +1162,12 @@ function agregarPracticaSeleccionada(){
 
   renderPracticasSeleccionadas();
 
-  if (!chkSob.checked){
-    cargarSlotsRango().then(async ()=>{
-      await cargarSlots();
-    });
-  }
+  await refrescarDisponibilidadPorPracticas();
 }
 
 
-function quitarPractica(index){
+async function quitarPractica(index){
 
-  // Siempre debe quedar al menos una práctica.
   if (PRACTICAS_SELECCIONADAS.length <= 1){
     return;
   }
@@ -1129,11 +1176,7 @@ function quitarPractica(index){
 
   renderPracticasSeleccionadas();
 
-  if (!chkSob.checked){
-    cargarSlotsRango().then(async ()=>{
-      await cargarSlots();
-    });
-  }
+  await refrescarDisponibilidadPorPracticas();
 }
   
 function renderPracticasSeleccionadas(){
