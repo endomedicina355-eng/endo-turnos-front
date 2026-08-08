@@ -1110,10 +1110,13 @@ function agregarPracticaSeleccionada(){
 
   renderPracticasSeleccionadas();
 
-if (!chkSob.checked){
-  cargarSlots();
+  if (!chkSob.checked){
+    cargarSlotsRango().then(async ()=>{
+      await cargarSlots();
+    });
+  }
 }
-}
+
 
 function quitarPractica(index){
 
@@ -1124,16 +1127,15 @@ function quitarPractica(index){
 
   PRACTICAS_SELECCIONADAS.splice(index,1);
 
-  PRACTICAS_SELECCIONADAS.splice(index,1);
+  renderPracticasSeleccionadas();
 
-renderPracticasSeleccionadas();
-
-if (!chkSob.checked){
-  cargarSlots();
+  if (!chkSob.checked){
+    cargarSlotsRango().then(async ()=>{
+      await cargarSlots();
+    });
+  }
 }
-}
-
-
+  
 function renderPracticasSeleccionadas(){
 
   practicasLista.innerHTML = "";
@@ -1641,9 +1643,7 @@ async function cargarSlotRecomendadoFijo(){
 
   SLOTS_RANGO = data || [];
 
-   
-
-  // agrupar por día
+  // Agrupar por día
   SLOTS_RANGO.forEach(s => {
 
     const dia = s.dia;
@@ -1655,14 +1655,59 @@ async function cargarSlotRecomendadoFijo(){
     SLOTS_POR_DIA[dia].push(s);
   });
 
-  // días reales con slots libres
-  DIAS_DISPONIBLES = Object.keys(SLOTS_POR_DIA);
+  // Ordenar slots dentro de cada día
+  Object.keys(SLOTS_POR_DIA).forEach(dia => {
+    SLOTS_POR_DIA[dia].sort(
+      (a,b) =>
+        new Date(a.inicio_slot) -
+        new Date(b.inicio_slot)
+    );
+  });
 
-  // recomendado
-  SLOT_RECOMENDADO_FIJO = SLOTS_RANGO[0] || null;
+  // Días que tienen al menos un slot libre
+  DIAS_DISPONIBLES =
+    Object.keys(SLOTS_POR_DIA).sort();
 
-  FECHA_RECOMENDADA_FIJA =
-    SLOT_RECOMENDADO_FIJO?.dia || null;
+  SLOT_RECOMENDADO_FIJO = null;
+  FECHA_RECOMENDADA_FIJA = null;
+
+  // =====================================================
+  // BUSCAR PRIMER INICIO QUE SOPORTE TODAS LAS PRÁCTICAS
+  // =====================================================
+
+  for (const dia of DIAS_DISPONIBLES){
+
+    const slotsDia =
+      SLOTS_POR_DIA[dia] || [];
+
+    if (!slotsDia.length) continue;
+
+    // Obtener duración real del slot
+    const duracionDia =
+      diffMinutes(
+        slotsDia[0].inicio_slot,
+        slotsDia[0].fin_slot
+      ) || 15;
+
+    const durAnterior = currentDurMin;
+
+    currentDurMin = duracionDia;
+
+    const slotsValidos =
+      filtrarSlotsPorPracticas(slotsDia);
+
+    currentDurMin = durAnterior;
+
+    if (slotsValidos.length){
+
+      FECHA_RECOMENDADA_FIJA = dia;
+
+      SLOT_RECOMENDADO_FIJO =
+        slotsValidos[0];
+
+      break;
+    }
+  }
 
   renderSlotRecomendado();
 }
