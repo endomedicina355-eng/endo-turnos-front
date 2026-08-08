@@ -448,12 +448,32 @@ textarea{
     <div>
       <div class="muted">Prácticas</div>
 
-      <div class="practicaAdd">
-        <select id="practicaSelect"></select>
-        <button id="btnAgregarPractica" type="button">
-          + Agregar
-        </button>
-      </div>
+      <div style="position:relative">
+  <input
+    id="practicaBuscar"
+    type="text"
+    autocomplete="off"
+    placeholder="Buscar práctica: codo, VNG, sueño..."
+  />
+
+  <div
+    id="practicaResultados"
+    style="
+      display:none;
+      position:absolute;
+      left:0;
+      right:0;
+      top:calc(100% + 4px);
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:12px;
+      box-shadow:0 8px 20px rgba(0,0,0,.12);
+      max-height:240px;
+      overflow:auto;
+      z-index:60;
+    "
+  ></div>
+</div>
 
       <div id="practicasLista" class="practicasLista"></div>
       <div id="resumenTiempo" class="resumenTiempo"></div>
@@ -750,9 +770,15 @@ const elSlot = document.getElementById("slot");
 const elHoraManual = document.getElementById("horaManual");
 const elCopago = document.getElementById("copago");
 const elNota = document.getElementById("nota");
-const elPracticaSelect = document.getElementById("practicaSelect");
-const btnAgregarPractica = document.getElementById("btnAgregarPractica");
-const practicasLista = document.getElementById("practicasLista");
+
+const practicaBuscar =
+  document.getElementById("practicaBuscar");
+
+const practicaResultados =
+  document.getElementById("practicaResultados");
+
+const practicasLista =
+  document.getElementById("practicasLista");
 
 const elDerivadorBuscar = document.getElementById("derivadorBuscar");
 const derivadorResultados = document.getElementById("derivadorResultados");
@@ -1024,28 +1050,24 @@ async function cargarMedicosTenant(){
 /* ================= PRACTICAS ================= */
 
 async function cargarPracticas(){
-  const { data, error } = await sb.rpc("secre_list_practicas");
+
+  const { data, error } =
+    await sb.rpc("secre_list_practicas");
 
   if (error){
-    errT.textContent = `No pude cargar prácticas: ${error.message}`;
+    errT.textContent =
+      `No pude cargar prácticas: ${error.message}`;
     return;
   }
 
   PRACTICAS_CATALOGO = data || [];
 
-  elPracticaSelect.innerHTML = "";
-
-  PRACTICAS_CATALOGO.forEach(p=>{
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.nombre;
-    elPracticaSelect.appendChild(opt);
-  });
-
   // Consulta por defecto
   const consulta =
     PRACTICAS_CATALOGO.find(
-      p => String(p.codigo || "").toLowerCase() === "consulta"
+      p =>
+        String(p.codigo || "")
+          .toLowerCase() === "consulta"
     )
     || PRACTICAS_CATALOGO[0];
 
@@ -1058,8 +1080,143 @@ async function cargarPracticas(){
     });
   }
 
+  practicaBuscar.value = "";
+  practicaResultados.innerHTML = "";
+  practicaResultados.style.display = "none";
+
   renderPracticasSeleccionadas();
 }
+
+function normalizarTextoPractica(v){
+  return String(v || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+
+function renderResultadosPractica(){
+
+  const q =
+    normalizarTextoPractica(
+      practicaBuscar.value
+    );
+
+  practicaResultados.innerHTML = "";
+
+  if (!q){
+    practicaResultados.style.display = "none";
+    return;
+  }
+
+  const coincidencias =
+    PRACTICAS_CATALOGO
+      .filter(p => {
+
+        const texto =
+          normalizarTextoPractica(
+            `${p.nombre || ""} ${p.codigo || ""}`
+          );
+
+        return texto.includes(q);
+      })
+      .slice(0,20);
+
+
+  if (!coincidencias.length){
+
+    practicaResultados.innerHTML = `
+      <div
+        class="muted"
+        style="padding:10px 12px"
+      >
+        Sin coincidencias
+      </div>
+    `;
+
+    practicaResultados.style.display = "block";
+    return;
+  }
+
+
+  coincidencias.forEach(p => {
+
+    const item =
+      document.createElement("button");
+
+    item.type = "button";
+
+    item.style.cssText = `
+      display:block;
+      width:100%;
+      text-align:left;
+      border:0;
+      border-bottom:1px solid #eee;
+      border-radius:0;
+      padding:11px 12px;
+      background:#fff;
+      font-weight:800;
+    `;
+
+    item.textContent =
+      p.nombre || "Práctica";
+
+    item.onclick = async () => {
+      await seleccionarPracticaBuscada(p);
+    };
+
+    practicaResultados.appendChild(item);
+  });
+
+  practicaResultados.style.display = "block";
+}
+
+
+async function seleccionarPracticaBuscada(p){
+
+  if (!p?.id) return;
+
+  const consulta =
+    PRACTICAS_CATALOGO.find(
+      x =>
+        String(x.codigo || "")
+          .toLowerCase() === "consulta"
+    );
+
+  // Si está solamente Consulta automática,
+  // la reemplazamos por la práctica elegida.
+  if (
+    PRACTICAS_SELECCIONADAS.length === 1 &&
+    consulta &&
+    PRACTICAS_SELECCIONADAS[0].id === consulta.id &&
+    p.id !== consulta.id
+  ){
+    PRACTICAS_SELECCIONADAS = [{
+      id: p.id,
+      nombre: p.nombre
+    }];
+  }
+  else{
+
+    // Permitimos repetir prácticas.
+    // Ej: RM rodilla derecha + RM rodilla izquierda.
+    PRACTICAS_SELECCIONADAS.push({
+      id: p.id,
+      nombre: p.nombre
+    });
+  }
+
+  practicaBuscar.value = "";
+  practicaResultados.innerHTML = "";
+  practicaResultados.style.display = "none";
+
+  renderPracticasSeleccionadas();
+
+  await refrescarDisponibilidadPorPracticas();
+
+  practicaBuscar.focus();
+}  
 
 async function refrescarDisponibilidadPorPracticas(){
 
@@ -1117,41 +1274,6 @@ async function refrescarDisponibilidadPorPracticas(){
   syncSobturnoUI();
 }
   
-async function agregarPracticaSeleccionada(){
-
-  const id = elPracticaSelect.value;
-  if (!id) return;
-
-  const p = PRACTICAS_CATALOGO.find(x => x.id === id);
-  if (!p) return;
-
-  const consulta = PRACTICAS_CATALOGO.find(
-    x => String(x.codigo || "").toLowerCase() === "consulta"
-  );
-
-  if (
-    PRACTICAS_SELECCIONADAS.length === 1 &&
-    consulta &&
-    PRACTICAS_SELECCIONADAS[0].id === consulta.id &&
-    p.id !== consulta.id
-  ){
-    PRACTICAS_SELECCIONADAS = [{
-      id: p.id,
-      nombre: p.nombre
-    }];
-  }
-  else{
-    PRACTICAS_SELECCIONADAS.push({
-      id: p.id,
-      nombre: p.nombre
-    });
-  }
-
-  renderPracticasSeleccionadas();
-
-  await refrescarDisponibilidadPorPracticas();
-}
-
 
 async function quitarPractica(index){
 
@@ -2439,7 +2561,10 @@ document.getElementById("btnGuardarPaciente").onclick = guardarPaciente;
 document.getElementById("btnHistorial").onclick = abrirHistorial;
 document.getElementById("btnCrearTurno").onclick = crearTurno;
 
-btnAgregarPractica.onclick = agregarPracticaSeleccionada;
+practicaBuscar.addEventListener(
+  "input",
+  renderResultadosPractica
+);
 elBloqueoSlots.onchange = actualizarResumenTiempo;
 
 elDerivadorBuscar.addEventListener("input", () => {
@@ -2470,6 +2595,13 @@ document.addEventListener("click",(e)=>{
     !derivadorResultados.contains(e.target)
   ){
     derivadorResultados.style.display = "none";
+  }
+
+  if (
+    !practicaBuscar.contains(e.target) &&
+    !practicaResultados.contains(e.target)
+  ){
+    practicaResultados.style.display = "none";
   }
 
 });  
