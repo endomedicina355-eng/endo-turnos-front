@@ -2727,41 +2727,42 @@ document.getElementById("btnBack").onclick = ()=> window.location.href = "./secr
   /* ================= CAMBIO DE MÉDICO ================= */
   elMedico.onchange = async () => {
 
-    // Limpiar todo el estado previo
-    CURRENT_SLOTS = [];
-    CURRENT_SLOT_INDEX = 0;
+  // Limpiar todo el estado previo
+  CURRENT_SLOTS = [];
+  CURRENT_SLOT_INDEX = 0;
 
-    DIAS_DISPONIBLES = [];
-    DIA_INDEX = 0;
+  DIAS_DISPONIBLES = [];
+  DIA_INDEX = 0;
 
-    SLOTS_RANGO = [];
-    SLOTS_POR_DIA = {};
+  SLOTS_RANGO = [];
+  SLOTS_POR_DIA = {};
 
-    DIAS_SOBRETURNOS = [];
-    DIA_SOB_INDEX = 0;
+  DIAS_SOBRETURNOS = [];
+  DIA_SOB_INDEX = 0;
 
-    SLOT_RECOMENDADO_FIJO = null;
-    FECHA_RECOMENDADA_FIJA = null;
+  SLOT_RECOMENDADO_FIJO = null;
+  FECHA_RECOMENDADA_FIJA = null;
 
-    elSlot.innerHTML = "";
-    renderSlotRecomendado();
+  // Reset duración hasta conocer la del nuevo médico
+  currentDurMin = 15;
 
-    // Si no hay médico elegido, no hacemos ninguna consulta de slots
-    if (!elMedico.value) {
-      elFecha.value = isoDateARNow();
-      btnCrear.disabled = true;
-      syncSobturnoUI();
-      return;
-    }
+  elSlot.innerHTML = "";
+  renderSlotRecomendado();
 
-    // Recién acá cargamos disponibilidad
-    await cargarSlotsRango();
-    await cargarDiasSobreturnos();
-    await setFechaPrimerDiaConSlots();
-    await cargarSlots();
-
+  if (!elMedico.value) {
+    elFecha.value = isoDateARNow();
+    btnCrear.disabled = true;
     syncSobturnoUI();
-  };
+    return;
+  }
+
+  await cargarSlotsRango();
+  await cargarDiasSobreturnos();
+  await setFechaPrimerDiaConSlots();
+  await cargarSlots();
+
+  syncSobturnoUI();
+};
 
 
   /* ================= CAMBIO MANUAL DE FECHA ================= */
