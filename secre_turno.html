@@ -725,8 +725,6 @@ textarea{
     </div>
   </div>
 </div>
-
-<!-- ✅ config.js (NO hardcode anon key acá) -->
   
 <!-- ✅ config.js (NO hardcode anon key acá) -->
 <script src="./config.js"></script>
@@ -1741,10 +1739,17 @@ async function buscarPaciente(){
   if (error){ errP.textContent = error.message; return; }
 
   const p = (data||[])[0];
-  if (!p){
-    okP.textContent = "No existe. Completá datos y guardá.";
-    return;
-  }
+
+if (!p){
+  elNombre.value = "";
+  elTel.value = "";
+  elEmail.value = "";
+  elOS.value = "";
+  elAf.value = "";
+
+  okP.textContent = "No existe. Completá datos y guardá.";
+  return;
+}
 
   currentPacienteId = p.id_paciente;
   elNombre.value = p.nombre || "";
@@ -2281,10 +2286,11 @@ document.getElementById("btnCrearTurno").onclick = crearTurno;
 btnAgregarPractica.onclick = agregarPracticaSeleccionada;
 elBloqueoSlots.onchange = actualizarResumenTiempo;
 
-elDerivadorBuscar.addEventListener(
-  "input",
-  renderResultadosDerivador
-);
+elDerivadorBuscar.addEventListener("input", () => {
+  DERIVADOR_SELECCIONADO_ID = null;
+  derivadorSeleccionado.textContent = "Sin derivador";
+  renderResultadosDerivador();
+});
 
 btnNuevoDerivador.onclick =
   abrirModalDerivador;
