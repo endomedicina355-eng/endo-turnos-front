@@ -1000,7 +1000,11 @@ async function cargarTenantBranding(){
 /* ================= MEDICOS por tenant ================= */
 async function cargarMedicosTenant(){
   errT.textContent = "";
-  elMedico.innerHTML = "";
+  elMedico.innerHTML = `
+  <option value="" selected disabled>
+    Seleccionar médico...
+  </option>
+`;
 
   if (!TENANT_ID){
     const opt = document.createElement("option");
@@ -2728,6 +2732,39 @@ await cargarSlots();
   syncSobturnoUI();
 
   elMedico.onchange = async () => {
+
+  CURRENT_SLOTS = [];
+  CURRENT_SLOT_INDEX = 0;
+
+  DIAS_DISPONIBLES = [];
+  DIA_INDEX = 0;
+
+  SLOTS_RANGO = [];
+  SLOTS_POR_DIA = {};
+
+  DIAS_SOBRETURNOS = [];
+  DIA_SOB_INDEX = 0;
+
+  SLOT_RECOMENDADO_FIJO = null;
+  FECHA_RECOMENDADA_FIJA = null;
+
+  elSlot.innerHTML = "";
+  renderSlotRecomendado();
+
+  if (!elMedico.value){
+    elFecha.value = isoDateARNow();
+    btnCrear.disabled = true;
+    syncSobturnoUI();
+    return;
+  }
+
+  await cargarSlotsRango();
+  await cargarDiasSobreturnos();
+  await setFechaPrimerDiaConSlots();
+  await cargarSlots();
+
+  syncSobturnoUI();
+}; = async () => {
   CURRENT_SLOTS = [];
   CURRENT_SLOT_INDEX = 0;
   SLOT_RECOMENDADO_FIJO = null;
