@@ -1664,50 +1664,54 @@ async function cargarSlotRecomendadoFijo(){
     );
   });
 
-  // Días que tienen al menos un slot libre
-  DIAS_DISPONIBLES =
-    Object.keys(SLOTS_POR_DIA).sort();
-
-  SLOT_RECOMENDADO_FIJO = null;
-  FECHA_RECOMENDADA_FIJA = null;
-
   // =====================================================
-  // BUSCAR PRIMER INICIO QUE SOPORTE TODAS LAS PRÁCTICAS
-  // =====================================================
+// DÍAS REALMENTE DISPONIBLES PARA LAS PRÁCTICAS ELEGIDAS
+// =====================================================
 
-  for (const dia of DIAS_DISPONIBLES){
+DIAS_DISPONIBLES = [];
 
-    const slotsDia =
-      SLOTS_POR_DIA[dia] || [];
+SLOT_RECOMENDADO_FIJO = null;
+FECHA_RECOMENDADA_FIJA = null;
 
-    if (!slotsDia.length) continue;
+const diasCandidatos =
+  Object.keys(SLOTS_POR_DIA).sort();
 
-    // Obtener duración real del slot
-    const duracionDia =
-      diffMinutes(
-        slotsDia[0].inicio_slot,
-        slotsDia[0].fin_slot
-      ) || 15;
+for (const dia of diasCandidatos){
 
-    const durAnterior = currentDurMin;
+  const slotsDia =
+    SLOTS_POR_DIA[dia] || [];
 
-    currentDurMin = duracionDia;
+  if (!slotsDia.length) continue;
 
-    const slotsValidos =
-      filtrarSlotsPorPracticas(slotsDia);
+  // Duración real del slot de ese día
+  const duracionDia =
+    diffMinutes(
+      slotsDia[0].inicio_slot,
+      slotsDia[0].fin_slot
+    ) || 15;
 
-    currentDurMin = durAnterior;
+  const durAnterior = currentDurMin;
 
-    if (slotsValidos.length){
+  currentDurMin = duracionDia;
 
+  const slotsValidos =
+    filtrarSlotsPorPracticas(slotsDia);
+
+  currentDurMin = durAnterior;
+
+  // 🔥 Solo incorporamos el día si realmente
+  // puede alojar todas las prácticas consecutivamente
+  if (slotsValidos.length){
+
+    DIAS_DISPONIBLES.push(dia);
+
+    // Primer horario válido de todos = recomendado
+    if (!SLOT_RECOMENDADO_FIJO){
       FECHA_RECOMENDADA_FIJA = dia;
-
-      SLOT_RECOMENDADO_FIJO =
-        slotsValidos[0];
-
-      break;
+      SLOT_RECOMENDADO_FIJO = slotsValidos[0];
     }
   }
+}
 
   renderSlotRecomendado();
 }
