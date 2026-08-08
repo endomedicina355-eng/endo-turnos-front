@@ -852,6 +852,46 @@ function diffMinutes(a,b){
   return Math.round((new Date(b).getTime() - new Date(a).getTime())/60000);
 }
 
+function filtrarSlotsPorPracticas(slots){
+
+  const cantidadPracticas =
+    Math.max(PRACTICAS_SELECCIONADAS.length, 1);
+
+  // Una sola práctica: cualquier slot libre sirve
+  if (cantidadPracticas <= 1){
+    return slots;
+  }
+
+  return slots.filter((slot, index)=>{
+
+    const inicioBase =
+      new Date(slot.inicio_slot).getTime();
+
+    for (let i = 1; i < cantidadPracticas; i++){
+
+      const siguiente =
+        slots[index + i];
+
+      if (!siguiente){
+        return false;
+      }
+
+      const inicioEsperado =
+        inicioBase +
+        (currentDurMin * 60000 * i);
+
+      const inicioReal =
+        new Date(siguiente.inicio_slot).getTime();
+
+      if (inicioReal !== inicioEsperado){
+        return false;
+      }
+    }
+
+    return true;
+  });
+}  
+
 /* ================= Auto logout (inactividad) ================= */
 const IDLE_MIN = 20;
 let idleTimer = null;
@@ -1069,6 +1109,10 @@ function agregarPracticaSeleccionada(){
   }
 
   renderPracticasSeleccionadas();
+
+if (!chkSob.checked){
+  cargarSlots();
+}
 }
 
 function quitarPractica(index){
@@ -1080,7 +1124,13 @@ function quitarPractica(index){
 
   PRACTICAS_SELECCIONADAS.splice(index,1);
 
-  renderPracticasSeleccionadas();
+  PRACTICAS_SELECCIONADAS.splice(index,1);
+
+renderPracticasSeleccionadas();
+
+if (!chkSob.checked){
+  cargarSlots();
+}
 }
 
 
@@ -1436,29 +1486,56 @@ async function setFechaPrimerDiaConSlots(){
 }
   /* ================= Slots ================= */
 async function cargarSlots(){
+
   errT.textContent = "";
   elSlot.innerHTML = "";
 
   if (!elMedico.value || !elFecha.value) return;
 
-  CURRENT_SLOTS = SLOTS_POR_DIA[elFecha.value] || [];
+  const slotsDia =
+    SLOTS_POR_DIA[elFecha.value] || [];
 
-  if (!CURRENT_SLOTS.length){
-    elSlot.innerHTML = `<option value="">Sin turnos disponibles</option>`;
+  if (!slotsDia.length){
+
+    CURRENT_SLOTS = [];
+
+    elSlot.innerHTML =
+      `<option value="">Sin turnos disponibles</option>`;
+
     btnCrear.disabled = true;
     btnPrev.disabled = true;
     btnNext.disabled = true;
+
     return;
   }
 
-  currentDurMin = diffMinutes(
-    CURRENT_SLOTS[0].inicio_slot,
-    CURRENT_SLOTS[0].fin_slot
-  ) || 15;
+  // Duración real del slot del médico
+  currentDurMin =
+    diffMinutes(
+      slotsDia[0].inicio_slot,
+      slotsDia[0].fin_slot
+    ) || 15;
+
+  // 🔥 FILTRADO INTELIGENTE
+  CURRENT_SLOTS =
+    filtrarSlotsPorPracticas(slotsDia);
 
   actualizarResumenTiempo();
 
+  if (!CURRENT_SLOTS.length){
+
+    elSlot.innerHTML =
+      `<option value="">Sin espacio consecutivo suficiente</option>`;
+
+    btnCrear.disabled = true;
+    btnPrev.disabled = true;
+    btnNext.disabled = true;
+
+    return;
+  }
+
   CURRENT_SLOT_INDEX = 0;
+
   renderSlotActual();
 }
   
