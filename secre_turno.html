@@ -2764,18 +2764,6 @@ await cargarSlots();
   await cargarSlots();
 
   syncSobturnoUI();
-}; = async () => {
-  CURRENT_SLOTS = [];
-  CURRENT_SLOT_INDEX = 0;
-  SLOT_RECOMENDADO_FIJO = null;
-  FECHA_RECOMENDADA_FIJA = null;
-  elSlot.innerHTML = "";
-
-  await cargarSlotsRango();
-  await cargarDiasSobreturnos();
-  await setFechaPrimerDiaConSlots();
-  await cargarSlots();
-  syncSobturnoUI();
 };
   
   elFecha.onchange = async () => {
