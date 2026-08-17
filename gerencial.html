@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+
   <title>Gerencial · Dashboard</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,7 +20,9 @@
       --danger:#b00020;
     }
 
-    *{box-sizing:border-box}
+    *{
+      box-sizing:border-box;
+    }
 
     body{
       margin:0;
@@ -88,11 +91,12 @@
       box-shadow:0 1px 2px rgba(0,0,0,.02);
     }
 
+
     /* ================= FILTROS ================= */
 
     .filters{
       display:grid;
-      grid-template-columns:1.5fr 1fr 1fr 1fr;
+      grid-template-columns:1.5fr 1fr 1fr 1fr 1fr;
       gap:12px;
       align-items:end;
       margin-bottom:16px;
@@ -121,6 +125,7 @@
       color:#fff;
       border-color:#111;
     }
+
 
     /* ================= KPIs ================= */
 
@@ -157,17 +162,8 @@
       color:var(--muted);
     }
 
-    .positivo{
-      color:var(--ok);
-      font-weight:800;
-    }
 
-    .negativo{
-      color:var(--danger);
-      font-weight:800;
-    }
-
-    /* ================= GRÁFICOS ================= */
+    /* ================= GRIDS ================= */
 
     .grid2{
       display:grid;
@@ -200,7 +196,84 @@
       height:290px;
     }
 
-    /* ================= LISTAS ================= */
+
+    /* ================= ORIGEN ================= */
+
+    .origenGrid{
+      display:grid;
+      grid-template-columns:360px 1fr;
+      gap:16px;
+      margin-bottom:16px;
+    }
+
+    .origenStats{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .origenCard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:15px;
+      background:#fafafa;
+    }
+
+    .origenTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:12px;
+    }
+
+    .origenNombre{
+      font-size:16px;
+      font-weight:900;
+    }
+
+    .origenCantidad{
+      font-size:26px;
+      font-weight:900;
+    }
+
+    .origenParticipacion{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:2px;
+    }
+
+    .origenMetricas{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:8px;
+    }
+
+    .origenMetrica{
+      border-top:1px solid #e8e8e8;
+      padding-top:10px;
+    }
+
+    .origenMetricaLabel{
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+      margin-bottom:3px;
+    }
+
+    .origenMetricaValue{
+      font-size:18px;
+      font-weight:900;
+    }
+
+    .origenDetalle{
+      margin-top:12px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+
+    /* ================= RANKINGS ================= */
 
     .ranking{
       display:flex;
@@ -248,7 +321,8 @@
       margin-top:12px;
     }
 
-    /* ================= TABLA ================= */
+
+    /* ================= TABLAS ================= */
 
     .tableWrap{
       overflow:auto;
@@ -285,11 +359,22 @@
       background:#f3f4f6;
     }
 
+    .pill.ok{
+      background:#dff5e5;
+      color:#0f5132;
+    }
+
+    .pill.bad{
+      background:#fde2e6;
+      color:#842029;
+    }
+
     .error{
       color:var(--danger);
       font-size:13px;
       margin-top:10px;
     }
+
 
     /* ================= MODAL ================= */
 
@@ -373,15 +458,32 @@
       font-size:16px;
     }
 
-    @media(max-width:1200px){
+
+    /* ================= RESPONSIVE ================= */
+
+    @media(max-width:1250px){
+      .filters{
+        grid-template-columns:1.5fr 1fr 1fr;
+      }
+
       .kpis{
         grid-template-columns:repeat(4,1fr);
       }
     }
 
-    @media(max-width:1100px){
+    @media(max-width:1050px){
       .grid3{
         grid-template-columns:1fr 1fr;
+      }
+
+      .origenGrid{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:800px){
+      .origenStats{
+        grid-template-columns:1fr;
       }
 
       .filters{
@@ -397,6 +499,10 @@
         grid-template-columns:1fr;
       }
 
+      .origenMetricas{
+        grid-template-columns:1fr;
+      }
+
       .wrap{
         padding:12px;
       }
@@ -404,15 +510,18 @@
   </style>
 </head>
 
+
 <body>
 
 <div class="wrap">
+
 
   <!-- ================= HEADER ================= -->
 
   <div class="header">
 
     <div>
+
       <div class="brand" id="brandTitle">
         Dashboard Gerencial
       </div>
@@ -422,7 +531,9 @@
       </div>
 
       <div class="muted" id="userLine"></div>
+
     </div>
+
 
     <div class="right">
 
@@ -430,7 +541,11 @@
         Secretaría
       </button>
 
-      <button id="btnActualizar" class="primary" type="button">
+      <button
+        id="btnActualizar"
+        class="primary"
+        type="button"
+      >
         Actualizar
       </button>
 
@@ -445,9 +560,10 @@
 
   <!-- ================= FILTROS ================= -->
 
-  <div class="card">
+  <div class="card" style="margin-bottom:16px">
 
     <div class="filters">
+
 
       <div class="field">
 
@@ -455,15 +571,27 @@
 
         <div class="periodos">
 
-          <button class="periodoBtn" data-periodo="7">
+          <button
+            class="periodoBtn"
+            data-periodo="7"
+            type="button"
+          >
             7 días
           </button>
 
-          <button class="periodoBtn active" data-periodo="30">
+          <button
+            class="periodoBtn active"
+            data-periodo="30"
+            type="button"
+          >
             30 días
           </button>
 
-          <button class="periodoBtn" data-periodo="mes">
+          <button
+            class="periodoBtn"
+            data-periodo="mes"
+            type="button"
+          >
             Mes actual
           </button>
 
@@ -512,6 +640,22 @@
 
       </div>
 
+
+      <div class="field">
+
+        <label>Origen</label>
+
+        <select id="filtroCanal">
+
+          <option value="">Todos</option>
+          <option value="secre">Secretaría</option>
+          <option value="web">Online</option>
+
+        </select>
+
+      </div>
+
+
     </div>
 
     <div class="error" id="err"></div>
@@ -529,11 +673,13 @@
       <div class="kpiChange">Cantidad de turnos</div>
     </div>
 
+
     <div class="kpi">
       <div class="kpiLabel">PRÁCTICAS</div>
       <div class="kpiValue" id="kpiPracticas">—</div>
-      <div class="kpiChange">Estudios / prácticas realizadas</div>
+      <div class="kpiChange">Estudios / prácticas</div>
     </div>
+
 
     <div class="kpi">
       <div class="kpiLabel">ATENDIDOS</div>
@@ -541,11 +687,13 @@
       <div class="kpiChange">Total período</div>
     </div>
 
+
     <div class="kpi">
       <div class="kpiLabel">AUSENTISMO</div>
       <div class="kpiValue" id="kpiAusentismo">—</div>
-      <div class="kpiChange">Sobre turnos programados</div>
+      <div class="kpiChange">Sobre turnos del período</div>
     </div>
+
 
     <div class="kpi">
       <div class="kpiLabel">CANCELACIONES</div>
@@ -553,11 +701,13 @@
       <div class="kpiChange">Total período</div>
     </div>
 
+
     <div class="kpi">
       <div class="kpiLabel">COPAGOS</div>
       <div class="kpiValue" id="kpiCopago">—</div>
       <div class="kpiChange">Recaudación registrada</div>
     </div>
+
 
     <div class="kpi">
       <div class="kpiLabel">TICKET PROMEDIO</div>
@@ -608,9 +758,284 @@
   </div>
 
 
+  <!-- =========================================================
+       ORIGEN DE LOS TURNOS
+       ========================================================= -->
+
+  <div class="origenGrid">
+
+
+    <div class="card">
+
+      <div class="cardTitle">
+        Origen de los turnos
+      </div>
+
+      <div class="cardSub">
+        Secretaría vs autogestión online
+      </div>
+
+      <div class="chartBox">
+        <canvas id="chartCanales"></canvas>
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="cardTitle">
+        Resultado según origen
+      </div>
+
+      <div class="cardSub">
+        Qué ocurrió con los turnos otorgados por cada canal
+      </div>
+
+
+      <div class="origenStats">
+
+
+        <!-- SECRETARÍA -->
+
+        <div class="origenCard">
+
+          <div class="origenTop">
+
+            <div>
+
+              <div class="origenNombre">
+                Secretaría
+              </div>
+
+              <div
+                class="origenParticipacion"
+                id="origenSecreParticipacion"
+              >
+                —
+              </div>
+
+            </div>
+
+            <div
+              class="origenCantidad"
+              id="origenSecreTurnos"
+            >
+              —
+            </div>
+
+          </div>
+
+
+          <div class="origenMetricas">
+
+            <div class="origenMetrica">
+
+              <div class="origenMetricaLabel">
+                ASISTENCIA
+              </div>
+
+              <div
+                class="origenMetricaValue"
+                id="origenSecreAsistencia"
+              >
+                —
+              </div>
+
+            </div>
+
+
+            <div class="origenMetrica">
+
+              <div class="origenMetricaLabel">
+                AUSENTISMO
+              </div>
+
+              <div
+                class="origenMetricaValue"
+                id="origenSecreAusentismo"
+              >
+                —
+              </div>
+
+            </div>
+
+
+            <div class="origenMetrica">
+
+              <div class="origenMetricaLabel">
+                CANCELACIÓN
+              </div>
+
+              <div
+                class="origenMetricaValue"
+                id="origenSecreCancelacion"
+              >
+                —
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="origenDetalle"
+            id="origenSecreDetalle"
+          >
+            —
+          </div>
+
+        </div>
+
+
+        <!-- ONLINE -->
+
+        <div class="origenCard">
+
+          <div class="origenTop">
+
+            <div>
+
+              <div class="origenNombre">
+                Online
+              </div>
+
+              <div
+                class="origenParticipacion"
+                id="origenWebParticipacion"
+              >
+                —
+              </div>
+
+            </div>
+
+            <div
+              class="origenCantidad"
+              id="origenWebTurnos"
+            >
+              —
+            </div>
+
+          </div>
+
+
+          <div class="origenMetricas">
+
+            <div class="origenMetrica">
+
+              <div class="origenMetricaLabel">
+                ASISTENCIA
+              </div>
+
+              <div
+                class="origenMetricaValue"
+                id="origenWebAsistencia"
+              >
+                —
+              </div>
+
+            </div>
+
+
+            <div class="origenMetrica">
+
+              <div class="origenMetricaLabel">
+                AUSENTISMO
+              </div>
+
+              <div
+                class="origenMetricaValue"
+                id="origenWebAusentismo"
+              >
+                —
+              </div>
+
+            </div>
+
+
+            <div class="origenMetrica">
+
+              <div class="origenMetricaLabel">
+                CANCELACIÓN
+              </div>
+
+              <div
+                class="origenMetricaValue"
+                id="origenWebCancelacion"
+              >
+                —
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="origenDetalle"
+            id="origenWebDetalle"
+          >
+            —
+          </div>
+
+        </div>
+
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= DETALLE ORIGEN ================= -->
+
+  <div class="card" style="margin-bottom:16px">
+
+    <div class="cardTitle">
+      Comparativa por origen
+    </div>
+
+    <div class="cardSub">
+      Evolución de los turnos según el canal por el cual fueron reservados
+    </div>
+
+
+    <div class="tableWrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>Origen</th>
+            <th>Turnos</th>
+            <th>Participación</th>
+            <th>Presentes</th>
+            <th>Atendidos</th>
+            <th>Asistencia</th>
+            <th>Ausentes</th>
+            <th>Ausentismo</th>
+            <th>Cancelados</th>
+            <th>Cancelación</th>
+          </tr>
+
+        </thead>
+
+        <tbody id="tablaCanales"></tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
   <!-- ================= FINANZAS / RANKINGS ================= -->
 
   <div class="grid3">
+
 
     <div class="card">
 
@@ -639,7 +1064,10 @@
         Ranking por cantidad de estudios
       </div>
 
-      <div class="ranking" id="rankingPracticas"></div>
+      <div
+        class="ranking"
+        id="rankingPracticas"
+      ></div>
 
     </div>
 
@@ -654,15 +1082,24 @@
         Estudios solicitados
       </div>
 
-      <div class="ranking" id="rankingDerivadores"></div>
+      <div
+        class="ranking"
+        id="rankingDerivadores"
+      ></div>
 
       <div class="rankingFooter">
-        <button id="btnVerDerivadores" type="button">
+
+        <button
+          id="btnVerDerivadores"
+          type="button"
+        >
           Ver más
         </button>
+
       </div>
 
     </div>
+
 
   </div>
 
@@ -678,6 +1115,7 @@
     <div class="cardSub">
       Producción, asistencia y copagos
     </div>
+
 
     <div class="tableWrap">
 
@@ -707,35 +1145,54 @@
 
   </div>
 
+
 </div>
 
 
 <!-- ================= MODAL DERIVADORES ================= -->
 
-<div class="modalBg" id="modalDerivadores">
+<div
+  class="modalBg"
+  id="modalDerivadores"
+>
 
   <div class="modal">
 
     <div class="modalHead">
 
       <div>
-        <div class="brand" style="font-size:18px">
+
+        <div
+          class="brand"
+          style="font-size:18px"
+        >
           Derivadores
         </div>
 
-        <div class="muted" id="modalDerivadoresSub">
+        <div
+          class="muted"
+          id="modalDerivadoresSub"
+        >
           Estudios solicitados según filtros actuales
         </div>
+
       </div>
 
-      <button id="btnCerrarDerivadores" type="button">
+
+      <button
+        id="btnCerrarDerivadores"
+        type="button"
+      >
         Cerrar ✕
       </button>
 
     </div>
 
-    <div class="modalBody" id="listaDerivadoresCompleta">
-    </div>
+
+    <div
+      class="modalBody"
+      id="listaDerivadoresCompleta"
+    ></div>
 
   </div>
 
@@ -743,48 +1200,96 @@
 
 
 <script src="./config.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 
 <script>
 
-/* ================= CONFIG ================= */
+/* =========================================================
+   CONFIG
+   ========================================================= */
 
-const SUPABASE_URL = window.__SB__?.url;
-const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+const SUPABASE_URL =
+  window.__SB__?.url;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY){
+const SUPABASE_ANON_KEY =
+  window.__SB__?.anonKey;
+
+
+if (
+  !SUPABASE_URL ||
+  !SUPABASE_ANON_KEY
+){
   alert("Falta config.js");
-  throw new Error("Missing Supabase config");
+  throw new Error(
+    "Missing Supabase config"
+  );
 }
 
-const sb = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+
+const sb =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 
 
-/* ================= DOM ================= */
+/* =========================================================
+   DOM
+   ========================================================= */
 
-const err = document.getElementById("err");
+const err =
+  document.getElementById(
+    "err"
+  );
 
-const filtroMedico = document.getElementById("filtroMedico");
-const filtroPractica = document.getElementById("filtroPractica");
-const filtroEstado = document.getElementById("filtroEstado");
+
+const filtroMedico =
+  document.getElementById(
+    "filtroMedico"
+  );
+
+const filtroPractica =
+  document.getElementById(
+    "filtroPractica"
+  );
+
+const filtroEstado =
+  document.getElementById(
+    "filtroEstado"
+  );
+
+const filtroCanal =
+  document.getElementById(
+    "filtroCanal"
+  );
+
 
 const modalDerivadores =
-  document.getElementById("modalDerivadores");
+  document.getElementById(
+    "modalDerivadores"
+  );
 
 const btnVerDerivadores =
-  document.getElementById("btnVerDerivadores");
+  document.getElementById(
+    "btnVerDerivadores"
+  );
 
 const btnCerrarDerivadores =
-  document.getElementById("btnCerrarDerivadores");
+  document.getElementById(
+    "btnCerrarDerivadores"
+  );
 
 const listaDerivadoresCompleta =
-  document.getElementById("listaDerivadoresCompleta");
+  document.getElementById(
+    "listaDerivadoresCompleta"
+  );
 
 
-/* ================= STATE ================= */
+/* =========================================================
+   STATE
+   ========================================================= */
 
 let TENANT_ID = null;
 
@@ -792,26 +1297,34 @@ let PERIODO = 30;
 
 /*
   DATA_RAW:
-  dataset completo traído UNA vez desde la RPC
-  para hasta 90 días.
+  ÚNICA carga desde backend.
+  Contiene hasta 90 días.
 
   DATA_FILTRADA:
-  se genera localmente según período,
-  médico, práctica y estado.
+  Se recalcula localmente.
 */
 
 let DATA_RAW = [];
+
 let DATA_FILTRADA = [];
 
 
-/* ================= CHARTS ================= */
+/* =========================================================
+   CHARTS
+   ========================================================= */
 
 let chartProduccion = null;
+
 let chartEstados = null;
+
 let chartCobros = null;
 
+let chartCanales = null;
 
-/* ================= HELPERS ================= */
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
 
 function hoyISO(){
 
@@ -819,99 +1332,250 @@ function hoyISO(){
     new Intl.DateTimeFormat(
       "en-CA",
       {
-        timeZone:"America/Argentina/Buenos_Aires",
+        timeZone:
+          "America/Argentina/Buenos_Aires",
         year:"numeric",
         month:"2-digit",
         day:"2-digit"
       }
     )
-    .formatToParts(new Date());
+    .formatToParts(
+      new Date()
+    );
+
 
   const y =
-    parts.find(x=>x.type==="year").value;
+    parts.find(
+      x=>x.type==="year"
+    ).value;
 
   const m =
-    parts.find(x=>x.type==="month").value;
+    parts.find(
+      x=>x.type==="month"
+    ).value;
 
   const d =
-    parts.find(x=>x.type==="day").value;
+    parts.find(
+      x=>x.type==="day"
+    ).value;
+
 
   return `${y}-${m}-${d}`;
+
 }
 
 
-function addDaysISO(iso,n){
+function addDaysISO(
+  iso,
+  n
+){
 
   const [y,m,d] =
-    iso.split("-").map(Number);
+    iso
+      .split("-")
+      .map(Number);
+
 
   const dt =
-    new Date(Date.UTC(y,m-1,d));
+    new Date(
+      Date.UTC(
+        y,
+        m-1,
+        d
+      )
+    );
+
 
   dt.setUTCDate(
-    dt.getUTCDate()+n
+    dt.getUTCDate() + n
   );
+
 
   return [
     dt.getUTCFullYear(),
-    String(dt.getUTCMonth()+1).padStart(2,"0"),
-    String(dt.getUTCDate()).padStart(2,"0")
+    String(
+      dt.getUTCMonth()+1
+    ).padStart(2,"0"),
+    String(
+      dt.getUTCDate()
+    ).padStart(2,"0")
   ].join("-");
+
 }
 
 
-function formatoFechaCorta(iso){
+function formatoFechaCorta(
+  iso
+){
 
-  if (!iso) return "";
+  if (!iso)
+    return "";
+
 
   const [y,m,d] =
     String(iso)
       .split("-")
       .map(Number);
 
-  return `${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}`;
+
+  return (
+    String(d)
+      .padStart(2,"0") +
+    "/" +
+    String(m)
+      .padStart(2,"0")
+  );
+
 }
 
 
-function practicaIdsArray(row){
+function practicaIdsArray(
+  row
+){
 
-  if (Array.isArray(row.practica_ids))
-    return row.practica_ids.map(String);
+  if (
+    Array.isArray(
+      row.practica_ids
+    )
+  ){
+    return row
+      .practica_ids
+      .map(String);
+  }
 
   return [];
+
 }
 
 
-function cantidadPracticasRow(row){
+function cantidadPracticasRow(
+  row
+){
 
   const n =
-    Number(row.cantidad_practicas);
+    Number(
+      row.cantidad_practicas
+    );
 
-  /*
-    Si backend devuelve 0 pero hay práctica principal,
-    contamos 1.
-
-    Si no hay ninguna práctica histórica registrada,
-    mantenemos fallback a 1 porque el turno funcionalmente
-    representa una consulta/práctica.
-  */
 
   if (n > 0)
     return n;
 
-  if (row.practica_principal_id)
+
+  if (
+    row.practica_principal_id
+  ){
     return 1;
+  }
+
+
+  /*
+    Turnos históricos sin práctica explícita:
+    se interpretan como una consulta/práctica.
+  */
 
   return 1;
+
 }
 
 
-/* ================= AUTH ================= */
+function normalizarEstado(
+  estado
+){
+
+  return String(
+    estado || ""
+  )
+  .toLowerCase()
+  .trim();
+
+}
+
+
+function normalizarCanal(
+  canal
+){
+
+  const c =
+    String(
+      canal || ""
+    )
+    .toLowerCase()
+    .trim();
+
+
+  if (
+    c === "web" ||
+    c === "online" ||
+    c === "autogestion"
+  ){
+    return "web";
+  }
+
+
+  if (
+    c === "secre" ||
+    c === "secretaria"
+  ){
+    return "secre";
+  }
+
+
+  return c || "otro";
+
+}
+
+
+function nombreCanal(
+  canal
+){
+
+  const c =
+    normalizarCanal(
+      canal
+    );
+
+
+  if (c === "secre")
+    return "Secretaría";
+
+
+  if (c === "web")
+    return "Online";
+
+
+  return "Otro";
+
+}
+
+
+function porcentaje(
+  numerador,
+  denominador
+){
+
+  if (!denominador)
+    return 0;
+
+
+  return (
+    Number(numerador) /
+    Number(denominador) *
+    100
+  );
+
+}
+
+
+/* =========================================================
+   AUTH
+   ========================================================= */
 
 async function requireLogin(){
 
   const { data } =
     await sb.auth.getUser();
+
 
   if (!data?.user){
 
@@ -922,39 +1586,66 @@ async function requireLogin(){
 
   }
 
-  document.getElementById(
-    "userLine"
-  ).textContent =
-    data.user.email || "";
+
+  document
+    .getElementById(
+      "userLine"
+    )
+    .textContent =
+      data.user.email || "";
+
 
   return data.user;
+
 }
 
 
-/* ================= TENANT ================= */
+/* =========================================================
+   TENANT
+   ========================================================= */
 
-async function resolverTenant(user){
+async function resolverTenant(
+  user
+){
 
-  const { data, error } =
+  const {
+    data,
+    error
+  } =
     await sb
-      .from("personal")
+      .from(
+        "personal"
+      )
       .select(
         "tenant_id,rol,activo"
       )
-      .eq("id",user.id)
-      .eq("activo",true)
+      .eq(
+        "id",
+        user.id
+      )
+      .eq(
+        "activo",
+        true
+      )
       .maybeSingle();
+
 
   if (error)
     throw error;
 
-  if (!data?.tenant_id)
+
+  if (!data?.tenant_id){
+
     throw new Error(
       "Usuario sin tenant."
     );
 
+  }
+
+
   TENANT_ID =
     data.tenant_id;
+
 
   const rol =
     String(
@@ -963,27 +1654,40 @@ async function resolverTenant(user){
     .toLowerCase()
     .trim();
 
+
   if (
-    !["admin","ceo"]
-      .includes(rol)
+    ![
+      "admin",
+      "ceo"
+    ].includes(rol)
   ){
+
     throw new Error(
       "No tenés permisos para acceder al dashboard gerencial."
     );
+
   }
+
 }
 
 
-/* ================= CARGA ÚNICA BACKEND ================= */
+/* =========================================================
+   ÚNICA CARGA DESDE BACKEND
+   ========================================================= */
 
 async function cargarDashboard(){
 
   if (!TENANT_ID)
     return;
 
+
   err.textContent = "";
 
-  const { data, error } =
+
+  const {
+    data,
+    error
+  } =
     await sb.rpc(
       "gerencial_dashboard",
       {
@@ -991,22 +1695,31 @@ async function cargarDashboard(){
       }
     );
 
+
   if (error){
+
     err.textContent =
       error.message;
+
     return;
+
   }
+
 
   DATA_RAW =
     data || [];
 
+
   cargarOpcionesFiltros();
 
   aplicarFiltros();
+
 }
 
 
-/* ================= SELECTS ================= */
+/* =========================================================
+   OPCIONES DE FILTRO
+   ========================================================= */
 
 function cargarOpcionesFiltros(){
 
@@ -1017,28 +1730,41 @@ function cargarOpcionesFiltros(){
     filtroPractica.value;
 
 
+  /* ================= MÉDICOS ================= */
+
   const medicosMap =
     new Map();
 
-  DATA_RAW.forEach(r=>{
 
-    if (
-      r.medico_id &&
-      r.medico_nombre
-    ){
-      medicosMap.set(
-        String(r.medico_id),
+  DATA_RAW.forEach(
+    r=>{
+
+      if (
+        r.medico_id &&
         r.medico_nombre
-      );
-    }
+      ){
 
-  });
+        medicosMap.set(
+          String(
+            r.medico_id
+          ),
+          r.medico_nombre
+        );
+
+      }
+
+    }
+  );
 
 
   filtroMedico.innerHTML =
+
     `<option value="">Todos</option>` +
+
     Array
-      .from(medicosMap.entries())
+      .from(
+        medicosMap.entries()
+      )
       .sort(
         (a,b)=>
           String(a[1])
@@ -1057,71 +1783,101 @@ function cargarOpcionesFiltros(){
   if (
     medicoActual &&
     medicosMap.has(
-      String(medicoActual)
+      String(
+        medicoActual
+      )
     )
   ){
+
     filtroMedico.value =
       medicoActual;
+
   }
 
+
+  /* ================= PRÁCTICAS ================= */
 
   const practicasMap =
     new Map();
 
-  DATA_RAW.forEach(r=>{
 
-    const ids =
-      practicaIdsArray(r);
+  DATA_RAW.forEach(
+    r=>{
 
-    const nombres =
-      String(
-        r.practicas_nombres || ""
-      )
-      .split(" + ")
-      .map(x=>x.trim())
-      .filter(Boolean);
-
-
-    ids.forEach((id,index)=>{
-
-      const nombre =
-        nombres[index] ||
-        (
-          String(
-            r.practica_principal_id
-          ) === String(id)
-            ? r.practica_principal_nombre
-            : "Práctica"
+      const ids =
+        practicaIdsArray(
+          r
         );
 
-      practicasMap.set(
-        String(id),
-        nombre || "Práctica"
-      );
 
-    });
-
-
-    if (
-      !ids.length &&
-      r.practica_principal_id
-    ){
-      practicasMap.set(
+      const nombres =
         String(
-          r.practica_principal_id
-        ),
-        r.practica_principal_nombre ||
-        "Práctica"
-      );
-    }
+          r.practicas_nombres ||
+          ""
+        )
+        .split(" + ")
+        .map(
+          x=>x.trim()
+        )
+        .filter(Boolean);
 
-  });
+
+      ids.forEach(
+        (id,index)=>{
+
+          const nombre =
+
+            nombres[index] ||
+
+            (
+              String(
+                r.practica_principal_id
+              ) ===
+              String(id)
+
+                ? r.practica_principal_nombre
+
+                : "Práctica"
+            );
+
+
+          practicasMap.set(
+            String(id),
+            nombre ||
+            "Práctica"
+          );
+
+        }
+      );
+
+
+      if (
+        !ids.length &&
+        r.practica_principal_id
+      ){
+
+        practicasMap.set(
+          String(
+            r.practica_principal_id
+          ),
+          r.practica_principal_nombre ||
+          "Práctica"
+        );
+
+      }
+
+    }
+  );
 
 
   filtroPractica.innerHTML =
+
     `<option value="">Todas</option>` +
+
     Array
-      .from(practicasMap.entries())
+      .from(
+        practicasMap.entries()
+      )
       .sort(
         (a,b)=>
           String(a[1])
@@ -1140,45 +1896,62 @@ function cargarOpcionesFiltros(){
   if (
     practicaActual &&
     practicasMap.has(
-      String(practicaActual)
+      String(
+        practicaActual
+      )
     )
   ){
+
     filtroPractica.value =
       practicaActual;
+
   }
 
 }
 
 
-/* ================= PERÍODO ================= */
+/* =========================================================
+   PERÍODO
+   ========================================================= */
 
 function fechaDesdePeriodo(){
 
   const hoy =
     hoyISO();
 
+
   if (
-    String(PERIODO) === "mes"
+    String(PERIODO) ===
+    "mes"
   ){
 
     return (
-      hoy.substring(0,7) +
+      hoy.substring(
+        0,
+        7
+      ) +
       "-01"
     );
 
   }
 
+
   const dias =
-    Number(PERIODO) || 30;
+    Number(PERIODO) ||
+    30;
+
 
   return addDaysISO(
     hoy,
-    -(dias-1)
+    -(dias - 1)
   );
+
 }
 
 
-/* ================= FILTROS LOCALES ================= */
+/* =========================================================
+   FILTROS LOCALES
+   ========================================================= */
 
 function aplicarFiltros(){
 
@@ -1197,125 +1970,197 @@ function aplicarFiltros(){
   const estado =
     filtroEstado.value;
 
+  const canal =
+    filtroCanal.value;
+
 
   DATA_FILTRADA =
-    DATA_RAW.filter(r=>{
 
-      const fecha =
-        String(r.fecha || "");
+    DATA_RAW.filter(
+      r=>{
 
-      if (
-        fecha < desde ||
-        fecha > hoy
-      ){
-        return false;
-      }
-
-
-      if (
-        medico &&
-        String(r.medico_id) !==
-        String(medico)
-      ){
-        return false;
-      }
-
-
-      if (
-        estado &&
-        String(r.estado || "")
-          .toLowerCase() !==
-        String(estado)
-          .toLowerCase()
-      ){
-        return false;
-      }
-
-
-      if (practica){
-
-        const ids =
-          practicaIdsArray(r);
-
-        const estaEnArray =
-          ids.includes(
-            String(practica)
+        const fecha =
+          String(
+            r.fecha || ""
           );
 
-        const esPrincipal =
-          String(
-            r.practica_principal_id ||
-            ""
-          ) ===
-          String(practica);
+
+        /* FECHA */
 
         if (
-          !estaEnArray &&
-          !esPrincipal
+          fecha < desde ||
+          fecha > hoy
         ){
           return false;
         }
+
+
+        /* MÉDICO */
+
+        if (
+          medico &&
+          String(
+            r.medico_id
+          ) !==
+          String(
+            medico
+          )
+        ){
+          return false;
+        }
+
+
+        /* ESTADO */
+
+        if (
+          estado &&
+          normalizarEstado(
+            r.estado
+          ) !==
+          normalizarEstado(
+            estado
+          )
+        ){
+          return false;
+        }
+
+
+        /* ORIGEN */
+
+        if (
+          canal &&
+          normalizarCanal(
+            r.canal
+          ) !==
+          normalizarCanal(
+            canal
+          )
+        ){
+          return false;
+        }
+
+
+        /* PRÁCTICA */
+
+        if (
+          practica
+        ){
+
+          const ids =
+            practicaIdsArray(
+              r
+            );
+
+
+          const estaEnArray =
+            ids.includes(
+              String(
+                practica
+              )
+            );
+
+
+          const esPrincipal =
+
+            String(
+              r.practica_principal_id ||
+              ""
+            ) ===
+
+            String(
+              practica
+            );
+
+
+          if (
+            !estaEnArray &&
+            !esPrincipal
+          ){
+            return false;
+          }
+
+        }
+
+
+        return true;
+
       }
-
-
-      return true;
-
-    });
+    );
 
 
   renderDashboard();
+
 }
 
 
-/* ================= KPIs ================= */
+/* =========================================================
+   KPIs
+   ========================================================= */
 
 function renderKPIs(){
 
   const rows =
     DATA_FILTRADA;
 
+
   const turnos =
     rows.length;
 
+
   const practicas =
+
     rows.reduce(
       (acc,r)=>
         acc +
-        cantidadPracticasRow(r),
+        cantidadPracticasRow(
+          r
+        ),
       0
     );
 
+
   const atendidos =
+
     rows.filter(
       r=>
-        String(r.estado)
-          .toLowerCase() ===
+        normalizarEstado(
+          r.estado
+        ) ===
         "atendido"
     ).length;
 
+
   const ausentes =
+
     rows.filter(
       r=>
-        String(r.estado)
-          .toLowerCase() ===
+        normalizarEstado(
+          r.estado
+        ) ===
         "ausente"
     ).length;
 
+
   const cancelados =
+
     rows.filter(
       r=>
-        String(r.estado)
-          .toLowerCase() ===
+        normalizarEstado(
+          r.estado
+        ) ===
         "cancelado"
     ).length;
 
 
   const copago =
+
     rows.reduce(
       (acc,r)=>
         acc +
         (
-          Number(r.copago) ||
+          Number(
+            r.copago
+          ) ||
           0
         ),
       0
@@ -1323,76 +2168,103 @@ function renderKPIs(){
 
 
   const registrosConCopago =
+
     rows.filter(
       r=>
-        Number(r.copago) > 0
+        Number(
+          r.copago
+        ) > 0
     ).length;
 
 
   const ticket =
+
     registrosConCopago
+
       ? copago /
         registrosConCopago
+
       : 0;
 
 
   const ausentismo =
-    turnos
-      ? ausentes /
-        turnos *
-        100
-      : 0;
+    porcentaje(
+      ausentes,
+      turnos
+    );
 
 
-  document.getElementById(
-    "kpiTurnos"
-  ).textContent =
-    turnos;
+  document
+    .getElementById(
+      "kpiTurnos"
+    )
+    .textContent =
+      turnos;
 
 
-  document.getElementById(
-    "kpiPracticas"
-  ).textContent =
-    practicas;
+  document
+    .getElementById(
+      "kpiPracticas"
+    )
+    .textContent =
+      practicas;
 
 
-  document.getElementById(
-    "kpiAtendidos"
-  ).textContent =
-    atendidos;
+  document
+    .getElementById(
+      "kpiAtendidos"
+    )
+    .textContent =
+      atendidos;
 
 
-  document.getElementById(
-    "kpiAusentismo"
-  ).textContent =
-    `${ausentismo.toFixed(1)}%`;
+  document
+    .getElementById(
+      "kpiAusentismo"
+    )
+    .textContent =
+      `${ausentismo.toFixed(1)}%`;
 
 
-  document.getElementById(
-    "kpiCancelaciones"
-  ).textContent =
-    cancelados;
+  document
+    .getElementById(
+      "kpiCancelaciones"
+    )
+    .textContent =
+      cancelados;
 
 
-  document.getElementById(
-    "kpiCopago"
-  ).textContent =
-    `$${Math.round(
-      copago
-    ).toLocaleString("es-AR")}`;
+  document
+    .getElementById(
+      "kpiCopago"
+    )
+    .textContent =
+
+      `$${Math.round(
+        copago
+      ).toLocaleString(
+        "es-AR"
+      )}`;
 
 
-  document.getElementById(
-    "kpiTicket"
-  ).textContent =
-    `$${Math.round(
-      ticket
-    ).toLocaleString("es-AR")}`;
+  document
+    .getElementById(
+      "kpiTicket"
+    )
+    .textContent =
+
+      `$${Math.round(
+        ticket
+      ).toLocaleString(
+        "es-AR"
+      )}`;
 
 }
 
 
-/* ================= PRODUCCIÓN ================= */
+/* =========================================================
+   PRODUCCIÓN
+   ========================================================= */
 
 function renderProduccion(){
 
@@ -1400,36 +2272,51 @@ function renderProduccion(){
     new Map();
 
 
-  DATA_FILTRADA.forEach(r=>{
+  DATA_FILTRADA.forEach(
+    r=>{
 
-    const dia =
-      String(r.fecha || "");
+      const dia =
+        String(
+          r.fecha || ""
+        );
 
-    map.set(
-      dia,
-      (
-        map.get(dia) || 0
-      ) + 1
-    );
 
-  });
+      map.set(
+        dia,
+        (
+          map.get(dia) ||
+          0
+        ) + 1
+      );
+
+    }
+  );
 
 
   const rows =
+
     Array
-      .from(map.entries())
+      .from(
+        map.entries()
+      )
       .sort(
         (a,b)=>
           a[0]
-            .localeCompare(b[0])
+            .localeCompare(
+              b[0]
+            )
       );
 
 
-  if (chartProduccion)
+  if (
+    chartProduccion
+  ){
     chartProduccion.destroy();
+  }
 
 
   chartProduccion =
+
     new Chart(
       document.getElementById(
         "chartProduccion"
@@ -1441,6 +2328,7 @@ function renderProduccion(){
         data:{
 
           labels:
+
             rows.map(
               x=>
                 formatoFechaCorta(
@@ -1451,10 +2339,12 @@ function renderProduccion(){
           datasets:[
             {
               label:"Turnos",
+
               data:
                 rows.map(
                   x=>x[1]
                 ),
+
               tension:.3
             }
           ]
@@ -1490,7 +2380,9 @@ function renderProduccion(){
 }
 
 
-/* ================= ESTADOS ================= */
+/* =========================================================
+   ESTADOS
+   ========================================================= */
 
 function renderEstados(){
 
@@ -1498,21 +2390,28 @@ function renderEstados(){
     new Map();
 
 
-  DATA_FILTRADA.forEach(r=>{
+  DATA_FILTRADA.forEach(
+    r=>{
 
-    const estado =
-      String(
-        r.estado || "sin estado"
+      const estado =
+        normalizarEstado(
+          r.estado
+        ) ||
+        "sin estado";
+
+
+      map.set(
+        estado,
+        (
+          map.get(
+            estado
+          ) ||
+          0
+        ) + 1
       );
 
-    map.set(
-      estado,
-      (
-        map.get(estado) || 0
-      ) + 1
-    );
-
-  });
+    }
+  );
 
 
   const rows =
@@ -1521,11 +2420,15 @@ function renderEstados(){
     );
 
 
-  if (chartEstados)
+  if (
+    chartEstados
+  ){
     chartEstados.destroy();
+  }
 
 
   chartEstados =
+
     new Chart(
       document.getElementById(
         "chartEstados"
@@ -1563,40 +2466,487 @@ function renderEstados(){
 }
 
 
-/* ================= COBROS ================= */
+/* =========================================================
+   ORIGEN DE TURNOS
+   ========================================================= */
+
+function obtenerStatsCanal(
+  canal
+){
+
+  const rows =
+
+    DATA_FILTRADA.filter(
+      r=>
+        normalizarCanal(
+          r.canal
+        ) ===
+        canal
+    );
+
+
+  const turnos =
+    rows.length;
+
+
+  const presentes =
+
+    rows.filter(
+      r=>
+        normalizarEstado(
+          r.estado
+        ) ===
+        "presente"
+    ).length;
+
+
+  const atendidos =
+
+    rows.filter(
+      r=>
+        normalizarEstado(
+          r.estado
+        ) ===
+        "atendido"
+    ).length;
+
+
+  const ausentes =
+
+    rows.filter(
+      r=>
+        normalizarEstado(
+          r.estado
+        ) ===
+        "ausente"
+    ).length;
+
+
+  const cancelados =
+
+    rows.filter(
+      r=>
+        normalizarEstado(
+          r.estado
+        ) ===
+        "cancelado"
+    ).length;
+
+
+  /*
+    Presente es un estado transitorio.
+    Al finalizar el día pasa a atendido.
+
+    Para medir asistencia real:
+    PRESENTE + ATENDIDO.
+  */
+
+  const asistencia =
+    presentes +
+    atendidos;
+
+
+  return {
+
+    canal,
+
+    nombre:
+      nombreCanal(
+        canal
+      ),
+
+    turnos,
+
+    presentes,
+
+    atendidos,
+
+    asistencia,
+
+    ausentes,
+
+    cancelados,
+
+    porcentajeAsistencia:
+      porcentaje(
+        asistencia,
+        turnos
+      ),
+
+    porcentajeAusentismo:
+      porcentaje(
+        ausentes,
+        turnos
+      ),
+
+    porcentajeCancelacion:
+      porcentaje(
+        cancelados,
+        turnos
+      )
+
+  };
+
+}
+
+
+function renderCanales(){
+
+  const secre =
+    obtenerStatsCanal(
+      "secre"
+    );
+
+  const web =
+    obtenerStatsCanal(
+      "web"
+    );
+
+
+  const total =
+    secre.turnos +
+    web.turnos;
+
+
+  const participacionSecre =
+    porcentaje(
+      secre.turnos,
+      total
+    );
+
+
+  const participacionWeb =
+    porcentaje(
+      web.turnos,
+      total
+    );
+
+
+  /* ================= GRÁFICO ================= */
+
+  if (
+    chartCanales
+  ){
+    chartCanales.destroy();
+  }
+
+
+  chartCanales =
+
+    new Chart(
+      document.getElementById(
+        "chartCanales"
+      ),
+      {
+
+        type:"doughnut",
+
+        data:{
+
+          labels:[
+            "Secretaría",
+            "Online"
+          ],
+
+          datasets:[
+            {
+              data:[
+                secre.turnos,
+                web.turnos
+              ]
+            }
+          ]
+
+        },
+
+        options:{
+
+          responsive:true,
+
+          maintainAspectRatio:false,
+
+          plugins:{
+
+            tooltip:{
+
+              callbacks:{
+
+                label:
+                  function(context){
+
+                    const valor =
+                      Number(
+                        context.raw
+                      ) || 0;
+
+                    const pct =
+                      porcentaje(
+                        valor,
+                        total
+                      );
+
+                    return (
+                      `${context.label}: ` +
+                      `${valor} (${pct.toFixed(1)}%)`
+                    );
+
+                  }
+
+              }
+
+            }
+
+          }
+
+        }
+
+      }
+    );
+
+
+  /* ================= CARDS ================= */
+
+  document
+    .getElementById(
+      "origenSecreTurnos"
+    )
+    .textContent =
+      secre.turnos;
+
+
+  document
+    .getElementById(
+      "origenSecreParticipacion"
+    )
+    .textContent =
+      `${participacionSecre.toFixed(1)}% del total`;
+
+
+  document
+    .getElementById(
+      "origenSecreAsistencia"
+    )
+    .textContent =
+      `${secre.porcentajeAsistencia.toFixed(1)}%`;
+
+
+  document
+    .getElementById(
+      "origenSecreAusentismo"
+    )
+    .textContent =
+      `${secre.porcentajeAusentismo.toFixed(1)}%`;
+
+
+  document
+    .getElementById(
+      "origenSecreCancelacion"
+    )
+    .textContent =
+      `${secre.porcentajeCancelacion.toFixed(1)}%`;
+
+
+  document
+    .getElementById(
+      "origenSecreDetalle"
+    )
+    .textContent =
+
+      `${secre.presentes} presentes · ` +
+      `${secre.atendidos} atendidos · ` +
+      `${secre.ausentes} ausentes · ` +
+      `${secre.cancelados} cancelados`;
+
+
+
+  document
+    .getElementById(
+      "origenWebTurnos"
+    )
+    .textContent =
+      web.turnos;
+
+
+  document
+    .getElementById(
+      "origenWebParticipacion"
+    )
+    .textContent =
+      `${participacionWeb.toFixed(1)}% del total`;
+
+
+  document
+    .getElementById(
+      "origenWebAsistencia"
+    )
+    .textContent =
+      `${web.porcentajeAsistencia.toFixed(1)}%`;
+
+
+  document
+    .getElementById(
+      "origenWebAusentismo"
+    )
+    .textContent =
+      `${web.porcentajeAusentismo.toFixed(1)}%`;
+
+
+  document
+    .getElementById(
+      "origenWebCancelacion"
+    )
+    .textContent =
+      `${web.porcentajeCancelacion.toFixed(1)}%`;
+
+
+  document
+    .getElementById(
+      "origenWebDetalle"
+    )
+    .textContent =
+
+      `${web.presentes} presentes · ` +
+      `${web.atendidos} atendidos · ` +
+      `${web.ausentes} ausentes · ` +
+      `${web.cancelados} cancelados`;
+
+
+  /* ================= TABLA ================= */
+
+  const tbody =
+    document.getElementById(
+      "tablaCanales"
+    );
+
+
+  tbody.innerHTML =
+
+    [
+      {
+        ...secre,
+        participacion:
+          participacionSecre
+      },
+
+      {
+        ...web,
+        participacion:
+          participacionWeb
+      }
+
+    ]
+
+    .map(
+      x=>`
+
+        <tr>
+
+          <td>
+            <b>${x.nombre}</b>
+          </td>
+
+          <td>
+            ${x.turnos}
+          </td>
+
+          <td>
+            ${x.participacion.toFixed(1)}%
+          </td>
+
+          <td>
+            ${x.presentes}
+          </td>
+
+          <td>
+            ${x.atendidos}
+          </td>
+
+          <td>
+            <span class="pill ok">
+              ${x.porcentajeAsistencia.toFixed(1)}%
+            </span>
+          </td>
+
+          <td>
+            ${x.ausentes}
+          </td>
+
+          <td>
+            <span class="pill bad">
+              ${x.porcentajeAusentismo.toFixed(1)}%
+            </span>
+          </td>
+
+          <td>
+            ${x.cancelados}
+          </td>
+
+          <td>
+            ${x.porcentajeCancelacion.toFixed(1)}%
+          </td>
+
+        </tr>
+
+      `
+    )
+    .join("");
+
+}
+
+
+/* =========================================================
+   COBROS
+   ========================================================= */
 
 function renderCobros(){
 
   let efectivo = 0;
+
   let transferencia = 0;
 
 
-  DATA_FILTRADA.forEach(r=>{
+  DATA_FILTRADA.forEach(
+    r=>{
 
-    const valor =
-      Number(r.copago) || 0;
+      const valor =
+        Number(
+          r.copago
+        ) || 0;
 
-    if (!valor)
-      return;
+
+      if (!valor)
+        return;
 
 
-    if (
-      r.copago_transferencia === true
-    ){
-      transferencia += valor;
+      if (
+        r.copago_transferencia ===
+        true
+      ){
+
+        transferencia +=
+          valor;
+
+      }
+      else{
+
+        efectivo +=
+          valor;
+
+      }
+
     }
-    else{
-      efectivo += valor;
-    }
-
-  });
+  );
 
 
-  if (chartCobros)
+  if (
+    chartCobros
+  ){
     chartCobros.destroy();
+  }
 
 
   chartCobros =
+
     new Chart(
       document.getElementById(
         "chartCobros"
@@ -1634,7 +2984,9 @@ function renderCobros(){
 }
 
 
-/* ================= PRÁCTICAS ================= */
+/* =========================================================
+   PRÁCTICAS
+   ========================================================= */
 
 function obtenerRankingPracticas(){
 
@@ -1642,83 +2994,118 @@ function obtenerRankingPracticas(){
     new Map();
 
 
-  DATA_FILTRADA.forEach(r=>{
+  DATA_FILTRADA.forEach(
+    r=>{
 
-    const ids =
-      practicaIdsArray(r);
-
-    const nombres =
-      String(
-        r.practicas_nombres || ""
-      )
-      .split(" + ")
-      .map(x=>x.trim())
-      .filter(Boolean);
+      const ids =
+        practicaIdsArray(
+          r
+        );
 
 
-    if (ids.length){
+      const nombres =
+        String(
+          r.practicas_nombres ||
+          ""
+        )
+        .split(" + ")
+        .map(
+          x=>x.trim()
+        )
+        .filter(Boolean);
 
-      ids.forEach(
-        (id,index)=>{
 
-          const nombre =
-            nombres[index] ||
-            r.practica_principal_nombre ||
-            "Práctica";
+      if (
+        ids.length
+      ){
 
-          const key =
-            String(id);
+        ids.forEach(
+          (id,index)=>{
 
-          if (!map.has(key)){
-            map.set(
-              key,
-              {
-                nombre,
-                cantidad:0
-              }
-            );
+            const nombre =
+
+              nombres[index] ||
+
+              r.practica_principal_nombre ||
+
+              "Práctica";
+
+
+            const key =
+              String(id);
+
+
+            if (
+              !map.has(key)
+            ){
+
+              map.set(
+                key,
+                {
+                  nombre,
+                  cantidad:0
+                }
+              );
+
+            }
+
+
+            map.get(
+              key
+            ).cantidad += 1;
+
           }
+        );
 
-          map.get(key)
-            .cantidad += 1;
 
-        }
-      );
+        return;
 
-      return;
+      }
+
+
+      const key =
+        String(
+          r.practica_principal_id ||
+          "consulta"
+        );
+
+
+      const nombre =
+
+        r.practica_principal_nombre ||
+
+        r.practicas_nombres ||
+
+        "Consulta";
+
+
+      if (
+        !map.has(key)
+      ){
+
+        map.set(
+          key,
+          {
+            nombre,
+            cantidad:0
+          }
+        );
+
+      }
+
+
+      map.get(
+        key
+      ).cantidad += 1;
+
     }
-
-
-    const key =
-      String(
-        r.practica_principal_id ||
-        "consulta"
-      );
-
-    const nombre =
-      r.practica_principal_nombre ||
-      r.practicas_nombres ||
-      "Consulta";
-
-
-    if (!map.has(key)){
-      map.set(
-        key,
-        {
-          nombre,
-          cantidad:0
-        }
-      );
-    }
-
-    map.get(key)
-      .cantidad += 1;
-
-  });
+  );
 
 
   return Array
-    .from(map.values())
+    .from(
+      map.values()
+    )
     .sort(
       (a,b)=>
         b.cantidad -
@@ -1728,7 +3115,9 @@ function obtenerRankingPracticas(){
 }
 
 
-/* ================= DERIVADORES ================= */
+/* =========================================================
+   DERIVADORES
+   ========================================================= */
 
 function obtenerRankingDerivadores(){
 
@@ -1736,63 +3125,83 @@ function obtenerRankingDerivadores(){
     new Map();
 
 
-  DATA_FILTRADA.forEach(r=>{
+  DATA_FILTRADA.forEach(
+    r=>{
 
-    if (!r.derivador_id)
-      return;
+      if (
+        !r.derivador_id
+      ){
+        return;
+      }
 
 
-    const id =
-      String(r.derivador_id);
+      const id =
+        String(
+          r.derivador_id
+        );
 
-    if (!map.has(id)){
 
-      map.set(
-        id,
-        {
+      if (
+        !map.has(id)
+      ){
+
+        map.set(
           id,
-          nombre:
-            r.derivador_nombre ||
-            "Sin nombre",
-          matricula:
-            r.derivador_matricula ||
-            null,
-          especialidad:
-            r.derivador_especialidad ||
-            null,
-          institucion:
-            r.derivador_institucion ||
-            null,
-          cantidad:0,
-          turnos:0
-        }
-      );
+          {
+
+            id,
+
+            nombre:
+              r.derivador_nombre ||
+              "Sin nombre",
+
+            matricula:
+              r.derivador_matricula ||
+              null,
+
+            especialidad:
+              r.derivador_especialidad ||
+              null,
+
+            institucion:
+              r.derivador_institucion ||
+              null,
+
+            cantidad:0,
+
+            turnos:0
+
+          }
+        );
+
+      }
+
+
+      const item =
+        map.get(id);
+
+
+      /*
+        Se cuentan estudios/prácticas,
+        no solamente turnos.
+      */
+
+      item.cantidad +=
+        cantidadPracticasRow(
+          r
+        );
+
+
+      item.turnos += 1;
 
     }
-
-
-    const item =
-      map.get(id);
-
-
-    /*
-      Para derivadores contamos PRÁCTICAS,
-      no simplemente turnos.
-
-      Ej:
-      RM Pie + RM Tobillo = 2 estudios derivados.
-    */
-
-    item.cantidad +=
-      cantidadPracticasRow(r);
-
-    item.turnos += 1;
-
-  });
+  );
 
 
   return Array
-    .from(map.values())
+    .from(
+      map.values()
+    )
     .sort(
       (a,b)=>
         b.cantidad -
@@ -1802,7 +3211,9 @@ function obtenerRankingDerivadores(){
 }
 
 
-/* ================= RANKING GENÉRICO ================= */
+/* =========================================================
+   RANKING GENÉRICO
+   ========================================================= */
 
 function renderRanking(
   elementId,
@@ -1815,18 +3226,28 @@ function renderRanking(
     );
 
 
-  if (!rows.length){
+  if (
+    !rows.length
+  ){
 
     el.innerHTML =
-      `<div class="muted">Sin datos para los filtros seleccionados.</div>`;
+
+      `<div class="muted">
+        Sin datos para los filtros seleccionados.
+      </div>`;
 
     return;
+
   }
 
 
   el.innerHTML =
+
     rows
-      .slice(0,5)
+      .slice(
+        0,
+        5
+      )
       .map(
         (x,i)=>`
 
@@ -1853,7 +3274,9 @@ function renderRanking(
 }
 
 
-/* ================= MODAL DERIVADORES ================= */
+/* =========================================================
+   MODAL DERIVADORES
+   ========================================================= */
 
 function abrirModalDerivadores(){
 
@@ -1861,10 +3284,16 @@ function abrirModalDerivadores(){
     obtenerRankingDerivadores();
 
 
-  if (!rows.length){
+  if (
+    !rows.length
+  ){
 
     listaDerivadoresCompleta.innerHTML =
-      `<div class="muted" style="padding:14px 0">
+
+      `<div
+        class="muted"
+        style="padding:14px 0"
+      >
         Sin derivadores para los filtros actuales.
       </div>`;
 
@@ -1872,64 +3301,99 @@ function abrirModalDerivadores(){
   else{
 
     listaDerivadoresCompleta.innerHTML =
-      rows.map(
-        (x,i)=>{
 
-          const detalles = [];
+      rows
+        .map(
+          (x,i)=>{
 
-          if (x.matricula)
-            detalles.push(
-              `MP ${x.matricula}`
-            );
+            const detalles =
+              [];
 
-          if (x.especialidad)
-            detalles.push(
+
+            if (
+              x.matricula
+            ){
+
+              detalles.push(
+                `MP ${x.matricula}`
+              );
+
+            }
+
+
+            if (
               x.especialidad
-            );
+            ){
 
-          if (x.institucion)
-            detalles.push(
+              detalles.push(
+                x.especialidad
+              );
+
+            }
+
+
+            if (
               x.institucion
-            );
+            ){
+
+              detalles.push(
+                x.institucion
+              );
+
+            }
 
 
-          return `
+            return `
 
-            <div class="modalDerivadorItem">
+              <div class="modalDerivadorItem">
 
-              <div class="modalNum">
-                ${i+1}
-              </div>
-
-              <div>
-
-                <div class="modalDerivadorNombre">
-                  ${x.nombre}
+                <div class="modalNum">
+                  ${i+1}
                 </div>
 
-                <div class="modalDerivadorDetalle">
-                  ${
-                    detalles.length
-                      ? detalles.join(" · ")
-                      : `${x.turnos} turno${x.turnos===1 ? "" : "s"}`
-                  }
+
+                <div>
+
+                  <div class="modalDerivadorNombre">
+                    ${x.nombre}
+                  </div>
+
+
+                  <div class="modalDerivadorDetalle">
+
+                    ${
+                      detalles.length
+
+                        ? detalles.join(
+                            " · "
+                          )
+
+                        : `${x.turnos} turno${
+                            x.turnos === 1
+                              ? ""
+                              : "s"
+                          }`
+                    }
+
+                  </div>
+
+                </div>
+
+
+                <div
+                  class="modalDerivadorCantidad"
+                  title="Cantidad de prácticas / estudios"
+                >
+                  ${x.cantidad}
                 </div>
 
               </div>
 
-              <div
-                class="modalDerivadorCantidad"
-                title="Cantidad de prácticas / estudios"
-              >
-                ${x.cantidad}
-              </div>
+            `;
 
-            </div>
-
-          `;
-
-        }
-      ).join("");
+          }
+        )
+        .join("");
 
   }
 
@@ -1948,7 +3412,9 @@ function cerrarModalDerivadores(){
 }
 
 
-/* ================= MÉDICOS ================= */
+/* =========================================================
+   MÉDICOS
+   ========================================================= */
 
 function renderTablaMedicos(){
 
@@ -1956,69 +3422,106 @@ function renderTablaMedicos(){
     new Map();
 
 
-  DATA_FILTRADA.forEach(r=>{
+  DATA_FILTRADA.forEach(
+    r=>{
 
-    const id =
-      String(
-        r.medico_id ||
-        r.medico_nombre ||
-        "sin_medico"
-      );
+      const id =
+
+        String(
+          r.medico_id ||
+          r.medico_nombre ||
+          "sin_medico"
+        );
 
 
-    if (!map.has(id)){
+      if (
+        !map.has(id)
+      ){
 
-      map.set(
-        id,
-        {
-          nombre:
-            r.medico_nombre ||
-            "Sin médico",
-          turnos:0,
-          practicas:0,
-          atendidos:0,
-          ausentes:0,
-          cancelados:0,
-          copago:0
-        }
-      );
+        map.set(
+          id,
+          {
+
+            nombre:
+              r.medico_nombre ||
+              "Sin médico",
+
+            turnos:0,
+
+            practicas:0,
+
+            atendidos:0,
+
+            ausentes:0,
+
+            cancelados:0,
+
+            copago:0
+
+          }
+        );
+
+      }
+
+
+      const item =
+        map.get(id);
+
+
+      item.turnos += 1;
+
+
+      item.practicas +=
+        cantidadPracticasRow(
+          r
+        );
+
+
+      item.copago +=
+        Number(
+          r.copago
+        ) || 0;
+
+
+      const estado =
+        normalizarEstado(
+          r.estado
+        );
+
+
+      if (
+        estado ===
+        "atendido"
+      ){
+        item.atendidos += 1;
+      }
+
+
+      if (
+        estado ===
+        "ausente"
+      ){
+        item.ausentes += 1;
+      }
+
+
+      if (
+        estado ===
+        "cancelado"
+      ){
+        item.cancelados += 1;
+      }
 
     }
-
-
-    const item =
-      map.get(id);
-
-
-    item.turnos += 1;
-
-    item.practicas +=
-      cantidadPracticasRow(r);
-
-    item.copago +=
-      Number(r.copago) || 0;
-
-
-    const estado =
-      String(r.estado || "")
-        .toLowerCase();
-
-
-    if (estado === "atendido")
-      item.atendidos += 1;
-
-    if (estado === "ausente")
-      item.ausentes += 1;
-
-    if (estado === "cancelado")
-      item.cancelados += 1;
-
-  });
+  );
 
 
   const rows =
+
     Array
-      .from(map.values())
+      .from(
+        map.values()
+      )
       .sort(
         (a,b)=>
           b.turnos -
@@ -2032,99 +3535,117 @@ function renderTablaMedicos(){
     );
 
 
-  if (!rows.length){
+  if (
+    !rows.length
+  ){
 
     tbody.innerHTML =
+
       `<tr>
-        <td colspan="9" class="muted">
+        <td
+          colspan="9"
+          class="muted"
+        >
           Sin datos para los filtros seleccionados.
         </td>
       </tr>`;
 
     return;
+
   }
 
 
   tbody.innerHTML =
-    rows.map(
-      m=>{
 
-        const ausentismo =
-          m.turnos
-            ? (
-                m.ausentes /
-                m.turnos *
-                100
-              )
-            : 0;
+    rows
+      .map(
+        m=>{
+
+          const ausentismo =
+            porcentaje(
+              m.ausentes,
+              m.turnos
+            );
 
 
-        const promedio =
-          m.turnos
-            ? (
-                m.copago /
+          const promedio =
+
+            m.turnos
+
+              ? m.copago /
                 m.turnos
-              )
-            : 0;
+
+              : 0;
 
 
-        return `
+          return `
 
-          <tr>
+            <tr>
 
-            <td>
-              <b>${m.nombre}</b>
-            </td>
+              <td>
+                <b>${m.nombre}</b>
+              </td>
 
-            <td>
-              ${m.turnos}
-            </td>
+              <td>
+                ${m.turnos}
+              </td>
 
-            <td>
-              ${m.practicas}
-            </td>
+              <td>
+                ${m.practicas}
+              </td>
 
-            <td>
-              ${m.atendidos}
-            </td>
+              <td>
+                ${m.atendidos}
+              </td>
 
-            <td>
-              ${m.ausentes}
-            </td>
+              <td>
+                ${m.ausentes}
+              </td>
 
-            <td>
-              ${m.cancelados}
-            </td>
+              <td>
+                ${m.cancelados}
+              </td>
 
-            <td>
-              <span class="pill">
-                ${ausentismo.toFixed(1)}%
-              </span>
-            </td>
+              <td>
+                <span class="pill">
+                  ${ausentismo.toFixed(1)}%
+                </span>
+              </td>
 
-            <td>
-              $${Math.round(
-                m.copago
-              ).toLocaleString("es-AR")}
-            </td>
+              <td>
 
-            <td>
-              $${Math.round(
-                promedio
-              ).toLocaleString("es-AR")}
-            </td>
+                $${Math.round(
+                  m.copago
+                ).toLocaleString(
+                  "es-AR"
+                )}
 
-          </tr>
+              </td>
 
-        `;
+              <td>
 
-      }
-    ).join("");
+                $${Math.round(
+                  promedio
+                ).toLocaleString(
+                  "es-AR"
+                )}
+
+              </td>
+
+            </tr>
+
+          `;
+
+        }
+      )
+      .join("");
 
 }
 
 
-/* ================= GENERAL RENDER ================= */
+/* =========================================================
+   GENERAL RENDER
+   ========================================================= */
 
 function renderDashboard(){
 
@@ -2134,85 +3655,107 @@ function renderDashboard(){
 
   renderEstados();
 
+  renderCanales();
+
   renderCobros();
+
 
   renderRanking(
     "rankingPracticas",
     obtenerRankingPracticas()
   );
 
+
   renderRanking(
     "rankingDerivadores",
     obtenerRankingDerivadores()
   );
+
 
   renderTablaMedicos();
 
 }
 
 
-/* ================= PERÍODOS ================= */
+/* =========================================================
+   PERÍODOS
+   ========================================================= */
 
 document
   .querySelectorAll(
     ".periodoBtn"
   )
-  .forEach(btn=>{
+  .forEach(
+    btn=>{
 
-    btn.onclick = ()=>{
+      btn.onclick =
+        ()=>{
 
-      document
-        .querySelectorAll(
-          ".periodoBtn"
-        )
-        .forEach(
-          x=>
-            x.classList.remove(
-              "active"
+          document
+            .querySelectorAll(
+              ".periodoBtn"
             )
-        );
+            .forEach(
+              x=>
+                x.classList.remove(
+                  "active"
+                )
+            );
 
 
-      btn.classList.add(
-        "active"
-      );
+          btn.classList.add(
+            "active"
+          );
 
 
-      PERIODO =
-        btn.dataset.periodo;
+          PERIODO =
+            btn.dataset.periodo;
 
 
-      /*
-        No llamamos backend.
-        Se recalcula sobre DATA_RAW.
-      */
+          /*
+            CERO llamada al backend.
+            Se filtra DATA_RAW.
+          */
 
-      aplicarFiltros();
+          aplicarFiltros();
 
-    };
+        };
 
-  });
+    }
+  );
 
 
-/* ================= FILTROS ================= */
+/* =========================================================
+   FILTROS
+   ========================================================= */
 
 filtroMedico.onchange =
   aplicarFiltros;
 
+
 filtroPractica.onchange =
   aplicarFiltros;
+
 
 filtroEstado.onchange =
   aplicarFiltros;
 
 
-/* ================= MODAL ================= */
+filtroCanal.onchange =
+  aplicarFiltros;
+
+
+/* =========================================================
+   MODAL
+   ========================================================= */
 
 btnVerDerivadores.onclick =
   abrirModalDerivadores;
 
+
 btnCerrarDerivadores.onclick =
   cerrarModalDerivadores;
+
 
 modalDerivadores.onclick =
   (e)=>{
@@ -2221,43 +3764,57 @@ modalDerivadores.onclick =
       e.target ===
       modalDerivadores
     ){
+
       cerrarModalDerivadores();
+
     }
 
   };
 
 
-/* ================= BOTONES ================= */
+/* =========================================================
+   BOTONES
+   ========================================================= */
 
-document.getElementById(
-  "btnActualizar"
-).onclick =
-  cargarDashboard;
-
-
-document.getElementById(
-  "btnSecretaria"
-).onclick =
-  ()=>{
-    window.location.href =
-      "./secretaria.html";
-  };
+document
+  .getElementById(
+    "btnActualizar"
+  )
+  .onclick =
+    cargarDashboard;
 
 
-document.getElementById(
-  "btnLogout"
-).onclick =
-  async ()=>{
+document
+  .getElementById(
+    "btnSecretaria"
+  )
+  .onclick =
+    ()=>{
 
-    await sb.auth.signOut();
+      window.location.href =
+        "./secretaria.html";
 
-    window.location.href =
-      "./login.html";
-
-  };
+    };
 
 
-/* ================= INIT ================= */
+document
+  .getElementById(
+    "btnLogout"
+  )
+  .onclick =
+    async ()=>{
+
+      await sb.auth.signOut();
+
+      window.location.href =
+        "./login.html";
+
+    };
+
+
+/* =========================================================
+   INIT
+   ========================================================= */
 
 (async ()=>{
 
@@ -2266,8 +3823,12 @@ document.getElementById(
     const user =
       await requireLogin();
 
-    if (!user)
+
+    if (
+      !user
+    ){
       return;
+    }
 
 
     await resolverTenant(
@@ -2276,7 +3837,7 @@ document.getElementById(
 
 
     /*
-      Una única carga inicial:
+      UNA única carga:
       últimos 90 días.
     */
 
@@ -2285,10 +3846,15 @@ document.getElementById(
   }
   catch(e){
 
-    console.error(e);
+    console.error(
+      e
+    );
+
 
     err.textContent =
+
       e?.message ||
+
       "Error iniciando dashboard.";
 
   }
