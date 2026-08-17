@@ -1,0 +1,1478 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>Gerencial · Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --primary:#111;
+      --bg:#f6f7f8;
+      --card:#fff;
+      --border:#e7e7e7;
+      --muted:#6b7280;
+      --text:#111;
+      --ok:#0a7a27;
+      --danger:#b00020;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      max-width:1400px;
+      margin:0 auto;
+      padding:20px;
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+
+    .brand{
+      font-size:22px;
+      font-weight:900;
+    }
+
+    .muted{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .right{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    button,
+    select,
+    input{
+      border:1px solid #ddd;
+      background:#fff;
+      border-radius:11px;
+      padding:10px 12px;
+      font-size:14px;
+    }
+
+    button{
+      cursor:pointer;
+      font-weight:700;
+    }
+
+    button.primary{
+      background:var(--primary);
+      color:#fff;
+      border-color:var(--primary);
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 1px 2px rgba(0,0,0,.02);
+    }
+
+    /* ================= FILTROS ================= */
+
+    .filters{
+      display:grid;
+      grid-template-columns:1.5fr 1fr 1fr 1fr;
+      gap:12px;
+      align-items:end;
+      margin-bottom:16px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .field label{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .periodos{
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+    }
+
+    .periodoBtn.active{
+      background:#111;
+      color:#fff;
+      border-color:#111;
+    }
+
+    /* ================= KPIs ================= */
+
+    .kpis{
+      display:grid;
+      grid-template-columns:repeat(6,1fr);
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    .kpi{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      min-height:105px;
+    }
+
+    .kpiLabel{
+      color:var(--muted);
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .kpiValue{
+      font-size:27px;
+      font-weight:900;
+      margin-top:8px;
+    }
+
+    .kpiChange{
+      font-size:12px;
+      margin-top:5px;
+      color:var(--muted);
+    }
+
+    .positivo{
+      color:var(--ok);
+      font-weight:800;
+    }
+
+    .negativo{
+      color:var(--danger);
+      font-weight:800;
+    }
+
+    /* ================= GRÁFICOS ================= */
+
+    .grid2{
+      display:grid;
+      grid-template-columns:2fr 1fr;
+      gap:16px;
+      margin-bottom:16px;
+    }
+
+    .grid3{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:16px;
+      margin-bottom:16px;
+    }
+
+    .cardTitle{
+      font-weight:900;
+      font-size:15px;
+      margin-bottom:3px;
+    }
+
+    .cardSub{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:14px;
+    }
+
+    .chartBox{
+      position:relative;
+      height:290px;
+    }
+
+    /* ================= LISTAS ================= */
+
+    .ranking{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .rankItem{
+      display:grid;
+      grid-template-columns:32px 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:10px;
+      border-bottom:1px solid #eee;
+    }
+
+    .rankItem:last-child{
+      border-bottom:0;
+    }
+
+    .rankNum{
+      width:28px;
+      height:28px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#f4f4f4;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .rankName{
+      font-weight:800;
+      font-size:14px;
+    }
+
+    .rankValue{
+      font-weight:900;
+    }
+
+    /* ================= TABLA ================= */
+
+    .tableWrap{
+      overflow:auto;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    th,
+    td{
+      padding:11px 10px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    th{
+      color:var(--muted);
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      padding:5px 9px;
+      font-size:11px;
+      font-weight:800;
+      background:#f3f4f6;
+    }
+
+    .error{
+      color:var(--danger);
+      font-size:13px;
+      margin-top:10px;
+    }
+
+    @media(max-width:1100px){
+      .kpis{
+        grid-template-columns:repeat(3,1fr);
+      }
+
+      .grid3{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .filters{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+
+    @media(max-width:700px){
+      .kpis,
+      .grid2,
+      .grid3,
+      .filters{
+        grid-template-columns:1fr;
+      }
+
+      .wrap{
+        padding:12px;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <!-- ================= HEADER ================= -->
+
+  <div class="header">
+
+    <div>
+      <div class="brand" id="brandTitle">
+        Dashboard Gerencial
+      </div>
+
+      <div class="muted" id="brandSubtitle">
+        Indicadores operativos y comerciales
+      </div>
+
+      <div class="muted" id="userLine"></div>
+    </div>
+
+    <div class="right">
+
+      <button
+        id="btnSecretaria"
+        type="button"
+      >
+        Secretaría
+      </button>
+
+      <button
+        id="btnActualizar"
+        class="primary"
+        type="button"
+      >
+        Actualizar
+      </button>
+
+      <button
+        id="btnLogout"
+        type="button"
+      >
+        Salir
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= FILTROS ================= -->
+
+  <div class="card">
+
+    <div class="filters">
+
+      <div class="field">
+
+        <label>Período</label>
+
+        <div class="periodos">
+
+          <button
+            class="periodoBtn"
+            data-periodo="7"
+          >
+            7 días
+          </button>
+
+          <button
+            class="periodoBtn active"
+            data-periodo="30"
+          >
+            30 días
+          </button>
+
+          <button
+            class="periodoBtn"
+            data-periodo="mes"
+          >
+            Mes actual
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Médico / Servicio</label>
+
+        <select id="filtroMedico">
+          <option value="">Todos</option>
+        </select>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Práctica</label>
+
+        <select id="filtroPractica">
+          <option value="">Todas</option>
+        </select>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Estado</label>
+
+        <select id="filtroEstado">
+
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="presente">Presente</option>
+          <option value="atendido">Atendido</option>
+          <option value="ausente">Ausente</option>
+          <option value="cancelado">Cancelado</option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+    <div class="error" id="err"></div>
+
+  </div>
+
+
+  <!-- ================= KPIs ================= -->
+
+  <div class="kpis">
+
+    <div class="kpi">
+
+      <div class="kpiLabel">
+        TURNOS
+      </div>
+
+      <div
+        class="kpiValue"
+        id="kpiTurnos"
+      >
+        —
+      </div>
+
+      <div
+        class="kpiChange"
+        id="kpiTurnosCambio"
+      >
+        —
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpiLabel">
+        ATENDIDOS
+      </div>
+
+      <div
+        class="kpiValue"
+        id="kpiAtendidos"
+      >
+        —
+      </div>
+
+      <div class="kpiChange">
+        Total período
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpiLabel">
+        AUSENTISMO
+      </div>
+
+      <div
+        class="kpiValue"
+        id="kpiAusentismo"
+      >
+        —
+      </div>
+
+      <div class="kpiChange">
+        Sobre turnos programados
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpiLabel">
+        CANCELACIONES
+      </div>
+
+      <div
+        class="kpiValue"
+        id="kpiCancelaciones"
+      >
+        —
+      </div>
+
+      <div class="kpiChange">
+        Total período
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpiLabel">
+        COPAGOS
+      </div>
+
+      <div
+        class="kpiValue"
+        id="kpiCopago"
+      >
+        —
+      </div>
+
+      <div class="kpiChange">
+        Recaudación registrada
+      </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+      <div class="kpiLabel">
+        TICKET PROMEDIO
+      </div>
+
+      <div
+        class="kpiValue"
+        id="kpiTicket"
+      >
+        —
+      </div>
+
+      <div class="kpiChange">
+        Copago promedio
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= PRODUCCIÓN ================= -->
+
+  <div class="grid2">
+
+    <div class="card">
+
+      <div class="cardTitle">
+        Producción
+      </div>
+
+      <div class="cardSub">
+        Turnos por día
+      </div>
+
+      <div class="chartBox">
+        <canvas id="chartProduccion"></canvas>
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="cardTitle">
+        Estado de los turnos
+      </div>
+
+      <div class="cardSub">
+        Distribución del período
+      </div>
+
+      <div class="chartBox">
+        <canvas id="chartEstados"></canvas>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= FINANZAS ================= -->
+
+  <div class="grid3">
+
+    <div class="card">
+
+      <div class="cardTitle">
+        Modalidad de cobro
+      </div>
+
+      <div class="cardSub">
+        Copagos registrados
+      </div>
+
+      <div class="chartBox">
+        <canvas id="chartCobros"></canvas>
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="cardTitle">
+        Prácticas principales
+      </div>
+
+      <div class="cardSub">
+        Ranking por cantidad
+      </div>
+
+      <div
+        class="ranking"
+        id="rankingPracticas"
+      >
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="cardTitle">
+        Principales derivadores
+      </div>
+
+      <div class="cardSub">
+        Turnos generados
+      </div>
+
+      <div
+        class="ranking"
+        id="rankingDerivadores"
+      >
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= PROFESIONALES ================= -->
+
+  <div class="card">
+
+    <div class="cardTitle">
+      Rendimiento por médico / servicio
+    </div>
+
+    <div class="cardSub">
+      Producción, asistencia y copagos
+    </div>
+
+    <div class="tableWrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>Médico / Servicio</th>
+            <th>Turnos</th>
+            <th>Atendidos</th>
+            <th>Ausentes</th>
+            <th>Cancelados</th>
+            <th>Ausentismo</th>
+            <th>Copagos</th>
+            <th>Promedio</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody id="tablaMedicos">
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script src="./config.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script>
+
+/* ================= CONFIG ================= */
+
+const SUPABASE_URL =
+  window.__SB__?.url;
+
+const SUPABASE_ANON_KEY =
+  window.__SB__?.anonKey;
+
+
+const sb =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+
+/* ================= DOM ================= */
+
+const err =
+  document.getElementById("err");
+
+const filtroMedico =
+  document.getElementById("filtroMedico");
+
+const filtroPractica =
+  document.getElementById("filtroPractica");
+
+const filtroEstado =
+  document.getElementById("filtroEstado");
+
+
+/* ================= STATE ================= */
+
+let TENANT_ID = null;
+
+let PERIODO = 30;
+
+let DASH_DATA = null;
+
+
+/* ================= CHARTS ================= */
+
+let chartProduccion = null;
+let chartEstados = null;
+let chartCobros = null;
+
+
+/* ================= AUTH ================= */
+
+async function requireLogin(){
+
+  const { data } =
+    await sb.auth.getUser();
+
+  if (!data?.user){
+
+    window.location.href =
+      "./login.html";
+
+    return null;
+
+  }
+
+  document.getElementById(
+    "userLine"
+  ).textContent =
+    data.user.email || "";
+
+  return data.user;
+}
+
+
+/* ================= TENANT ================= */
+
+async function resolverTenant(user){
+
+  const { data, error } =
+    await sb
+      .from("personal")
+      .select(
+        "tenant_id,rol,activo"
+      )
+      .eq(
+        "id",
+        user.id
+      )
+      .eq(
+        "activo",
+        true
+      )
+      .maybeSingle();
+
+
+  if (error)
+    throw error;
+
+
+  if (!data?.tenant_id)
+    throw new Error(
+      "Usuario sin tenant."
+    );
+
+
+  TENANT_ID =
+    data.tenant_id;
+
+
+  const rol =
+    String(
+      data.rol || ""
+    ).toLowerCase();
+
+
+  if (
+    ![
+      "admin",
+      "ceo"
+    ].includes(rol)
+  ){
+    throw new Error(
+      "No tenés permisos para acceder al dashboard gerencial."
+    );
+  }
+
+}
+
+
+/* ================= CARGA DASH ================= */
+
+async function cargarDashboard(){
+
+  if (!TENANT_ID)
+    return;
+
+
+  err.textContent = "";
+
+
+  /*
+    Próxima etapa:
+
+    RPC sugerida:
+
+    gerencial_dashboard(
+      p_desde,
+      p_hasta,
+      p_medico_id,
+      p_practica_id,
+      p_estado
+    )
+
+    Retornaría un JSON único con:
+
+    {
+      resumen:{},
+      produccion_dia:[],
+      estados:[],
+      cobros:{},
+      practicas:[],
+      derivadores:[],
+      medicos:[]
+    }
+
+    Así hacemos UNA llamada al backend
+    y no 10 queries distintas.
+  */
+
+
+  /* ==========================================
+     MOCK TEMPORAL PARA DISEÑAR EL FRONT
+     ========================================== */
+
+  DASH_DATA = {
+
+    resumen:{
+      turnos:286,
+      atendidos:231,
+      ausentes:21,
+      cancelados:18,
+      copago:4280000,
+      ticket_promedio:18528,
+      cambio_turnos:12.4
+    },
+
+    produccion_dia:[
+      {dia:"01/08",cantidad:10},
+      {dia:"02/08",cantidad:14},
+      {dia:"03/08",cantidad:12},
+      {dia:"04/08",cantidad:18},
+      {dia:"05/08",cantidad:16},
+      {dia:"06/08",cantidad:21},
+      {dia:"07/08",cantidad:19},
+      {dia:"08/08",cantidad:24}
+    ],
+
+    estados:[
+      {estado:"Atendido",cantidad:231},
+      {estado:"Ausente",cantidad:21},
+      {estado:"Cancelado",cantidad:18},
+      {estado:"Pendiente",cantidad:16}
+    ],
+
+    cobros:{
+      efectivo:1680000,
+      transferencia:2600000
+    },
+
+    practicas:[
+      {nombre:"RM Rodilla",cantidad:62},
+      {nombre:"RM Lumbar",cantidad:51},
+      {nombre:"RM Cerebro",cantidad:39},
+      {nombre:"RM Hombro",cantidad:31},
+      {nombre:"Consulta",cantidad:28}
+    ],
+
+    derivadores:[
+      {nombre:"Dr. Pérez",cantidad:38},
+      {nombre:"Dra. Gómez",cantidad:31},
+      {nombre:"Dr. Rodríguez",cantidad:27},
+      {nombre:"Dra. Fernández",cantidad:19},
+      {nombre:"Dr. López",cantidad:16}
+    ],
+
+    medicos:[
+      {
+        nombre:"Resonancia Magnética",
+        turnos:184,
+        atendidos:157,
+        ausentes:12,
+        cancelados:8,
+        copago:3180000
+      },
+
+      {
+        nombre:"Dr. Ejemplo",
+        turnos:102,
+        atendidos:74,
+        ausentes:9,
+        cancelados:10,
+        copago:1100000
+      }
+    ]
+
+  };
+
+
+  renderDashboard();
+
+}
+
+
+/* ================= RENDER KPIS ================= */
+
+function renderKPIs(){
+
+  const r =
+    DASH_DATA.resumen;
+
+
+  document.getElementById(
+    "kpiTurnos"
+  ).textContent =
+    r.turnos;
+
+
+  document.getElementById(
+    "kpiAtendidos"
+  ).textContent =
+    r.atendidos;
+
+
+  const ausentismo =
+    r.turnos
+      ? (
+          r.ausentes /
+          r.turnos *
+          100
+        )
+      : 0;
+
+
+  document.getElementById(
+    "kpiAusentismo"
+  ).textContent =
+    `${ausentismo.toFixed(1)}%`;
+
+
+  document.getElementById(
+    "kpiCancelaciones"
+  ).textContent =
+    r.cancelados;
+
+
+  document.getElementById(
+    "kpiCopago"
+  ).textContent =
+    `$${Number(
+      r.copago || 0
+    ).toLocaleString("es-AR")}`;
+
+
+  document.getElementById(
+    "kpiTicket"
+  ).textContent =
+    `$${Number(
+      r.ticket_promedio || 0
+    ).toLocaleString("es-AR")}`;
+
+
+  const cambio =
+    Number(
+      r.cambio_turnos || 0
+    );
+
+
+  const elCambio =
+    document.getElementById(
+      "kpiTurnosCambio"
+    );
+
+
+  elCambio.textContent =
+    `${cambio >= 0 ? "+" : ""}${cambio.toFixed(1)}% vs período anterior`;
+
+
+  elCambio.className =
+    cambio >= 0
+      ? "kpiChange positivo"
+      : "kpiChange negativo";
+
+}
+
+
+/* ================= GRÁFICOS ================= */
+
+function renderProduccion(){
+
+  if (chartProduccion)
+    chartProduccion.destroy();
+
+
+  chartProduccion =
+    new Chart(
+      document.getElementById(
+        "chartProduccion"
+      ),
+      {
+
+        type:"line",
+
+        data:{
+
+          labels:
+            DASH_DATA.produccion_dia
+              .map(x=>x.dia),
+
+          datasets:[
+            {
+              label:"Turnos",
+              data:
+                DASH_DATA.produccion_dia
+                  .map(x=>x.cantidad),
+              tension:.3
+            }
+          ]
+
+        },
+
+        options:{
+
+          responsive:true,
+
+          maintainAspectRatio:false,
+
+          plugins:{
+            legend:{
+              display:false
+            }
+          },
+
+          scales:{
+            y:{
+              beginAtZero:true
+            }
+          }
+
+        }
+
+      }
+    );
+
+}
+
+
+function renderEstados(){
+
+  if (chartEstados)
+    chartEstados.destroy();
+
+
+  chartEstados =
+    new Chart(
+      document.getElementById(
+        "chartEstados"
+      ),
+      {
+
+        type:"doughnut",
+
+        data:{
+
+          labels:
+            DASH_DATA.estados
+              .map(x=>x.estado),
+
+          datasets:[
+            {
+              data:
+                DASH_DATA.estados
+                  .map(x=>x.cantidad)
+            }
+          ]
+
+        },
+
+        options:{
+          responsive:true,
+          maintainAspectRatio:false
+        }
+
+      }
+    );
+
+}
+
+
+function renderCobros(){
+
+  if (chartCobros)
+    chartCobros.destroy();
+
+
+  chartCobros =
+    new Chart(
+      document.getElementById(
+        "chartCobros"
+      ),
+      {
+
+        type:"doughnut",
+
+        data:{
+
+          labels:[
+            "Efectivo",
+            "Transferencia"
+          ],
+
+          datasets:[
+            {
+              data:[
+                DASH_DATA.cobros.efectivo,
+                DASH_DATA.cobros.transferencia
+              ]
+            }
+          ]
+
+        },
+
+        options:{
+          responsive:true,
+          maintainAspectRatio:false
+        }
+
+      }
+    );
+
+}
+
+
+/* ================= RANKINGS ================= */
+
+function renderRanking(
+  elementId,
+  rows
+){
+
+  const el =
+    document.getElementById(
+      elementId
+    );
+
+
+  el.innerHTML =
+    rows.map(
+      (x,i)=>`
+
+        <div class="rankItem">
+
+          <div class="rankNum">
+            ${i+1}
+          </div>
+
+          <div class="rankName">
+            ${x.nombre}
+          </div>
+
+          <div class="rankValue">
+            ${x.cantidad}
+          </div>
+
+        </div>
+
+      `
+    ).join("");
+
+}
+
+
+/* ================= TABLA MÉDICOS ================= */
+
+function renderTablaMedicos(){
+
+  const tbody =
+    document.getElementById(
+      "tablaMedicos"
+    );
+
+
+  tbody.innerHTML =
+    DASH_DATA.medicos.map(
+      m=>{
+
+        const ausentismo =
+          m.turnos
+            ? (
+                m.ausentes /
+                m.turnos *
+                100
+              )
+            : 0;
+
+
+        const promedio =
+          m.atendidos
+            ? (
+                m.copago /
+                m.atendidos
+              )
+            : 0;
+
+
+        return `
+
+          <tr>
+
+            <td>
+              <b>${m.nombre}</b>
+            </td>
+
+            <td>
+              ${m.turnos}
+            </td>
+
+            <td>
+              ${m.atendidos}
+            </td>
+
+            <td>
+              ${m.ausentes}
+            </td>
+
+            <td>
+              ${m.cancelados}
+            </td>
+
+            <td>
+              <span class="pill">
+                ${ausentismo.toFixed(1)}%
+              </span>
+            </td>
+
+            <td>
+              $${Number(
+                m.copago
+              ).toLocaleString("es-AR")}
+            </td>
+
+            <td>
+              $${Math.round(
+                promedio
+              ).toLocaleString("es-AR")}
+            </td>
+
+          </tr>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* ================= GENERAL RENDER ================= */
+
+function renderDashboard(){
+
+  renderKPIs();
+
+  renderProduccion();
+
+  renderEstados();
+
+  renderCobros();
+
+  renderRanking(
+    "rankingPracticas",
+    DASH_DATA.practicas
+  );
+
+  renderRanking(
+    "rankingDerivadores",
+    DASH_DATA.derivadores
+  );
+
+  renderTablaMedicos();
+
+}
+
+
+/* ================= PERÍODOS ================= */
+
+document
+  .querySelectorAll(
+    ".periodoBtn"
+  )
+  .forEach(btn=>{
+
+    btn.onclick = async ()=>{
+
+      document
+        .querySelectorAll(
+          ".periodoBtn"
+        )
+        .forEach(
+          x=>x.classList.remove(
+            "active"
+          )
+        );
+
+
+      btn.classList.add(
+        "active"
+      );
+
+
+      PERIODO =
+        btn.dataset.periodo;
+
+
+      await cargarDashboard();
+
+    };
+
+  });
+
+
+/* ================= BOTONES ================= */
+
+document.getElementById(
+  "btnActualizar"
+).onclick =
+  cargarDashboard;
+
+
+document.getElementById(
+  "btnSecretaria"
+).onclick =
+  ()=>{
+    window.location.href =
+      "./secretaria.html";
+  };
+
+
+document.getElementById(
+  "btnLogout"
+).onclick =
+  async ()=>{
+
+    await sb.auth.signOut();
+
+    window.location.href =
+      "./login.html";
+
+  };
+
+
+filtroMedico.onchange =
+  cargarDashboard;
+
+filtroPractica.onchange =
+  cargarDashboard;
+
+filtroEstado.onchange =
+  cargarDashboard;
+
+
+/* ================= INIT ================= */
+
+(async ()=>{
+
+  try{
+
+    const user =
+      await requireLogin();
+
+    if (!user)
+      return;
+
+
+    await resolverTenant(
+      user
+    );
+
+
+    await cargarDashboard();
+
+  }
+  catch(e){
+
+    err.textContent =
+      e?.message ||
+      "Error iniciando dashboard.";
+
+  }
+
+})();
+
+</script>
+
+</body>
+</html>
