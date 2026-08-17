@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-
   <title>Gerencial · Dashboard</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,9 +19,7 @@
       --danger:#b00020;
     }
 
-    *{
-      box-sizing:border-box;
-    }
+    *{box-sizing:border-box}
 
     body{
       margin:0;
@@ -91,8 +88,6 @@
       box-shadow:0 1px 2px rgba(0,0,0,.02);
     }
 
-    /* ================= FILTROS ================= */
-
     .filters{
       display:grid;
       grid-template-columns:1.5fr 1fr 1fr 1fr;
@@ -124,8 +119,6 @@
       color:#fff;
       border-color:#111;
     }
-
-    /* ================= KPIs ================= */
 
     .kpis{
       display:grid;
@@ -170,8 +163,6 @@
       font-weight:800;
     }
 
-    /* ================= GRÁFICOS ================= */
-
     .grid2{
       display:grid;
       grid-template-columns:2fr 1fr;
@@ -202,8 +193,6 @@
       position:relative;
       height:290px;
     }
-
-    /* ================= LISTAS ================= */
 
     .ranking{
       display:flex;
@@ -245,8 +234,6 @@
       font-weight:900;
     }
 
-    /* ================= TABLA ================= */
-
     .tableWrap{
       overflow:auto;
     }
@@ -256,8 +243,7 @@
       border-collapse:collapse;
     }
 
-    th,
-    td{
+    th,td{
       padding:11px 10px;
       border-bottom:1px solid #eee;
       text-align:left;
@@ -289,17 +275,9 @@
     }
 
     @media(max-width:1100px){
-      .kpis{
-        grid-template-columns:repeat(3,1fr);
-      }
-
-      .grid3{
-        grid-template-columns:1fr 1fr;
-      }
-
-      .filters{
-        grid-template-columns:1fr 1fr;
-      }
+      .kpis{grid-template-columns:repeat(3,1fr)}
+      .grid3{grid-template-columns:1fr 1fr}
+      .filters{grid-template-columns:1fr 1fr}
     }
 
     @media(max-width:700px){
@@ -310,11 +288,8 @@
         grid-template-columns:1fr;
       }
 
-      .wrap{
-        padding:12px;
-      }
+      .wrap{padding:12px}
     }
-
   </style>
 </head>
 
@@ -322,52 +297,22 @@
 
 <div class="wrap">
 
-  <!-- ================= HEADER ================= -->
-
   <div class="header">
 
     <div>
-      <div class="brand" id="brandTitle">
-        Dashboard Gerencial
-      </div>
-
-      <div class="muted" id="brandSubtitle">
-        Indicadores operativos y comerciales
-      </div>
-
+      <div class="brand" id="brandTitle">Dashboard Gerencial</div>
+      <div class="muted" id="brandSubtitle">Indicadores operativos y comerciales</div>
       <div class="muted" id="userLine"></div>
     </div>
 
     <div class="right">
-
-      <button
-        id="btnSecretaria"
-        type="button"
-      >
-        Secretaría
-      </button>
-
-      <button
-        id="btnActualizar"
-        class="primary"
-        type="button"
-      >
-        Actualizar
-      </button>
-
-      <button
-        id="btnLogout"
-        type="button"
-      >
-        Salir
-      </button>
-
+      <button id="btnSecretaria" type="button">Secretaría</button>
+      <button id="btnActualizar" class="primary" type="button">Actualizar</button>
+      <button id="btnLogout" type="button">Salir</button>
     </div>
 
   </div>
 
-
-  <!-- ================= FILTROS ================= -->
 
   <div class="card">
 
@@ -379,24 +324,15 @@
 
         <div class="periodos">
 
-          <button
-            class="periodoBtn"
-            data-periodo="7"
-          >
+          <button class="periodoBtn" data-periodo="7">
             7 días
           </button>
 
-          <button
-            class="periodoBtn active"
-            data-periodo="30"
-          >
+          <button class="periodoBtn active" data-periodo="30">
             30 días
           </button>
 
-          <button
-            class="periodoBtn"
-            data-periodo="mes"
-          >
+          <button class="periodoBtn" data-periodo="mes">
             Mes actual
           </button>
 
@@ -406,42 +342,35 @@
 
 
       <div class="field">
-
         <label>Médico / Servicio</label>
 
         <select id="filtroMedico">
           <option value="">Todos</option>
         </select>
-
       </div>
 
 
       <div class="field">
-
         <label>Práctica</label>
 
         <select id="filtroPractica">
           <option value="">Todas</option>
         </select>
-
       </div>
 
 
       <div class="field">
-
         <label>Estado</label>
 
         <select id="filtroEstado">
-
           <option value="">Todos</option>
           <option value="pendiente">Pendiente</option>
           <option value="presente">Presente</option>
           <option value="atendido">Atendido</option>
           <option value="ausente">Ausente</option>
           <option value="cancelado">Cancelado</option>
-
+          <option value="reprogramado">Reprogramado</option>
         </select>
-
       </div>
 
     </div>
@@ -451,237 +380,100 @@
   </div>
 
 
-  <!-- ================= KPIs ================= -->
-
   <div class="kpis">
 
     <div class="kpi">
-
-      <div class="kpiLabel">
-        TURNOS
-      </div>
-
-      <div
-        class="kpiValue"
-        id="kpiTurnos"
-      >
-        —
-      </div>
-
-      <div
-        class="kpiChange"
-        id="kpiTurnosCambio"
-      >
-        —
-      </div>
-
+      <div class="kpiLabel">TURNOS</div>
+      <div class="kpiValue" id="kpiTurnos">—</div>
+      <div class="kpiChange" id="kpiTurnosCambio">—</div>
     </div>
 
-
     <div class="kpi">
-
-      <div class="kpiLabel">
-        ATENDIDOS
-      </div>
-
-      <div
-        class="kpiValue"
-        id="kpiAtendidos"
-      >
-        —
-      </div>
-
-      <div class="kpiChange">
-        Total período
-      </div>
-
+      <div class="kpiLabel">ATENDIDOS</div>
+      <div class="kpiValue" id="kpiAtendidos">—</div>
+      <div class="kpiChange">Total período</div>
     </div>
 
-
     <div class="kpi">
-
-      <div class="kpiLabel">
-        AUSENTISMO
-      </div>
-
-      <div
-        class="kpiValue"
-        id="kpiAusentismo"
-      >
-        —
-      </div>
-
-      <div class="kpiChange">
-        Sobre turnos programados
-      </div>
-
+      <div class="kpiLabel">AUSENTISMO</div>
+      <div class="kpiValue" id="kpiAusentismo">—</div>
+      <div class="kpiChange">Sobre turnos programados</div>
     </div>
 
-
     <div class="kpi">
-
-      <div class="kpiLabel">
-        CANCELACIONES
-      </div>
-
-      <div
-        class="kpiValue"
-        id="kpiCancelaciones"
-      >
-        —
-      </div>
-
-      <div class="kpiChange">
-        Total período
-      </div>
-
+      <div class="kpiLabel">CANCELACIONES</div>
+      <div class="kpiValue" id="kpiCancelaciones">—</div>
+      <div class="kpiChange">Total período</div>
     </div>
 
-
     <div class="kpi">
-
-      <div class="kpiLabel">
-        COPAGOS
-      </div>
-
-      <div
-        class="kpiValue"
-        id="kpiCopago"
-      >
-        —
-      </div>
-
-      <div class="kpiChange">
-        Recaudación registrada
-      </div>
-
+      <div class="kpiLabel">COPAGOS</div>
+      <div class="kpiValue" id="kpiCopago">—</div>
+      <div class="kpiChange">Recaudación registrada</div>
     </div>
 
-
     <div class="kpi">
-
-      <div class="kpiLabel">
-        TICKET PROMEDIO
-      </div>
-
-      <div
-        class="kpiValue"
-        id="kpiTicket"
-      >
-        —
-      </div>
-
-      <div class="kpiChange">
-        Copago promedio
-      </div>
-
+      <div class="kpiLabel">TICKET PROMEDIO</div>
+      <div class="kpiValue" id="kpiTicket">—</div>
+      <div class="kpiChange">Copago promedio</div>
     </div>
 
   </div>
 
-
-  <!-- ================= PRODUCCIÓN ================= -->
 
   <div class="grid2">
 
     <div class="card">
-
-      <div class="cardTitle">
-        Producción
-      </div>
-
-      <div class="cardSub">
-        Turnos por día
-      </div>
+      <div class="cardTitle">Producción</div>
+      <div class="cardSub">Turnos por día</div>
 
       <div class="chartBox">
         <canvas id="chartProduccion"></canvas>
       </div>
-
     </div>
 
 
     <div class="card">
-
-      <div class="cardTitle">
-        Estado de los turnos
-      </div>
-
-      <div class="cardSub">
-        Distribución del período
-      </div>
+      <div class="cardTitle">Estado de los turnos</div>
+      <div class="cardSub">Distribución del período</div>
 
       <div class="chartBox">
         <canvas id="chartEstados"></canvas>
       </div>
-
     </div>
 
   </div>
 
-
-  <!-- ================= FINANZAS ================= -->
 
   <div class="grid3">
 
     <div class="card">
-
-      <div class="cardTitle">
-        Modalidad de cobro
-      </div>
-
-      <div class="cardSub">
-        Copagos registrados
-      </div>
+      <div class="cardTitle">Modalidad de cobro</div>
+      <div class="cardSub">Copagos registrados</div>
 
       <div class="chartBox">
         <canvas id="chartCobros"></canvas>
       </div>
-
     </div>
 
 
     <div class="card">
+      <div class="cardTitle">Prácticas principales</div>
+      <div class="cardSub">Ranking por cantidad</div>
 
-      <div class="cardTitle">
-        Prácticas principales
-      </div>
-
-      <div class="cardSub">
-        Ranking por cantidad
-      </div>
-
-      <div
-        class="ranking"
-        id="rankingPracticas"
-      >
-      </div>
-
+      <div class="ranking" id="rankingPracticas"></div>
     </div>
 
 
     <div class="card">
+      <div class="cardTitle">Principales derivadores</div>
+      <div class="cardSub">Turnos generados</div>
 
-      <div class="cardTitle">
-        Principales derivadores
-      </div>
-
-      <div class="cardSub">
-        Turnos generados
-      </div>
-
-      <div
-        class="ranking"
-        id="rankingDerivadores"
-      >
-      </div>
-
+      <div class="ranking" id="rankingDerivadores"></div>
     </div>
 
   </div>
 
-
-  <!-- ================= PROFESIONALES ================= -->
 
   <div class="card">
 
@@ -698,9 +490,7 @@
       <table>
 
         <thead>
-
           <tr>
-
             <th>Médico / Servicio</th>
             <th>Turnos</th>
             <th>Atendidos</th>
@@ -709,13 +499,10 @@
             <th>Ausentismo</th>
             <th>Copagos</th>
             <th>Promedio</th>
-
           </tr>
-
         </thead>
 
-        <tbody id="tablaMedicos">
-        </tbody>
+        <tbody id="tablaMedicos"></tbody>
 
       </table>
 
@@ -727,32 +514,37 @@
 
 
 <script src="./config.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 
 <script>
 
 /* ================= CONFIG ================= */
 
-const SUPABASE_URL =
-  window.__SB__?.url;
+const SUPABASE_URL = window.__SB__?.url;
+const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
 
-const SUPABASE_ANON_KEY =
-  window.__SB__?.anonKey;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY){
+  alert("Falta config.js");
+  throw new Error("Missing Supabase config");
+}
 
+const sb = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  {
+    auth:{
+      persistSession:true,
+      autoRefreshToken:true
+    }
+  }
+);
 
-const sb =
-  supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
+const AR_TZ = "America/Argentina/Buenos_Aires";
 
 
 /* ================= DOM ================= */
 
-const err =
-  document.getElementById("err");
+const err = document.getElementById("err");
 
 const filtroMedico =
   document.getElementById("filtroMedico");
@@ -766,18 +558,103 @@ const filtroEstado =
 
 /* ================= STATE ================= */
 
-let TENANT_ID = null;
+let DATA_90 = [];
+let DATA_FILTRADA = [];
 
-let PERIODO = 30;
-
-let DASH_DATA = null;
-
-
-/* ================= CHARTS ================= */
+let PERIODO = "30";
 
 let chartProduccion = null;
 let chartEstados = null;
 let chartCobros = null;
+
+
+/* ================= HELPERS ================= */
+
+function fechaARHoy(){
+
+  const parts =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:AR_TZ,
+        year:"numeric",
+        month:"2-digit",
+        day:"2-digit"
+      }
+    ).formatToParts(new Date());
+
+  const y =
+    parts.find(x=>x.type==="year").value;
+
+  const m =
+    parts.find(x=>x.type==="month").value;
+
+  const d =
+    parts.find(x=>x.type==="day").value;
+
+  return `${y}-${m}-${d}`;
+}
+
+
+function parseFechaLocal(iso){
+
+  const [y,m,d] =
+    String(iso).split("-").map(Number);
+
+  return new Date(
+    y,
+    m-1,
+    d,
+    12,
+    0,
+    0
+  );
+}
+
+
+function addDays(date, n){
+
+  const d =
+    new Date(date);
+
+  d.setDate(
+    d.getDate() + n
+  );
+
+  return d;
+}
+
+
+function mismoMes(a,b){
+
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth()
+  );
+}
+
+
+function formatFechaCorta(iso){
+
+  const d =
+    parseFechaLocal(iso);
+
+  return d.toLocaleDateString(
+    "es-AR",
+    {
+      day:"2-digit",
+      month:"2-digit"
+    }
+  );
+}
+
+
+function money(v){
+
+  return `$${Math.round(
+    Number(v || 0)
+  ).toLocaleString("es-AR")}`;
+}
 
 
 /* ================= AUTH ================= */
@@ -793,7 +670,6 @@ async function requireLogin(){
       "./login.html";
 
     return null;
-
   }
 
   document.getElementById(
@@ -805,178 +681,405 @@ async function requireLogin(){
 }
 
 
-/* ================= TENANT ================= */
+/* ================= BRANDING ================= */
 
-async function resolverTenant(user){
+async function cargarBranding(){
 
-  const { data, error } =
-    await sb
-      .from("personal")
-      .select(
-        "tenant_id,rol,activo"
-      )
-      .eq(
-        "id",
-        user.id
-      )
-      .eq(
-        "activo",
-        true
-      )
-      .maybeSingle();
+  try{
+
+    const { data:userData } =
+      await sb.auth.getUser();
+
+    const user =
+      userData?.user;
+
+    if (!user) return;
 
 
-  if (error)
-    throw error;
+    const { data:personal } =
+      await sb
+        .from("personal")
+        .select("tenant_id")
+        .eq("id", user.id)
+        .maybeSingle();
 
 
-  if (!data?.tenant_id)
-    throw new Error(
-      "Usuario sin tenant."
-    );
+    if (!personal?.tenant_id)
+      return;
 
 
-  TENANT_ID =
-    data.tenant_id;
+    const { data:tenant } =
+      await sb
+        .from("Tenants")
+        .select(
+          "nombre,theme,color_primario,color_secundario"
+        )
+        .eq(
+          "id",
+          personal.tenant_id
+        )
+        .maybeSingle();
 
 
-  const rol =
-    String(
-      data.rol || ""
-    ).toLowerCase();
+    if (!tenant)
+      return;
 
 
-  if (
-    ![
-      "admin",
-      "ceo"
-    ].includes(rol)
-  ){
-    throw new Error(
-      "No tenés permisos para acceder al dashboard gerencial."
+    const title =
+      tenant?.theme?.header?.title ||
+      tenant?.nombre ||
+      "Dashboard";
+
+
+    document.getElementById(
+      "brandTitle"
+    ).textContent =
+      `${title} · Gerencial`;
+
+
+    document.getElementById(
+      "brandSubtitle"
+    ).textContent =
+      "Indicadores operativos y comerciales";
+
+
+    document.title =
+      `${title} · Dashboard Gerencial`;
+
+
+    document.documentElement
+      .style
+      .setProperty(
+        "--primary",
+        tenant.color_primario || "#111"
+      );
+
+
+    document.documentElement
+      .style
+      .setProperty(
+        "--bg",
+        tenant.color_secundario || "#f6f7f8"
+      );
+
+  }
+  catch(e){
+    console.warn(
+      "No pude cargar branding",
+      e
     );
   }
 
 }
 
 
-/* ================= CARGA DASH ================= */
+/* ================= BACKEND ================= */
 
-async function cargarDashboard(){
-
-  if (!TENANT_ID)
-    return;
-
+async function cargarDataset90(){
 
   err.textContent = "";
 
+  const { data, error } =
+    await sb.rpc(
+      "gerencial_dashboard",
+      {
+        p_dias:90
+      }
+    );
 
-  /*
-    Próxima etapa:
 
-    RPC sugerida:
+  if (error){
+    throw error;
+  }
 
-    gerencial_dashboard(
-      p_desde,
-      p_hasta,
-      p_medico_id,
-      p_practica_id,
-      p_estado
-    )
 
-    Retornaría un JSON único con:
+  DATA_90 =
+    data || [];
 
-    {
-      resumen:{},
-      produccion_dia:[],
-      estados:[],
-      cobros:{},
-      practicas:[],
-      derivadores:[],
-      medicos:[]
+
+  construirFiltros();
+
+
+  aplicarFiltros();
+
+}
+
+
+/* ================= FILTROS SELECT ================= */
+
+function construirFiltros(){
+
+  const medicoActual =
+    filtroMedico.value;
+
+  const practicaActual =
+    filtroPractica.value;
+
+
+  const medicos =
+    new Map();
+
+
+  DATA_90.forEach(r=>{
+
+    if (
+      r.medico_id &&
+      r.medico_nombre
+    ){
+      medicos.set(
+        String(r.medico_id),
+        r.medico_nombre
+      );
     }
 
-    Así hacemos UNA llamada al backend
-    y no 10 queries distintas.
-  */
+  });
 
 
-  /* ==========================================
-     MOCK TEMPORAL PARA DISEÑAR EL FRONT
-     ========================================== */
+  filtroMedico.innerHTML =
+    `<option value="">Todos</option>`;
 
-  DASH_DATA = {
 
-    resumen:{
-      turnos:286,
-      atendidos:231,
-      ausentes:21,
-      cancelados:18,
-      copago:4280000,
-      ticket_promedio:18528,
-      cambio_turnos:12.4
-    },
+  [...medicos.entries()]
+    .sort(
+      (a,b)=>
+        String(a[1])
+          .localeCompare(
+            String(b[1]),
+            "es"
+          )
+    )
+    .forEach(([id,nombre])=>{
 
-    produccion_dia:[
-      {dia:"01/08",cantidad:10},
-      {dia:"02/08",cantidad:14},
-      {dia:"03/08",cantidad:12},
-      {dia:"04/08",cantidad:18},
-      {dia:"05/08",cantidad:16},
-      {dia:"06/08",cantidad:21},
-      {dia:"07/08",cantidad:19},
-      {dia:"08/08",cantidad:24}
-    ],
+      const opt =
+        document.createElement(
+          "option"
+        );
 
-    estados:[
-      {estado:"Atendido",cantidad:231},
-      {estado:"Ausente",cantidad:21},
-      {estado:"Cancelado",cantidad:18},
-      {estado:"Pendiente",cantidad:16}
-    ],
+      opt.value = id;
+      opt.textContent = nombre;
 
-    cobros:{
-      efectivo:1680000,
-      transferencia:2600000
-    },
+      filtroMedico.appendChild(opt);
 
-    practicas:[
-      {nombre:"RM Rodilla",cantidad:62},
-      {nombre:"RM Lumbar",cantidad:51},
-      {nombre:"RM Cerebro",cantidad:39},
-      {nombre:"RM Hombro",cantidad:31},
-      {nombre:"Consulta",cantidad:28}
-    ],
+    });
 
-    derivadores:[
-      {nombre:"Dr. Pérez",cantidad:38},
-      {nombre:"Dra. Gómez",cantidad:31},
-      {nombre:"Dr. Rodríguez",cantidad:27},
-      {nombre:"Dra. Fernández",cantidad:19},
-      {nombre:"Dr. López",cantidad:16}
-    ],
 
-    medicos:[
-      {
-        nombre:"Resonancia Magnética",
-        turnos:184,
-        atendidos:157,
-        ausentes:12,
-        cancelados:8,
-        copago:3180000
-      },
+  const practicas =
+    new Map();
 
-      {
-        nombre:"Dr. Ejemplo",
-        turnos:102,
-        atendidos:74,
-        ausentes:9,
-        cancelados:10,
-        copago:1100000
+
+  DATA_90.forEach(r=>{
+
+    const ids =
+      Array.isArray(r.practica_ids)
+        ? r.practica_ids
+        : [];
+
+    const nombres =
+      String(
+        r.practicas_nombres || ""
+      )
+        .split(" + ")
+        .map(x=>x.trim());
+
+
+    ids.forEach(
+      (id,i)=>{
+
+        if (!id) return;
+
+        practicas.set(
+          String(id),
+          nombres[i] ||
+          r.practica_principal_nombre ||
+          "Práctica"
+        );
+
       }
-    ]
+    );
 
-  };
+  });
+
+
+  filtroPractica.innerHTML =
+    `<option value="">Todas</option>`;
+
+
+  [...practicas.entries()]
+    .sort(
+      (a,b)=>
+        String(a[1])
+          .localeCompare(
+            String(b[1]),
+            "es"
+          )
+    )
+    .forEach(([id,nombre])=>{
+
+      const opt =
+        document.createElement(
+          "option"
+        );
+
+      opt.value = id;
+      opt.textContent = nombre;
+
+      filtroPractica.appendChild(opt);
+
+    });
+
+
+  if (
+    [...filtroMedico.options]
+      .some(
+        o=>o.value === medicoActual
+      )
+  ){
+    filtroMedico.value =
+      medicoActual;
+  }
+
+
+  if (
+    [...filtroPractica.options]
+      .some(
+        o=>o.value === practicaActual
+      )
+  ){
+    filtroPractica.value =
+      practicaActual;
+  }
+
+}
+
+
+/* ================= FILTRADO EN MEMORIA ================= */
+
+function filtrarPorPeriodo(rows){
+
+  const hoy =
+    parseFechaLocal(
+      fechaARHoy()
+    );
+
+
+  if (PERIODO === "mes"){
+
+    return rows.filter(
+      r=>{
+
+        if (!r.fecha)
+          return false;
+
+        return mismoMes(
+          parseFechaLocal(r.fecha),
+          hoy
+        );
+
+      }
+    );
+
+  }
+
+
+  const dias =
+    Number(PERIODO || 30);
+
+
+  const desde =
+    addDays(
+      hoy,
+      -(dias-1)
+    );
+
+
+  return rows.filter(
+    r=>{
+
+      if (!r.fecha)
+        return false;
+
+      const f =
+        parseFechaLocal(
+          r.fecha
+        );
+
+      return (
+        f >= desde &&
+        f <= hoy
+      );
+
+    }
+  );
+
+}
+
+
+function aplicarFiltros(){
+
+  let rows =
+    filtrarPorPeriodo(
+      DATA_90
+    );
+
+
+  const medicoId =
+    filtroMedico.value;
+
+
+  const practicaId =
+    filtroPractica.value;
+
+
+  const estado =
+    filtroEstado.value;
+
+
+  if (medicoId){
+
+    rows =
+      rows.filter(
+        r=>
+          String(r.medico_id) ===
+          String(medicoId)
+      );
+
+  }
+
+
+  if (practicaId){
+
+    rows =
+      rows.filter(
+        r=>
+          Array.isArray(
+            r.practica_ids
+          ) &&
+          r.practica_ids
+            .map(String)
+            .includes(
+              String(practicaId)
+            )
+      );
+
+  }
+
+
+  if (estado){
+
+    rows =
+      rows.filter(
+        r=>
+          String(
+            r.estado || ""
+          ).toLowerCase() ===
+          estado
+      );
+
+  }
+
+
+  DATA_FILTRADA =
+    rows;
 
 
   renderDashboard();
@@ -984,34 +1087,95 @@ async function cargarDashboard(){
 }
 
 
-/* ================= RENDER KPIS ================= */
+/* ================= KPIS ================= */
 
 function renderKPIs(){
 
-  const r =
-    DASH_DATA.resumen;
+  const rows =
+    DATA_FILTRADA;
+
+
+  const turnos =
+    rows.length;
+
+
+  const atendidos =
+    rows.filter(
+      r=>r.estado === "atendido"
+    ).length;
+
+
+  const ausentes =
+    rows.filter(
+      r=>r.estado === "ausente"
+    ).length;
+
+
+  const cancelados =
+    rows.filter(
+      r=>r.estado === "cancelado"
+    ).length;
+
+
+  const copago =
+    rows.reduce(
+      (acc,r)=>
+        acc +
+        Number(
+          r.copago || 0
+        ),
+      0
+    );
+
+
+  const conCopago =
+    rows.filter(
+      r=>
+        Number(
+          r.copago || 0
+        ) > 0
+    ).length;
+
+
+  const ticket =
+    conCopago
+      ? copago /
+        conCopago
+      : 0;
+
+
+  const programadosBase =
+    rows.filter(
+      r=>
+        ![
+          "cancelado",
+          "reprogramado"
+        ].includes(
+          r.estado
+        )
+    ).length;
+
+
+  const ausentismo =
+    programadosBase
+      ? (
+          ausentes /
+          programadosBase *
+          100
+        )
+      : 0;
 
 
   document.getElementById(
     "kpiTurnos"
   ).textContent =
-    r.turnos;
+    turnos;
 
 
   document.getElementById(
     "kpiAtendidos"
   ).textContent =
-    r.atendidos;
-
-
-  const ausentismo =
-    r.turnos
-      ? (
-          r.ausentes /
-          r.turnos *
-          100
-        )
-      : 0;
+    atendidos;
 
 
   document.getElementById(
@@ -1023,52 +1187,65 @@ function renderKPIs(){
   document.getElementById(
     "kpiCancelaciones"
   ).textContent =
-    r.cancelados;
+    cancelados;
 
 
   document.getElementById(
     "kpiCopago"
   ).textContent =
-    `$${Number(
-      r.copago || 0
-    ).toLocaleString("es-AR")}`;
+    money(copago);
 
 
   document.getElementById(
     "kpiTicket"
   ).textContent =
-    `$${Number(
-      r.ticket_promedio || 0
-    ).toLocaleString("es-AR")}`;
+    money(ticket);
 
 
-  const cambio =
-    Number(
-      r.cambio_turnos || 0
-    );
-
-
-  const elCambio =
-    document.getElementById(
-      "kpiTurnosCambio"
-    );
-
-
-  elCambio.textContent =
-    `${cambio >= 0 ? "+" : ""}${cambio.toFixed(1)}% vs período anterior`;
-
-
-  elCambio.className =
-    cambio >= 0
-      ? "kpiChange positivo"
-      : "kpiChange negativo";
+  document.getElementById(
+    "kpiTurnosCambio"
+  ).textContent =
+    `${turnos} turnos en el período`;
 
 }
 
 
-/* ================= GRÁFICOS ================= */
+/* ================= PRODUCCIÓN ================= */
 
 function renderProduccion(){
+
+  const mapa =
+    new Map();
+
+
+  DATA_FILTRADA
+    .slice()
+    .sort(
+      (a,b)=>
+        String(a.fecha)
+          .localeCompare(
+            String(b.fecha)
+          )
+    )
+    .forEach(r=>{
+
+      const key =
+        r.fecha;
+
+      if (!key)
+        return;
+
+      mapa.set(
+        key,
+        (mapa.get(key) || 0) + 1
+      );
+
+    });
+
+
+  const rows =
+    [...mapa.entries()];
+
 
   if (chartProduccion)
     chartProduccion.destroy();
@@ -1086,15 +1263,20 @@ function renderProduccion(){
         data:{
 
           labels:
-            DASH_DATA.produccion_dia
-              .map(x=>x.dia),
+            rows.map(
+              x=>
+                formatFechaCorta(
+                  x[0]
+                )
+            ),
 
           datasets:[
             {
               label:"Turnos",
               data:
-                DASH_DATA.produccion_dia
-                  .map(x=>x.cantidad),
+                rows.map(
+                  x=>x[1]
+                ),
               tension:.3
             }
           ]
@@ -1104,7 +1286,6 @@ function renderProduccion(){
         options:{
 
           responsive:true,
-
           maintainAspectRatio:false,
 
           plugins:{
@@ -1115,7 +1296,10 @@ function renderProduccion(){
 
           scales:{
             y:{
-              beginAtZero:true
+              beginAtZero:true,
+              ticks:{
+                precision:0
+              }
             }
           }
 
@@ -1127,7 +1311,33 @@ function renderProduccion(){
 }
 
 
+/* ================= ESTADOS ================= */
+
 function renderEstados(){
+
+  const estados =
+    new Map();
+
+
+  DATA_FILTRADA.forEach(
+    r=>{
+
+      const e =
+        r.estado ||
+        "sin estado";
+
+      estados.set(
+        e,
+        (estados.get(e) || 0) + 1
+      );
+
+    }
+  );
+
+
+  const rows =
+    [...estados.entries()];
+
 
   if (chartEstados)
     chartEstados.destroy();
@@ -1145,14 +1355,16 @@ function renderEstados(){
         data:{
 
           labels:
-            DASH_DATA.estados
-              .map(x=>x.estado),
+            rows.map(
+              x=>x[0]
+            ),
 
           datasets:[
             {
               data:
-                DASH_DATA.estados
-                  .map(x=>x.cantidad)
+                rows.map(
+                  x=>x[1]
+                )
             }
           ]
 
@@ -1169,7 +1381,39 @@ function renderEstados(){
 }
 
 
+/* ================= COBROS ================= */
+
 function renderCobros(){
+
+  let efectivo = 0;
+  let transferencia = 0;
+
+
+  DATA_FILTRADA
+    .forEach(
+      r=>{
+
+        const valor =
+          Number(
+            r.copago || 0
+          );
+
+        if (!valor)
+          return;
+
+
+        if (
+          r.copago_transferencia === true
+        ){
+          transferencia += valor;
+        }
+        else{
+          efectivo += valor;
+        }
+
+      }
+    );
+
 
   if (chartCobros)
     chartCobros.destroy();
@@ -1194,8 +1438,8 @@ function renderCobros(){
           datasets:[
             {
               data:[
-                DASH_DATA.cobros.efectivo,
-                DASH_DATA.cobros.transferencia
+                efectivo,
+                transferencia
               ]
             }
           ]
@@ -1213,7 +1457,121 @@ function renderCobros(){
 }
 
 
-/* ================= RANKINGS ================= */
+/* ================= PRÁCTICAS ================= */
+
+function obtenerRankingPracticas(){
+
+  const map =
+    new Map();
+
+
+  DATA_FILTRADA.forEach(
+    r=>{
+
+      const nombres =
+        String(
+          r.practicas_nombres ||
+          ""
+        )
+          .split(" + ")
+          .map(x=>x.trim())
+          .filter(Boolean);
+
+
+      if (!nombres.length){
+
+        const principal =
+          r.practica_principal_nombre ||
+          "Consulta";
+
+        map.set(
+          principal,
+          (map.get(principal) || 0) + 1
+        );
+
+        return;
+      }
+
+
+      nombres.forEach(
+        nombre=>{
+
+          map.set(
+            nombre,
+            (map.get(nombre) || 0) + 1
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+  return [...map.entries()]
+    .map(
+      ([nombre,cantidad])=>({
+        nombre,
+        cantidad
+      })
+    )
+    .sort(
+      (a,b)=>
+        b.cantidad -
+        a.cantidad
+    )
+    .slice(0,8);
+
+}
+
+
+/* ================= DERIVADORES ================= */
+
+function obtenerRankingDerivadores(){
+
+  const map =
+    new Map();
+
+
+  DATA_FILTRADA.forEach(
+    r=>{
+
+      if (!r.derivador_id)
+        return;
+
+
+      const nombre =
+        r.derivador_nombre ||
+        "Sin nombre";
+
+
+      map.set(
+        nombre,
+        (map.get(nombre) || 0) + 1
+      );
+
+    }
+  );
+
+
+  return [...map.entries()]
+    .map(
+      ([nombre,cantidad])=>({
+        nombre,
+        cantidad
+      })
+    )
+    .sort(
+      (a,b)=>
+        b.cantidad -
+        a.cantidad
+    )
+    .slice(0,8);
+
+}
+
+
+/* ================= RANKING RENDER ================= */
 
 function renderRanking(
   elementId,
@@ -1224,6 +1582,15 @@ function renderRanking(
     document.getElementById(
       elementId
     );
+
+
+  if (!rows.length){
+
+    el.innerHTML =
+      `<div class="muted">Sin datos para este filtro.</div>`;
+
+    return;
+  }
 
 
   el.innerHTML =
@@ -1252,7 +1619,96 @@ function renderRanking(
 }
 
 
-/* ================= TABLA MÉDICOS ================= */
+/* ================= MÉDICOS ================= */
+
+function obtenerResumenMedicos(){
+
+  const map =
+    new Map();
+
+
+  DATA_FILTRADA.forEach(
+    r=>{
+
+      const id =
+        String(
+          r.medico_id ||
+          r.medico_nombre ||
+          "sin_medico"
+        );
+
+
+      if (!map.has(id)){
+
+        map.set(
+          id,
+          {
+            nombre:
+              r.medico_nombre ||
+              "Sin médico",
+
+            turnos:0,
+            atendidos:0,
+            ausentes:0,
+            cancelados:0,
+            copago:0
+          }
+        );
+
+      }
+
+
+      const x =
+        map.get(id);
+
+
+      x.turnos++;
+
+
+      if (
+        r.estado ===
+        "atendido"
+      ){
+        x.atendidos++;
+      }
+
+
+      if (
+        r.estado ===
+        "ausente"
+      ){
+        x.ausentes++;
+      }
+
+
+      if (
+        r.estado ===
+        "cancelado"
+      ){
+        x.cancelados++;
+      }
+
+
+      x.copago +=
+        Number(
+          r.copago || 0
+        );
+
+    }
+  );
+
+
+  return [...map.values()]
+    .sort(
+      (a,b)=>
+        b.turnos -
+        a.turnos
+    );
+
+}
+
+
+/* ================= TABLA ================= */
 
 function renderTablaMedicos(){
 
@@ -1262,22 +1718,40 @@ function renderTablaMedicos(){
     );
 
 
+  const medicos =
+    obtenerResumenMedicos();
+
+
+  if (!medicos.length){
+
+    tbody.innerHTML =
+      `<tr><td colspan="8" class="muted">Sin datos.</td></tr>`;
+
+    return;
+  }
+
+
   tbody.innerHTML =
-    DASH_DATA.medicos.map(
+    medicos.map(
       m=>{
 
+        const base =
+          m.turnos -
+          m.cancelados;
+
+
         const ausentismo =
-          m.turnos
+          base > 0
             ? (
                 m.ausentes /
-                m.turnos *
+                base *
                 100
               )
             : 0;
 
 
         const promedio =
-          m.atendidos
+          m.atendidos > 0
             ? (
                 m.copago /
                 m.atendidos
@@ -1293,21 +1767,13 @@ function renderTablaMedicos(){
               <b>${m.nombre}</b>
             </td>
 
-            <td>
-              ${m.turnos}
-            </td>
+            <td>${m.turnos}</td>
 
-            <td>
-              ${m.atendidos}
-            </td>
+            <td>${m.atendidos}</td>
 
-            <td>
-              ${m.ausentes}
-            </td>
+            <td>${m.ausentes}</td>
 
-            <td>
-              ${m.cancelados}
-            </td>
+            <td>${m.cancelados}</td>
 
             <td>
               <span class="pill">
@@ -1316,15 +1782,11 @@ function renderTablaMedicos(){
             </td>
 
             <td>
-              $${Number(
-                m.copago
-              ).toLocaleString("es-AR")}
+              ${money(m.copago)}
             </td>
 
             <td>
-              $${Math.round(
-                promedio
-              ).toLocaleString("es-AR")}
+              ${money(promedio)}
             </td>
 
           </tr>
@@ -1337,7 +1799,7 @@ function renderTablaMedicos(){
 }
 
 
-/* ================= GENERAL RENDER ================= */
+/* ================= RENDER GENERAL ================= */
 
 function renderDashboard(){
 
@@ -1351,12 +1813,12 @@ function renderDashboard(){
 
   renderRanking(
     "rankingPracticas",
-    DASH_DATA.practicas
+    obtenerRankingPracticas()
   );
 
   renderRanking(
     "rankingDerivadores",
-    DASH_DATA.derivadores
+    obtenerRankingDerivadores()
   );
 
   renderTablaMedicos();
@@ -1372,33 +1834,47 @@ document
   )
   .forEach(btn=>{
 
-    btn.onclick = async ()=>{
+    btn.onclick =
+      ()=>{
 
-      document
-        .querySelectorAll(
-          ".periodoBtn"
-        )
-        .forEach(
-          x=>x.classList.remove(
-            "active"
+        document
+          .querySelectorAll(
+            ".periodoBtn"
           )
+          .forEach(
+            x=>
+              x.classList.remove(
+                "active"
+              )
+          );
+
+
+        btn.classList.add(
+          "active"
         );
 
 
-      btn.classList.add(
-        "active"
-      );
+        PERIODO =
+          btn.dataset.periodo;
 
 
-      PERIODO =
-        btn.dataset.periodo;
+        aplicarFiltros();
 
-
-      await cargarDashboard();
-
-    };
+      };
 
   });
+
+
+/* ================= FILTROS ================= */
+
+filtroMedico.onchange =
+  aplicarFiltros;
+
+filtroPractica.onchange =
+  aplicarFiltros;
+
+filtroEstado.onchange =
+  aplicarFiltros;
 
 
 /* ================= BOTONES ================= */
@@ -1406,7 +1882,18 @@ document
 document.getElementById(
   "btnActualizar"
 ).onclick =
-  cargarDashboard;
+  async ()=>{
+
+    try{
+      await cargarDataset90();
+    }
+    catch(e){
+      err.textContent =
+        e?.message ||
+        "Error actualizando dashboard.";
+    }
+
+  };
 
 
 document.getElementById(
@@ -1431,16 +1918,6 @@ document.getElementById(
   };
 
 
-filtroMedico.onchange =
-  cargarDashboard;
-
-filtroPractica.onchange =
-  cargarDashboard;
-
-filtroEstado.onchange =
-  cargarDashboard;
-
-
 /* ================= INIT ================= */
 
 (async ()=>{
@@ -1454,12 +1931,10 @@ filtroEstado.onchange =
       return;
 
 
-    await resolverTenant(
-      user
-    );
+    await cargarBranding();
 
 
-    await cargarDashboard();
+    await cargarDataset90();
 
   }
   catch(e){
