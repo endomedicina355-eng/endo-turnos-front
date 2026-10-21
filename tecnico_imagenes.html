@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agenda de Resonancia</title>
+  <style>
+    :root{
+      --primary:#111;
+      --bg:#f6f7f8;
+      --card:#fff;
+      --border:#e7e7e7;
+      --muted:#666;
+      --danger:#b00020;
+      --ok:#0a7a27;
+    }
+
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#111;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1180px;margin:0 auto;padding:18px}
+    .header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .brand{font-weight:900}
+    .muted{color:var(--muted);font-size:13px}
+    .right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
+
+    button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:700}
+    button.primary{background:var(--primary);color:#fff;border:0;font-weight:900}
+    button.small{padding:8px 10px;font-size:13px}
+    button:disabled{opacity:.45;cursor:not-allowed}
+
+    .dateNav{display:grid;grid-template-columns:auto minmax(220px,1fr) auto;gap:10px;align-items:center}
+    .dateBox{text-align:center}
+    .dateTitle{font-size:20px;font-weight:900}
+    .dateSub{font-size:13px;color:var(--muted);margin-top:3px}
+
+    .kpi{display:grid;grid-template-columns:repeat(5,minmax(115px,1fr));gap:10px;margin-top:14px}
+    .pill{border:1px solid #ddd;border-radius:14px;padding:10px 12px;background:#fff;font-size:12px}
+    .pill b{display:block;font-size:17px;margin-top:3px}
+
+    .error{color:var(--danger);font-size:13px;margin-top:10px}
+    .ok{color:var(--ok);font-size:13px;margin-top:10px}
+    .tableWrap{overflow:auto}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}
+    th,td{padding:10px 8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:middle}
+    th{color:#666;text-align:left;font-size:12px;font-weight:800}
+    th:nth-child(1),td:nth-child(1){width:78px}
+    th:nth-child(2),td:nth-child(2){width:190px}
+    th:nth-child(3),td:nth-child(3){width:150px}
+    th:nth-child(4),td:nth-child(4){width:120px}
+    th:nth-child(5),td:nth-child(5){width:190px}
+    th:nth-child(6),td:nth-child(6){width:auto}
+
+    .patientLink{font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:3px;display:inline-block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .nota{white-space:pre-wrap;overflow-wrap:anywhere}
+
+    .estadoBadge{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;font-size:13px;font-weight:900;text-transform:capitalize}
+    .estadoBadge.pendiente{background:#e7f0ff;border:1px solid #b6d0ff;color:#0b3d91}
+    .estadoBadge.presente{background:#dff5e5;border:1px solid #a7e1b7;color:#0f5132}
+    .estadoBadge.atendido{background:#e8def8;border:1px solid #c9b5ef;color:#4b267b}
+    .estadoBadge.ausente{background:#fde2e6;border:1px solid #f2b7c2;color:#842029}
+
+    .cards{display:none}
+    .turnoCard{border:1px solid #eee;border-radius:14px;padding:12px;margin:10px 0}
+    .turnoHora{font-size:18px;font-weight:900}
+    .turnoLinea{margin-top:7px;font-size:14px}
+
+    .modalBackdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(0,0,0,.35);z-index:9999}
+    .modal{width:100%;max-width:760px;max-height:85vh;background:#fff;border:1px solid #eee;border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.2);display:flex;flex-direction:column;overflow:hidden}
+    .modalHead{display:flex;justify-content:space-between;gap:12px;padding:14px;border-bottom:1px solid #eee}
+    .modalTitle{font-weight:900}
+    .modalBody{padding:14px;overflow:auto}
+    .modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .box{border:1px solid #eee;border-radius:14px;padding:12px}
+    .histItem{padding:10px 0;border-bottom:1px solid #eee}
+    .histItem:last-child{border-bottom:0}
+
+    @media(max-width:900px){
+      .kpi{grid-template-columns:repeat(2,1fr)}
+      .tableWrap{display:none}
+      .cards{display:block}
+    }
+
+    @media(max-width:650px){
+      .dateNav{grid-template-columns:1fr 1fr}
+      .dateBox{grid-column:1/-1;grid-row:1}
+      .modalGrid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <div class="brand" id="brandTitle">Agenda de Resonancia</div>
+        <div class="muted" id="brandSubtitle">Agenda técnica de Diagnóstico por Imágenes</div>
+        <div class="muted" id="userLine"></div>
+      </div>
+      <div class="right">
+        <button id="btnRefresh" class="primary" type="button">Actualizar</button>
+        <button id="btnLogout" class="small" type="button">Salir</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="dateNav">
+        <button id="btnPrevDay" type="button">← Día anterior</button>
+        <div class="dateBox">
+          <div class="dateTitle" id="dateTitle">—</div>
+          <div class="dateSub" id="dateSub">Cargando agenda…</div>
+        </div>
+        <button id="btnNextDay" type="button">Día siguiente →</button>
+      </div>
+      <div class="kpi" id="kpis"></div>
+      <div class="error" id="err"></div>
+      <div class="ok" id="ok"></div>
+    </div>
+
+    <div class="card tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Paciente</th>
+            <th>Obra social</th>
+            <th>Estado</th>
+            <th>Práctica</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card cards" id="cards"></div>
+  </div>
+
+  <div class="modalBackdrop" id="modalPaciente">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modalHead">
+        <div>
+          <div class="modalTitle" id="mTitle">Paciente</div>
+          <div class="muted" id="mSub">—</div>
+        </div>
+        <button id="btnCloseModal" class="small" type="button">Cerrar ✕</button>
+      </div>
+      <div class="modalBody">
+        <div class="modalGrid">
+          <div class="box"><div class="muted">DNI</div><div id="mDni">—</div></div>
+          <div class="box"><div class="muted">Afiliado</div><div id="mAf">—</div></div>
+          <div class="box"><div class="muted">Obra social</div><div id="mOS">—</div></div>
+          <div class="box"><div class="muted">Teléfono</div><div id="mTel">—</div></div>
+          <div class="box"><div class="muted">Email</div><div id="mEmail">—</div></div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="box">
+          <div class="brand">Historial de atención</div>
+          <div class="muted">Últimos 2 años dentro de la clínica.</div>
+          <div id="mHist" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = window.__SB__?.url;
+    const SUPABASE_ANON_KEY = window.__SB__?.anonKey;
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      alert("Falta config.js");
+      throw new Error("Missing Supabase config");
+    }
+
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    const AR_TZ = "America/Argentina/Buenos_Aires";
+    const IDLE_MIN = 20;
+    const RESONANCIA_MEDICO_ID = "56cb465a-2593-4314-ae8e-2b63b019e459";
+
+    let idleTimer = null;
+    let ME = null;
+    let TENANT = null;
+    let DIAS_AGENDA = [];
+    let DIA_INDEX = 0;
+    let AGENDA_CACHE = new Map();
+    let AGENDA_ROWS = [];
+    let realtimeTurnosChannel = null;
+    let realtimeReloadTimer = null;
+
+    const brandTitle = document.getElementById("brandTitle");
+    const brandSubtitle = document.getElementById("brandSubtitle");
+    const userLine = document.getElementById("userLine");
+    const dateTitle = document.getElementById("dateTitle");
+    const dateSub = document.getElementById("dateSub");
+    const btnPrevDay = document.getElementById("btnPrevDay");
+    const btnNextDay = document.getElementById("btnNextDay");
+    const btnRefresh = document.getElementById("btnRefresh");
+    const btnLogout = document.getElementById("btnLogout");
+    const elKpis = document.getElementById("kpis");
+    const elErr = document.getElementById("err");
+    const elOk = document.getElementById("ok");
+    const elBody = document.getElementById("tbody");
+    const elCards = document.getElementById("cards");
+    const modalPaciente = document.getElementById("modalPaciente");
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    const mTitle = document.getElementById("mTitle");
+    const mSub = document.getElementById("mSub");
+    const mDni = document.getElementById("mDni");
+    const mAf = document.getElementById("mAf");
+    const mOS = document.getElementById("mOS");
+    const mTel = document.getElementById("mTel");
+    const mEmail = document.getElementById("mEmail");
+    const mHist = document.getElementById("mHist");
+
+    async function hardLogout() {
+      try { await sb.auth.signOut(); } catch (e) {}
+      location.href = "./login.html";
+    }
+
+    function resetIdle() {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(hardLogout, IDLE_MIN * 60 * 1000);
+    }
+
+    ["click", "keydown", "mousemove", "touchstart", "scroll"].forEach((eventName) => {
+      addEventListener(eventName, resetIdle, { passive: true });
+    });
+    resetIdle();
+
+    function isoDateARNow() {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: AR_TZ,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(new Date());
+
+      const get = (type) => parts.find((part) => part.type === type)?.value;
+      return `${get("year")}-${get("month")}-${get("day")}`;
+    }
+
+    function addDaysISO(iso, amount) {
+      const [year, month, day] = iso.split("-").map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      date.setUTCDate(date.getUTCDate() + amount);
+      return [
+        date.getUTCFullYear(),
+        String(date.getUTCMonth() + 1).padStart(2, "0"),
+        String(date.getUTCDate()).padStart(2, "0")
+      ].join("-");
+    }
+
+    function fmtHora(timestamp) {
+      return new Date(timestamp).toLocaleTimeString("es-AR", {
+        timeZone: AR_TZ,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
+    }
+
+    function fmtFecha(iso) {
+      return new Date(`${iso}T12:00:00-03:00`).toLocaleDateString("es-AR", {
+        timeZone: AR_TZ,
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function toast(message) {
+      elOk.textContent = message;
+      setTimeout(() => {
+        if (elOk.textContent === message) elOk.textContent = "";
+      }, 1600);
+    }
+
+    async function cargarIdentidad() {
+      const { data: { user } } = await sb.auth.getUser();
+
+      if (!user) {
+        location.href = "./login.html";
+        return false;
+      }
+
+      const { data, error } = await sb.rpc("cfg_get_me");
+      if (error) throw error;
+      if (!data?.length) throw new Error("Usuario sin perfil activo.");
+
+      ME = data[0];
+
+      if (String(ME.rol || "").toLowerCase() !== "medico") {
+        throw new Error("Acceso exclusivo para el equipo de Resonancia.");
+      }
+
+      if (String(ME.medico_id || "") !== RESONANCIA_MEDICO_ID) {
+        throw new Error("Este usuario no está vinculado a la agenda de Resonancia.");
+      }
+
+      if (!ME.tenant_id) {
+        throw new Error("Usuario sin institución vinculada.");
+      }
+
+      userLine.textContent = `Usuario: ${ME.nombre || user.email}`;
+
+      const tenantRes = await sb
+        .from("Tenants")
+        .select("id,nombre,theme,color_primario,color_secundario")
+        .eq("id", ME.tenant_id)
+        .eq("activo", true)
+        .maybeSingle();
+
+      if (tenantRes.error) throw tenantRes.error;
+
+      TENANT = tenantRes.data || null;
+      const title = TENANT?.theme?.header?.title || TENANT?.nombre || "ReserMed";
+      brandTitle.textContent = `${title} · Resonancia Magnética`;
+      brandSubtitle.textContent = "Agenda técnica de Diagnóstico por Imágenes";
+      document.title = `${title} · Agenda de Resonancia`;
+      document.documentElement.style.setProperty("--primary", TENANT?.color_primario || "#111");
+      document.documentElement.style.setProperty("--bg", TENANT?.color_secundario || "#f6f7f8");
+
+      return true;
+    }
+
+    async function cargarDiasAgenda() {
+      const hoy = isoDateARNow();
+      const desde = addDaysISO(hoy, -90);
+      const hasta = addDaysISO(hoy, 180);
+
+      const { data, error } = await sb.rpc("medico_get_dias_agenda", {
+        p_desde: desde,
+        p_hasta: hasta
+      });
+
+      if (error) throw error;
+
+      DIAS_AGENDA = (data || [])
+        .map((item) => String(item.dia || item))
+        .filter(Boolean)
+        .sort();
+
+      if (!DIAS_AGENDA.length) {
+        DIA_INDEX = 0;
+        return;
+      }
+
+      const hoyIndex = DIAS_AGENDA.indexOf(hoy);
+      if (hoyIndex >= 0) {
+        DIA_INDEX = hoyIndex;
+        return;
+      }
+
+      const proximoIndex = DIAS_AGENDA.findIndex((dia) => dia > hoy);
+      DIA_INDEX = proximoIndex >= 0 ? proximoIndex : DIAS_AGENDA.length - 1;
+    }
+
+    async function pedirAgendaDia(fecha, forzar = false) {
+      if (!forzar && AGENDA_CACHE.has(fecha)) return AGENDA_CACHE.get(fecha);
+
+      const { data, error } = await sb.rpc("medico_get_agenda_dia", {
+        p_fecha: fecha
+      });
+
+      if (error) throw error;
+
+      const rows = data || [];
+      AGENDA_CACHE.set(fecha, rows);
+      return rows;
+    }
+
+    async function cargarAgendaActual(forzar = false) {
+      elErr.textContent = "";
+      elOk.textContent = "";
+      elBody.innerHTML = "";
+      elCards.innerHTML = "";
+      elKpis.innerHTML = "";
+
+      if (!DIAS_AGENDA.length) {
+        dateTitle.textContent = "Sin agenda";
+        dateSub.textContent = "No hay turnos dentro del período consultado.";
+        btnPrevDay.disabled = true;
+        btnNextDay.disabled = true;
+        return;
+      }
+
+      const fecha = DIAS_AGENDA[DIA_INDEX];
+      dateTitle.textContent = fmtFecha(fecha);
+      dateSub.textContent = "Agenda de Resonancia del día seleccionado";
+      btnPrevDay.disabled = DIA_INDEX <= 0;
+      btnNextDay.disabled = DIA_INDEX >= DIAS_AGENDA.length - 1;
+
+      try {
+        AGENDA_ROWS = await pedirAgendaDia(fecha, forzar);
+        renderKpis(AGENDA_ROWS);
+        renderAgenda(AGENDA_ROWS);
+      } catch (error) {
+        elErr.textContent = error?.message || "Error cargando agenda.";
+      }
+    }
+
+    function renderKpis(rows) {
+      const total = rows.length;
+      const pendientes = rows.filter((row) => row.estado === "pendiente").length;
+      const presentes = rows.filter((row) => row.estado === "presente").length;
+      const atendidos = rows.filter((row) => row.estado === "atendido").length;
+      const ausentes = rows.filter((row) => row.estado === "ausente").length;
+
+      elKpis.innerHTML = `
+        <div class="pill">Turnos<b>${total}</b></div>
+        <div class="pill">En espera<b>${presentes}</b></div>
+        <div class="pill">Pendientes<b>${pendientes}</b></div>
+        <div class="pill">Atendidos<b>${atendidos}</b></div>
+        <div class="pill">Ausentes<b>${ausentes}</b></div>
+      `;
+    }
+
+    function renderAgenda(rows) {
+      if (!rows.length) {
+        elBody.innerHTML = `<tr><td colspan="6" class="muted">Sin turnos para este día.</td></tr>`;
+        elCards.innerHTML = `<div class="muted">Sin turnos para este día.</div>`;
+        return;
+      }
+
+      rows.forEach((row) => {
+        const turnoId = escapeHTML(row.turno_id);
+        const paciente = escapeHTML(row.paciente_nombre || "—");
+        const obraSocial = escapeHTML(row.obra_social || "—");
+        const estado = escapeHTML(row.estado || "—");
+        const practica = escapeHTML(row.practica_nombre || row.practica_id || "Consulta");
+        const nota = escapeHTML(row.nota || "—");
+
+        const tr = document.createElement("tr");
+        tr.dataset.turno = row.turno_id;
+        tr.innerHTML = `
+          <td><b>${fmtHora(row.inicio)}</b></td>
+          <td><span class="patientLink" data-paciente="${turnoId}">${paciente}</span></td>
+          <td>${obraSocial}</td>
+          <td><span class="estadoBadge ${estado}">${estado}</span></td>
+          <td>${practica}</td>
+          <td class="nota">${nota}</td>
+        `;
+        elBody.appendChild(tr);
+        tr.querySelector(`[data-paciente="${turnoId}"]`).onclick = () => abrirFichaPaciente(row);
+
+        const card = document.createElement("div");
+        card.className = "turnoCard";
+        card.dataset.turno = row.turno_id;
+        card.innerHTML = `
+          <div class="turnoHora">${fmtHora(row.inicio)}</div>
+          <div class="turnoLinea"><b>Paciente:</b> <span class="patientLink" data-paciente="${turnoId}">${paciente}</span></div>
+          <div class="turnoLinea"><b>Obra social:</b> ${obraSocial}</div>
+          <div class="turnoLinea"><b>Práctica:</b> ${practica}</div>
+          <div class="turnoLinea"><b>Notas:</b> <span class="nota">${nota}</span></div>
+          <div class="turnoLinea"><span class="estadoBadge ${estado}">${estado}</span></div>
+        `;
+        elCards.appendChild(card);
+        card.querySelector(`[data-paciente="${turnoId}"]`).onclick = () => abrirFichaPaciente(row);
+      });
+    }
+
+    function iniciarRealtimeTurnos() {
+      if (!ME?.medico_id) return;
+
+      if (realtimeTurnosChannel) {
+        sb.removeChannel(realtimeTurnosChannel);
+      }
+
+      realtimeTurnosChannel = sb
+        .channel(`agenda-resonancia-${ME.medico_id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "Turnos",
+            filter: `medico_id=eq.${ME.medico_id}`
+          },
+          () => {
+            clearTimeout(realtimeReloadTimer);
+            realtimeReloadTimer = setTimeout(async () => {
+              const fechaActual = DIAS_AGENDA[DIA_INDEX];
+              if (!fechaActual) return;
+              AGENDA_CACHE.delete(fechaActual);
+              await cargarAgendaActual(true);
+            }, 500);
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            dateSub.textContent = "Agenda de Resonancia sincronizada en tiempo real";
+          }
+
+          if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
+            dateSub.textContent = `Agenda sin conexión en tiempo real: ${status}`;
+          }
+        });
+    }
+
+    function openModal() {
+      modalPaciente.style.display = "flex";
+    }
+
+    function closeModal() {
+      modalPaciente.style.display = "none";
+    }
+
+    btnCloseModal.onclick = closeModal;
+    modalPaciente.addEventListener("click", (event) => {
+      if (event.target === modalPaciente) closeModal();
+    });
+
+    async function abrirFichaPaciente(row) {
+      mTitle.textContent = row.paciente_nombre || "Paciente";
+      mSub.textContent = `Turno: ${fmtHora(row.inicio)}`;
+      mDni.textContent = row.dni || "—";
+      mAf.textContent = row.numero_afiliado || "—";
+      mOS.textContent = row.obra_social || "—";
+      mTel.textContent = row.telefono || "—";
+      mEmail.textContent = row.email || "—";
+      mHist.innerHTML = `<div class="muted">Cargando historial…</div>`;
+      openModal();
+
+      if (!row.paciente_id) {
+        mHist.innerHTML = `<div class="muted">Paciente sin identificador.</div>`;
+        return;
+      }
+
+      const { data, error } = await sb.rpc("medico_get_historial_paciente", {
+        p_paciente_id: row.paciente_id,
+        p_anios: 2
+      });
+
+      if (error) {
+        mHist.innerHTML = `<div class="muted">${escapeHTML(error.message)}</div>`;
+        return;
+      }
+
+      const rows = data || [];
+      if (!rows.length) {
+        mHist.innerHTML = `<div class="muted">Sin historial reciente.</div>`;
+        return;
+      }
+
+      mHist.innerHTML = rows.map((item) => {
+        const fecha = new Date(item.inicio).toLocaleDateString("es-AR", { timeZone: AR_TZ });
+        const hora = fmtHora(item.inicio);
+        const estado = escapeHTML(item.estado || "—");
+        const practica = item.practica_nombre
+          ? `Práctica: <b>${escapeHTML(item.practica_nombre)}</b>`
+          : "";
+        const medico = item.medico_nombre
+          ? ` · Médico: <b>${escapeHTML(item.medico_nombre)}</b>`
+          : "";
+
+        return `
+          <div class="histItem">
+            <div><b>${fecha} · ${hora}</b></div>
+            <div class="muted">Estado: <b>${estado}</b></div>
+            <div class="muted">${practica}${medico}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    btnPrevDay.onclick = async () => {
+      if (DIA_INDEX <= 0) return;
+      DIA_INDEX--;
+      await cargarAgendaActual();
+    };
+
+    btnNextDay.onclick = async () => {
+      if (DIA_INDEX >= DIAS_AGENDA.length - 1) return;
+      DIA_INDEX++;
+      await cargarAgendaActual();
+    };
+
+    btnRefresh.onclick = async () => {
+      const fecha = DIAS_AGENDA[DIA_INDEX];
+      if (fecha) AGENDA_CACHE.delete(fecha);
+      await cargarAgendaActual(true);
+      toast("Agenda actualizada.");
+    };
+
+    btnLogout.onclick = hardLogout;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const ok = await cargarIdentidad();
+        if (!ok) return;
+
+        await cargarDiasAgenda();
+        await cargarAgendaActual();
+        iniciarRealtimeTurnos();
+      } catch (error) {
+        elErr.textContent = error?.message || "Error iniciando la agenda de Resonancia.";
+      }
+    });
+  </script>
+</body>
+</html>
